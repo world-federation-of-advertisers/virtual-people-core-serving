@@ -1,0 +1,16 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+package(default_visibility = ["//src:__subpackages__"])
+
+_INCLUDE_PREFIX = "/src/main/cc"
+
+cc_library(
+    name = "model_node",
+    srcs = ["model_node.cc"],
+    hdrs = ["model_node.h"],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "@com_google_absl//absl/status",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
