@@ -14,3 +14,15 @@ cc_library(
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
+
+cc_library(
+    name = "population_node_impl",
+    srcs = ["population_node_impl.cc"],
+    hdrs = ["population_node_impl.h"],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        ":model_node",
+        "@com_google_absl//absl/status",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
