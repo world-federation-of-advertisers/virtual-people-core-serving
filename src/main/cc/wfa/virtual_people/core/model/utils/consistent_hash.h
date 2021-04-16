@@ -18,8 +18,6 @@
 #include <cstdint>
 
 namespace wfa_virtual_people {
-namespace core {
-namespace utils {
 
 // Applies consistent hashing, to map the input key to one of the buckets.
 // Each bucket is represented by an index with range [0, num_buckets - 1].
@@ -29,8 +27,6 @@ namespace utils {
 //   https://arxiv.org/pdf/1406.2294.pdf
 int32_t JumpConsistentHash(uint64_t key, int32_t num_buckets);
 
-}  // namespace utils
-}  // namespace core
 }  // namespace wfa_virtual_people
 
 #endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_CONSISTENT_HASH_H_
