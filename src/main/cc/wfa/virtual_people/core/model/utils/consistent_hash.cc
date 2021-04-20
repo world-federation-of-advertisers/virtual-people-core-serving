@@ -29,7 +29,7 @@ int32_t JumpConsistentHash(uint64_t key, int32_t num_buckets) {
     j = (b + 1) * (static_cast<double>(1LL << 31) /
                    static_cast<double>((key >> 33) + 1));
   }
-  return b;
+  return static_cast<int32_t>(b);
 }
 
 }  // namespace wfa_virtual_people
