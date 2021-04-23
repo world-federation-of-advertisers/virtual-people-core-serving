@@ -22,14 +22,14 @@ namespace wfa_virtual_people {
 // published paper:
 //   https://arxiv.org/pdf/1406.2294.pdf
 int32_t JumpConsistentHash(uint64_t key, int32_t num_buckets) {
-  int64_t b = -1, j = 0;
-  while (j < num_buckets) {
+  int32_t b = -1;
+  for (int64_t j = 0; j < num_buckets; ) {
     b = j;
     key = key * 2862933555777941757ULL + 1;
-    j = (b + 1) * (static_cast<double>(1LL << 31) /
+    j = (j + 1) * (static_cast<double>(1LL << 31) /
                    static_cast<double>((key >> 33) + 1));
   }
-  return static_cast<int32_t>(b);
+  return b;
 }
 
 }  // namespace wfa_virtual_people
