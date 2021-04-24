@@ -54,5 +54,20 @@ TEST(JumpConsistentHashTest, TestCorrectness) {
   }
 }
 
+TEST(JumpConsistentHashTest, TestIntMaxBuckets) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<unsigned long long> distrib(
+      std::numeric_limits<std::uint64_t>::min(),
+      std::numeric_limits<std::uint64_t>::max()
+  );
+  for (int i = 0; i < kKeyNumber; i++) {
+    uint64_t key = static_cast<uint64_t>(distrib(gen));
+    int32_t output =
+        JumpConsistentHash(key, std::numeric_limits<std::int32_t>::max());
+    EXPECT_GE(output, 0);
+  }
+}
+
 }  // namespace
 }  // namespace wfa_virtual_people
