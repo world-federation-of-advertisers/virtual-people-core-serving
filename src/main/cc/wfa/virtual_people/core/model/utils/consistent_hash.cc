@@ -23,6 +23,7 @@ namespace wfa_virtual_people {
 //   https://arxiv.org/pdf/1406.2294.pdf
 int32_t JumpConsistentHash(uint64_t key, int32_t num_buckets) {
   int32_t b = -1;
+  // Use int64_t for j to handle int32_t overflow.
   for (int64_t j = 0; j < num_buckets; ) {
     b = j;
     key = key * 2862933555777941757ULL + 1;
