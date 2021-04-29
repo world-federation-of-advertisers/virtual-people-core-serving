@@ -25,10 +25,17 @@ http_archive(
     urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.0.tar.gz"],
 )
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
+
+new_git_repository(
+  name = "com_google_farmhash",
+  remote = "https://github.com/google/farmhash",
+  commit = "0d859a811870d10f53a594927d0d0b97573ad06d",
+  build_file = "farmhash.BUILD",
+)
 
 git_repository(
   name = "virtual_people_common",
   remote = "https://github.com/world-federation-of-advertisers/virtual-people-common",
-  commit = "9b9067683c2ab687fa318afb984ad5a28e3374a9",
+  commit = "286a38bdc42e10e1fc49b53f84f8a012cef59d36",
 )

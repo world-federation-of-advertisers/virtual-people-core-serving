@@ -15,9 +15,13 @@
 #ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_POPULATION_NODE_IMPL_H_
 #define WFA_VIRTUAL_PEOPLE_CORE_MODEL_POPULATION_NODE_IMPL_H_
 
+#include <string>
+
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
+#include "wfa/virtual_people/core/model/utils/virtual_person_selector.h"
 
 namespace wfa_virtual_people {
 
@@ -28,13 +32,26 @@ namespace wfa_virtual_people {
 // population_node, and assigned to virtual_person_activities in @event.
 class PopulationNodeImpl : public ModelNode {
  public:
-  explicit PopulationNodeImpl(const CompiledNode& node_config);
+  // Always use Build to get a PopulationNodeImpl object. User should not call
+  // the constructor below directly.
+  static absl::StatusOr<std::unique_ptr<PopulationNodeImpl>> Build(
+      const CompiledNode& node_config);
+
+  // Never call the constructor directly.
+  explicit PopulationNodeImpl(
+      const CompiledNode& node_config,
+      std::unique_ptr<VirtualPersonSelector> virtual_person_selector,
+      const std::string& random_seed);
   ~PopulationNodeImpl() override {}
 
   absl::Status Apply(LabelerEvent* event) const override;
 
   PopulationNodeImpl(const PopulationNodeImpl&) = delete;
   PopulationNodeImpl& operator=(const PopulationNodeImpl&) = delete;
+
+ private:
+  std::unique_ptr<VirtualPersonSelector> virtual_person_selector_;
+  const std::string random_seed_;
 };
 
 }  // namespace wfa_virtual_people
