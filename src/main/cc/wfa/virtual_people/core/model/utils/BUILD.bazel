@@ -5,6 +5,33 @@ package(default_visibility = ["//src:__subpackages__"])
 _INCLUDE_PREFIX = "/src/main/cc"
 
 cc_library(
+    name = "virtual_person_selector",
+    srcs = ["virtual_person_selector.cc"],
+    hdrs = ["virtual_person_selector.h"],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        ":consistent_hash",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_protobuf//:protobuf",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "virtual_person_selector_test",
+    srcs = ["virtual_person_selector_test.cc"],
+    deps = [
+        ":virtual_person_selector",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_library(
     name = "consistent_hash",
     srcs = ["consistent_hash.cc"],
     hdrs = ["consistent_hash.h"],
