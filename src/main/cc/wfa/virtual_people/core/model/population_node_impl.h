@@ -26,14 +26,15 @@
 namespace wfa_virtual_people {
 
 // The implementation of the CompiledNode with population_node set.
-//
-// The field population_node in @node_config must be set.
-// When applying the node, exactly one id will be selected from the pools in
-// population_node, and assigned to virtual_person_activities in @event.
 class PopulationNodeImpl : public ModelNode {
  public:
-  // Always use Build to get a PopulationNodeImpl object. User should not call
-  // the constructor below directly.
+  // Always use ModelNodeFactory.NewModelNode to get a ModelNode object.
+  // Users should never call the factory fucntion or constructor of the derived
+  // class directly.
+  //
+  // Returns error status if any of the following happens:
+  //   @node_config.population_node is not set.
+  //   The total population of the pools is 0.
   static absl::StatusOr<std::unique_ptr<PopulationNodeImpl>> Build(
       const CompiledNode& node_config);
 
@@ -44,6 +45,8 @@ class PopulationNodeImpl : public ModelNode {
       const std::string& random_seed);
   ~PopulationNodeImpl() override {}
 
+  // When Apply is called, exactly one id will be selected from the pools in
+  // population_node, and assigned to virtual_person_activities[0] in @event.
   absl::Status Apply(LabelerEvent* event) const override;
 
   PopulationNodeImpl(const PopulationNodeImpl&) = delete;
