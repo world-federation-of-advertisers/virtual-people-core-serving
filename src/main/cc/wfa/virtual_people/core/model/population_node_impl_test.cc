@@ -78,7 +78,7 @@ TEST(PopulationNodeImplTest, TestApply) {
 
   for (auto const& x : id_counts) {
     int count = x.second;
-    // The expectation is 1 / 10 = 10%.
+    // The expected ratio for getting a given virtual person id is 1 / 10 = 10%.
     // Absolute error more than 2% is very unlikely.
     EXPECT_NEAR(
         static_cast<double>(count) / static_cast<double>(kFingerprintNumber),
@@ -87,6 +87,7 @@ TEST(PopulationNodeImplTest, TestApply) {
 }
 
 TEST(PopulationNodeImplTest, TestInvalidPools) {
+  // The node is invalid as the total pools size is 0.
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"PROTO(
       name: "TestPopulationNode"

@@ -72,7 +72,7 @@ TEST(VirtualPersonSelectorTest, TestGetVirtualPersonId) {
 
   for (auto const& x : id_counts) {
     int count = x.second;
-    // The expectation is 1 / 10 = 10%.
+    // The expected ratio for getting a given virtual person id is 1 / 10 = 10%.
     // Absolute error more than 2% is very unlikely.
     EXPECT_NEAR(static_cast<double>(count) / static_cast<double>(kSeedNumber),
                 0.1, 0.02);
@@ -80,6 +80,7 @@ TEST(VirtualPersonSelectorTest, TestGetVirtualPersonId) {
 }
 
 TEST(VirtualPersonSelectorTest, TestInvalidPools) {
+  // This is invalid as the total pools size is 0.
   PopulationNode population_node;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"PROTO(
       pools {
