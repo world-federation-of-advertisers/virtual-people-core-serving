@@ -29,7 +29,7 @@ namespace wfa_virtual_people {
 class PopulationNodeImpl : public ModelNode {
  public:
   // Always use ModelNodeFactory.NewModelNode to get a ModelNode object.
-  // Users should never call the factory fucntion or constructor of the derived
+  // Users should never call the factory function or constructor of the derived
   // class directly.
   //
   // Returns error status if any of the following happens:
