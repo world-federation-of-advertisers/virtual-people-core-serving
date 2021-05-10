@@ -1,0 +1,41 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+package(default_visibility = ["//src:__subpackages__"])
+
+_INCLUDE_PREFIX = "/src/main/cc"
+
+cc_library(
+    name = "model_node",
+    srcs = [
+        "model_node.cc",
+        "model_node_factory.cc",
+        "population_node_impl.cc",
+    ],
+    hdrs = [
+        "model_node.h",
+        "model_node_factory.h",
+        "population_node_impl.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_farmhash//:farmhash",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "//src/main/cc/wfa/virtual_people/core/model/utils:virtual_person_selector",
+    ],
+)
+
+cc_test(
+    name = "population_node_impl_test",
+    srcs = ["population_node_impl_test.cc"],
+    deps = [
+        ":model_node",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
