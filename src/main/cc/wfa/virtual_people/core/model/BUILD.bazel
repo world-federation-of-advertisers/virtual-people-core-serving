@@ -20,6 +20,8 @@ cc_library(
     ],
     strip_include_prefix = _INCLUDE_PREFIX,
     deps = [
+        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater",
+        "//src/main/cc/wfa/virtual_people/core/model/utils:constants",
         "//src/main/cc/wfa/virtual_people/core/model/utils:distributed_consistent_hashing",
         "//src/main/cc/wfa/virtual_people/core/model/utils:field_filters_matcher",
         "//src/main/cc/wfa/virtual_people/core/model/utils:virtual_person_selector",
@@ -55,6 +57,7 @@ cc_test(
     deps = [
         ":model_node",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
         "@cross_media_measurement//src/test/cc/testutil:matchers",

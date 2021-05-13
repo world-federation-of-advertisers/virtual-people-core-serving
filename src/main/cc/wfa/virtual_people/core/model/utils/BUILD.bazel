@@ -5,6 +5,12 @@ package(default_visibility = ["//src:__subpackages__"])
 _INCLUDE_PREFIX = "/src/main/cc"
 
 cc_library(
+    name = "constants",
+    hdrs = ["constants.h"],
+    strip_include_prefix = _INCLUDE_PREFIX,
+)
+
+cc_library(
     name = "virtual_person_selector",
     srcs = ["virtual_person_selector.cc"],
     hdrs = ["virtual_person_selector.h"],
@@ -83,6 +89,7 @@ cc_library(
     hdrs = ["field_filters_matcher.h"],
     strip_include_prefix = _INCLUDE_PREFIX,
     deps = [
+        ":constants",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -105,6 +112,38 @@ cc_test(
         "@cross_media_measurement//src/test/cc/testutil:matchers",
         "@cross_media_measurement//src/test/cc/testutil:status_macros",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:field_filter_cc_proto",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_library(
+    name = "hash_field_mask_matcher",
+    srcs = ["hash_field_mask_matcher.cc"],
+    hdrs = ["hash_field_mask_matcher.h"],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        ":constants",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_farmhash//:farmhash",
+        "@com_google_protobuf//:protobuf",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "hash_field_mask_matcher_test",
+    srcs = ["hash_field_mask_matcher_test.cc"],
+    deps = [
+        ":hash_field_mask_matcher",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )

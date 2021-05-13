@@ -1,0 +1,48 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+package(default_visibility = ["//src:__subpackages__"])
+
+_INCLUDE_PREFIX = "/src/main/cc"
+
+cc_library(
+    name = "attributes_updater",
+    srcs = [
+        "attributes_updater.cc",
+        "update_matrix_impl.cc",
+    ],
+    hdrs = [
+        "attributes_updater.h",
+        "update_matrix_impl.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "//src/main/cc/wfa/virtual_people/core/model/utils:constants",
+        "//src/main/cc/wfa/virtual_people/core/model/utils:distributed_consistent_hashing",
+        "//src/main/cc/wfa/virtual_people/core/model/utils:field_filters_matcher",
+        "//src/main/cc/wfa/virtual_people/core/model/utils:hash_field_mask_matcher",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/main/cc/wfa/measurement/common:macros",
+        "@virtual_people_common//src/main/cc/wfa/virtual_people/common/field_filter",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "update_matrix_impl_test",
+    srcs = ["update_matrix_impl_test.cc"],
+    deps = [
+        ":attributes_updater",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
