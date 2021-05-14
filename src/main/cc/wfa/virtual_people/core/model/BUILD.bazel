@@ -9,13 +9,11 @@ cc_library(
     srcs = [
         "branch_node_impl.cc",
         "model_node.cc",
-        "model_node_factory.cc",
         "population_node_impl.cc",
     ],
     hdrs = [
         "branch_node_impl.h",
         "model_node.h",
-        "model_node_factory.h",
         "population_node_impl.h",
     ],
     strip_include_prefix = _INCLUDE_PREFIX,

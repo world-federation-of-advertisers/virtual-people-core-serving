@@ -23,7 +23,6 @@
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/core/model/model_node.h"
-#include "wfa/virtual_people/core/model/model_node_factory.h"
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 #include "wfa/virtual_people/core/model/utils/field_filters_matcher.h"
 
@@ -32,7 +31,6 @@ namespace wfa_virtual_people {
 // Converts @branch to a child node and appends to @child_nodes.
 absl::Status AppendChildNode(
     const BranchNode::Branch& branch,
-    const ModelNodeFactory& factory,
     std::vector<ChildNodeRef>& child_nodes) {
   if (branch.has_node_index()) {
     // Store the index of the child node. Will be resolved to the ModelNode
@@ -43,7 +41,7 @@ absl::Status AppendChildNode(
   if (branch.has_node()) {
     // Create the ModelNode object and store.
     child_nodes.emplace_back();
-    ASSIGN_OR_RETURN(child_nodes.back(), factory.NewModelNode(branch.node()));
+    ASSIGN_OR_RETURN(child_nodes.back(), ModelNode::Build(branch.node()));
     return absl::OkStatus();
   }
   return absl::InvalidArgumentError(
@@ -88,9 +86,8 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
   // Converts each Branch to ChildNodeRef. Breaks if encounters any error
   // status.
   std::vector<ChildNodeRef> child_nodes;
-  ModelNodeFactory factory;
   for (const BranchNode::Branch& branch : branch_node.branches()) {
-    RETURN_IF_ERROR(AppendChildNode(branch, factory, child_nodes));
+    RETURN_IF_ERROR(AppendChildNode(branch, child_nodes));
   }
 
   // If all @branch_node.branches have chance, use chance.
