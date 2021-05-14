@@ -20,7 +20,6 @@
 #include "src/test/cc/testutil/matchers.h"
 #include "src/test/cc/testutil/status_macros.h"
 #include "wfa/virtual_people/core/model/model_node.h"
-#include "wfa/virtual_people/core/model/model_node_factory.h"
 
 namespace wfa_virtual_people {
 namespace {
@@ -56,8 +55,7 @@ TEST(PopulationNodeImplTest, TestApply) {
   )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<ModelNode> node,
-      ModelNodeFactory().NewModelNode(config));
+      std::unique_ptr<ModelNode> node, ModelNode::Build(config));
 
   absl::flat_hash_map<int64_t, double> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
@@ -109,7 +107,7 @@ TEST(PopulationNodeImplTest, TestInvalidPools) {
   )pb", &config));
 
   EXPECT_THAT(
-      ModelNodeFactory().NewModelNode(config).status(),
+      ModelNode::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 

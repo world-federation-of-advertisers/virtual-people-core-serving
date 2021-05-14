@@ -21,7 +21,6 @@
 #include "src/test/cc/testutil/matchers.h"
 #include "src/test/cc/testutil/status_macros.h"
 #include "wfa/virtual_people/core/model/model_node.h"
-#include "wfa/virtual_people/core/model/model_node_factory.h"
 
 namespace wfa_virtual_people {
 namespace {
@@ -74,7 +73,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeByChance) {
   )pb", &config));
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<ModelNode> node,
-      ModelNodeFactory().NewModelNode(config));
+      ModelNode::Build(config));
 
   absl::flat_hash_map<int64_t, double> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
@@ -116,7 +115,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
   )pb", &branch_node_config));
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<ModelNode> branch_node,
-      ModelNodeFactory().NewModelNode(branch_node_config));
+      ModelNode::Build(branch_node_config));
 
   // Set up map from indexes to child nodes.
   absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
@@ -135,7 +134,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
   )pb", &population_node_config_1));
   ASSERT_OK_AND_ASSIGN(
       node_refs[2],
-      ModelNodeFactory().NewModelNode(population_node_config_1));
+      ModelNode::Build(population_node_config_1));
 
   CompiledNode population_node_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -151,7 +150,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
   )pb", &population_node_config_2));
   ASSERT_OK_AND_ASSIGN(
       node_refs[3],
-      ModelNodeFactory().NewModelNode(population_node_config_2));
+      ModelNode::Build(population_node_config_2));
 
   EXPECT_THAT(branch_node->ResolveChildReferences(node_refs), IsOk());
 
@@ -218,7 +217,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeByCondition) {
   )pb", &config));
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<ModelNode> node,
-      ModelNodeFactory().NewModelNode(config));
+      ModelNode::Build(config));
 
   LabelerEvent input_1;
   input_1.set_person_country_code("country_code_1");
@@ -262,7 +261,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
   )pb", &branch_node_config_1));
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<ModelNode> branch_node_1,
-      ModelNodeFactory().NewModelNode(branch_node_config_1));
+      ModelNode::Build(branch_node_config_1));
 
   // Set up map from indexes to child nodes.
   absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
@@ -281,7 +280,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
   )pb", &branch_node_config_2));
   ASSERT_OK_AND_ASSIGN(
       node_refs[2],
-      ModelNodeFactory().NewModelNode(branch_node_config_2));
+      ModelNode::Build(branch_node_config_2));
 
   CompiledNode branch_node_config_3;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -297,7 +296,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
   )pb", &branch_node_config_3));
   ASSERT_OK_AND_ASSIGN(
       node_refs[3],
-      ModelNodeFactory().NewModelNode(branch_node_config_3));
+      ModelNode::Build(branch_node_config_3));
 
   CompiledNode population_node_config_1;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -313,7 +312,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
   )pb", &population_node_config_1));
   ASSERT_OK_AND_ASSIGN(
       node_refs[4],
-      ModelNodeFactory().NewModelNode(population_node_config_1));
+      ModelNode::Build(population_node_config_1));
 
   CompiledNode population_node_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -329,7 +328,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
   )pb", &population_node_config_2));
   ASSERT_OK_AND_ASSIGN(
       node_refs[5],
-      ModelNodeFactory().NewModelNode(population_node_config_2));
+      ModelNode::Build(population_node_config_2));
 
   EXPECT_THAT(branch_node_1->ResolveChildReferences(node_refs), IsOk());
 
@@ -373,7 +372,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexNotResolved) {
   )pb", &branch_node_config));
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<ModelNode> branch_node,
-      ModelNodeFactory().NewModelNode(branch_node_config));
+      ModelNode::Build(branch_node_config));
 
   LabelerEvent input;
   input.set_acting_fingerprint(0);
@@ -390,7 +389,7 @@ TEST(BranchNodeImplTest, TestNoBranch) {
       branch_node {}
   )pb", &config));
   EXPECT_THAT(
-      ModelNodeFactory().NewModelNode(config).status(),
+      ModelNode::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
@@ -406,7 +405,7 @@ TEST(BranchNodeImplTest, TestNoChildNode) {
       }
   )pb", &config));
   EXPECT_THAT(
-      ModelNodeFactory().NewModelNode(config).status(),
+      ModelNode::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
@@ -422,7 +421,7 @@ TEST(BranchNodeImplTest, TestNoSelectBy) {
       }
   )pb", &config));
   EXPECT_THAT(
-      ModelNodeFactory().NewModelNode(config).status(),
+      ModelNode::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
@@ -443,7 +442,7 @@ TEST(BranchNodeImplTest, TestDifferentSelectBy) {
       }
   )pb", &config));
   EXPECT_THAT(
-      ModelNodeFactory().NewModelNode(config).status(),
+      ModelNode::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
@@ -462,7 +461,7 @@ TEST(BranchNodeImplTest, TestResolveChildReferencesIndexNotFound) {
   )pb", &config));
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<ModelNode> node,
-      ModelNodeFactory().NewModelNode(config));
+      ModelNode::Build(config));
 
   absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
   EXPECT_THAT(
@@ -544,7 +543,7 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
   )pb", &config));
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<ModelNode> node,
-      ModelNodeFactory().NewModelNode(config));
+      ModelNode::Build(config));
 
   // Test for RAW_COUNTRY_1
   absl::flat_hash_map<int64_t, double> id_counts_1;

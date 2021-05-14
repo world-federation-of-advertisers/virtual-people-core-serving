@@ -30,7 +30,7 @@ namespace wfa_virtual_people {
 // The implementation of the CompiledNode with population_node set.
 class PopulationNodeImpl : public ModelNode {
  public:
-  // Always use ModelNodeFactory.NewModelNode to get a ModelNode object.
+  // Always use ModelNode::Build to get a ModelNode object.
   // Users should never call the factory function or constructor of the derived
   // class directly.
   //
