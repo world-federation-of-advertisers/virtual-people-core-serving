@@ -43,16 +43,16 @@ DistributedConsistentHashing::Build(
 
   // Gets sum of probabilities.
   double probabilities_sum = 0.0;
-  for_each (distribution->begin(), distribution->end(),
-            [&probabilities_sum](const DistributionChoice& choice) {
+  std::for_each (distribution->begin(), distribution->end(),
+                 [&probabilities_sum](const DistributionChoice& choice) {
     probabilities_sum += choice.probability;
   });
   if (probabilities_sum <= 0) {
     return absl::InvalidArgumentError("Probabilities sum is not positive.");
   }
   // Normalizes the probabilities.
-  for_each (distribution->begin(), distribution->end(),
-            [probabilities_sum](DistributionChoice& choice) {
+  std::for_each (distribution->begin(), distribution->end(),
+                 [probabilities_sum](DistributionChoice& choice) {
     choice.probability /= probabilities_sum;
   });
   return absl::make_unique<DistributedConsistentHashing>(
