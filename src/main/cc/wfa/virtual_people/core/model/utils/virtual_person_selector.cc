@@ -63,16 +63,15 @@ absl::StatusOr<std::unique_ptr<VirtualPersonSelector>>
 VirtualPersonSelector::Build(
     const RepeatedPtrField<PopulationNode::VirtualPersonPool>& pools) {
   uint64_t total_population = 0;
-  std::unique_ptr<std::vector<VirtualPersonIdPool>> compiled_pools =
-      absl::make_unique<std::vector<VirtualPersonIdPool>>();
+  std::vector<VirtualPersonIdPool> compiled_pools;
   for (const PopulationNode::VirtualPersonPool& pool : pools) {
     if (pool.total_population() == 0) {
       // This pool is empty.
       continue;
     }
-    compiled_pools->emplace_back();
-    compiled_pools->back().virtual_people_id_offset = pool.population_offset();
-    compiled_pools->back().population_index_offset = total_population;
+    compiled_pools.emplace_back();
+    compiled_pools.back().virtual_people_id_offset = pool.population_offset();
+    compiled_pools.back().population_index_offset = total_population;
     total_population += pool.total_population();
   }
   if (total_population == 0) {
@@ -85,7 +84,7 @@ VirtualPersonSelector::Build(
 
 VirtualPersonSelector::VirtualPersonSelector(
     const uint64_t total_population,
-    std::unique_ptr<std::vector<VirtualPersonIdPool>> compiled_pools):
+    std::vector<VirtualPersonIdPool>&& compiled_pools):
     total_population_(total_population), pools_(std::move(compiled_pools)) {}
 
 int64_t VirtualPersonSelector::GetVirtualPersonId(
@@ -96,7 +95,7 @@ int64_t VirtualPersonSelector::GetVirtualPersonId(
   // Gets the first pool with population_index_offset larger than
   // population_index.
   auto it = std::upper_bound(
-      pools_->begin(), pools_->end(), population_index,
+      pools_.begin(), pools_.end(), population_index,
       [](uint64_t population_index, const VirtualPersonIdPool& pool) {
         return population_index < pool.population_index_offset;
       });

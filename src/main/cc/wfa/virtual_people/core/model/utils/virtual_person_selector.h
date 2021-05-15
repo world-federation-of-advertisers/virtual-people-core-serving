@@ -68,14 +68,14 @@ class VirtualPersonSelector {
   // Never call the constructor directly.
   explicit VirtualPersonSelector(
       uint64_t total_population,
-      std::unique_ptr<std::vector<VirtualPersonIdPool>> compiled_pools);
+      std::vector<VirtualPersonIdPool>&& compiled_pools);
+
+  VirtualPersonSelector(const VirtualPersonSelector&) = delete;
+  VirtualPersonSelector& operator=(const VirtualPersonSelector&) = delete;
 
   // Selects and returns an id from the virtual person pools, using consistent
   // hashing based on the random_seed.
   int64_t GetVirtualPersonId(uint64_t random_seed) const;
-
-  VirtualPersonSelector(const VirtualPersonSelector&) = delete;
-  VirtualPersonSelector& operator=(const VirtualPersonSelector&) = delete;
 
  private:
   // The sum of total population of all pools. Required for hashing.
@@ -83,7 +83,7 @@ class VirtualPersonSelector {
 
   // Stores the required information to compute the virtual person id after
   // hashing.
-  std::unique_ptr<std::vector<VirtualPersonIdPool>> pools_;
+  std::vector<VirtualPersonIdPool> pools_;
 };
 
 }  // namespace wfa_virtual_people

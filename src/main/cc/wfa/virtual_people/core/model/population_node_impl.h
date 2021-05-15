@@ -19,6 +19,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/virtual_person_selector.h"
@@ -42,15 +43,15 @@ class PopulationNodeImpl : public ModelNode {
   explicit PopulationNodeImpl(
       const CompiledNode& node_config,
       std::unique_ptr<VirtualPersonSelector> virtual_person_selector,
-      const std::string& random_seed);
+      absl::string_view random_seed);
   ~PopulationNodeImpl() override {}
+
+  PopulationNodeImpl(const PopulationNodeImpl&) = delete;
+  PopulationNodeImpl& operator=(const PopulationNodeImpl&) = delete;
 
   // When Apply is called, exactly one id will be selected from the pools in
   // population_node, and assigned to virtual_person_activities[0] in @event.
   absl::Status Apply(LabelerEvent* event) const override;
-
-  PopulationNodeImpl(const PopulationNodeImpl&) = delete;
-  PopulationNodeImpl& operator=(const PopulationNodeImpl&) = delete;
 
  private:
   std::unique_ptr<VirtualPersonSelector> virtual_person_selector_;
