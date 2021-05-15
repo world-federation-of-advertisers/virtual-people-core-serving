@@ -16,8 +16,17 @@
 #define WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_DISTRIBUTED_CONSISTENT_HASHING_H_
 
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 
 namespace wfa_virtual_people {
+
+struct DistributionChoice {
+  DistributionChoice(int32_t init_choice_id, double init_probability):
+      choice_id(init_choice_id), probability(init_probability) {}
+
+  int32_t choice_id;
+  double probability;
+};
 
 // The C++ implementation of consistent hashing for distributions.
 //
@@ -31,26 +40,26 @@ class DistributedConsistentHashing {
   // Always use Build to get a DistributedConsistentHashing object. Users should
   // not call the constructor below directly.
   //
-  // @distribution is represented by a list of (choice id, probability) pairs.
+  // @distribution is represented by a list of (choice_id, probability) structs.
   // The probabilities will be normalized.
   //
   // Returns error status if any of the following happens:
   //   @distribution is empty.
   //   Any probability in @distribution is negative.
-  //   Probabilities sum in @distribution is not positive.
+  //   Sum of probabilities in @distribution is not positive.
   static absl::StatusOr<std::unique_ptr<DistributedConsistentHashing>> Build(
-      std::unique_ptr<std::vector<std::pair<int32_t, double>>> distribution);
+      std::unique_ptr<std::vector<DistributionChoice>> distribution);
 
   // Never call the constructor directly.
   explicit DistributedConsistentHashing(
-      std::unique_ptr<std::vector<std::pair<int32_t, double>>> distribution):
+      std::unique_ptr<std::vector<DistributionChoice>> distribution):
       distribution_(std::move(distribution)) {}
 
   // Returns the selected choice id.
-  int32_t Hash(const std::string& random_seed) const;
+  int32_t Hash(absl::string_view random_seed) const;
 
  private:
-  std::unique_ptr<std::vector<std::pair<int32_t, double>>> distribution_;
+  std::unique_ptr<std::vector<DistributionChoice>> distribution_;
 };
 
 }  // namespace wfa_virtual_people

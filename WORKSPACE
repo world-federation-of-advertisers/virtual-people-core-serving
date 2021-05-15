@@ -39,3 +39,10 @@ git_repository(
   remote = "https://github.com/world-federation-of-advertisers/virtual-people-common",
   commit = "286a38bdc42e10e1fc49b53f84f8a012cef59d36",
 )
+
+git_repository(
+    name = "cross_media_measurement",
+    remote = "https://github.com/world-federation-of-advertisers/cross-media-measurement",
+    commit = "9f3596dd4224b4dc6510de3f67a568de6f9220f1",
+    repo_mapping = {"@googletest": "@com_google_googletest"}
+)

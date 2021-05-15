@@ -14,66 +14,79 @@
 
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 
-#include <math.h>
+#include <cmath>
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "src/farmhash.h"
 
 namespace wfa_virtual_people {
 
 absl::StatusOr<std::unique_ptr<DistributedConsistentHashing>>
 DistributedConsistentHashing::Build(
-    std::unique_ptr<std::vector<std::pair<int32_t, double>>> distribution) {
+    std::unique_ptr<std::vector<DistributionChoice>> distribution) {
   if (distribution->empty()) {
     return absl::InvalidArgumentError("The given distribution is empty.");
   }
-  double probabilities_sum = 0.0;
-  for (auto it = distribution->begin(); it != distribution->end(); ++it) {
-    if (it->second < 0) {
-      return absl::InvalidArgumentError("Negative probability is provided.");
-    }
-    probabilities_sum += it->second;
+  // Returns error status for any negative probability.
+  auto negative_probability_it = std::find_if(
+      distribution->begin(), distribution->end(),
+      [](const DistributionChoice& choice) {
+        return (choice.probability < 0);
+      });
+  if (negative_probability_it != distribution->end()) {
+    return absl::InvalidArgumentError("Negative probability is provided.");
   }
+
+  // Gets sum of probabilities.
+  double probabilities_sum = 0.0;
+  for_each (distribution->begin(), distribution->end(),
+            [&probabilities_sum](const DistributionChoice& choice) {
+    probabilities_sum += choice.probability;
+  });
   if (probabilities_sum <= 0) {
     return absl::InvalidArgumentError("Probabilities sum is not positive.");
   }
   // Normalizes the probabilities.
-  for (auto it = distribution->begin(); it != distribution->end(); ++it) {
-    it->second /= probabilities_sum;
-  }
+  for_each (distribution->begin(), distribution->end(),
+            [probabilities_sum](DistributionChoice& choice) {
+    choice.probability /= probabilities_sum;
+  });
   return absl::make_unique<DistributedConsistentHashing>(
       std::move(distribution));
 }
 
-std::string GetFullSeed(const std::string& random_seed, const int32_t choice) {
+std::string GetFullSeed(
+    absl::string_view random_seed, const int32_t choice) {
   return absl::StrFormat("consistent-hashing-%s-%d", random_seed, choice);
 }
 
-inline double FloatHash(const std::string& full_seed) {
+inline double FloatHash(absl::string_view full_seed) {
   return static_cast<double>(util::Fingerprint64(full_seed)) /
          static_cast<double>(std::numeric_limits<uint64_t>::max());
 }
 
 double ComputeXi(
-    const std::string& random_seed,
+    absl::string_view random_seed,
     const int32_t choice, const double probability) {
-  return -log(FloatHash(GetFullSeed(random_seed, choice))) / probability;
+  return (-std::log(FloatHash(GetFullSeed(random_seed, choice))) /
+          probability);
 }
 
 // A C++ version of the Python function ConsistentHashing.hash in
 // https://github.com/world-federation-of-advertisers/virtual_people_examples/blob/main/notebooks/Consistent_Hashing.ipynb
 int32_t DistributedConsistentHashing::Hash(
-    const std::string& random_seed) const {
+    absl::string_view random_seed) const {
   auto it = distribution_->begin();
-  int32_t choice = it->first;
-  double choice_xi = ComputeXi(random_seed, it->first, it->second);
+  int32_t choice = it->choice_id;
+  double choice_xi = ComputeXi(random_seed, it->choice_id, it->probability);
   for (++it; it != distribution_->end(); ++it) {
-    double xi = ComputeXi(random_seed, it->first, it->second);
+    double xi = ComputeXi(random_seed, it->choice_id, it->probability);
     if (choice_xi > xi) {
-      choice = it->first;
+      choice = it->choice_id;
       choice_xi = xi;
     }
   }
