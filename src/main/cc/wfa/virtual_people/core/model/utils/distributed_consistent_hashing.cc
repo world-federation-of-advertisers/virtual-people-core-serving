@@ -31,30 +31,23 @@ DistributedConsistentHashing::Build(
   if (distribution->empty()) {
     return absl::InvalidArgumentError("The given distribution is empty.");
   }
-  // Returns error status for any negative probability.
-  auto negative_probability_it = std::find_if(
-      distribution->begin(), distribution->end(),
-      [](const DistributionChoice& choice) {
-        return (choice.probability < 0);
-      });
-  if (negative_probability_it != distribution->end()) {
-    return absl::InvalidArgumentError("Negative probability is provided.");
+  // Returns error status for any negative probability, and gets sum of
+  // probabilities.
+  double probabilities_sum = 0.0;
+  for (const DistributionChoice& choice : *distribution) {
+    if (choice.probability < 0) {
+      return absl::InvalidArgumentError("Negative probability is provided.");
+    }
+    probabilities_sum += choice.probability;
   }
 
-  // Gets sum of probabilities.
-  double probabilities_sum = 0.0;
-  std::for_each (distribution->begin(), distribution->end(),
-                 [&probabilities_sum](const DistributionChoice& choice) {
-    probabilities_sum += choice.probability;
-  });
   if (probabilities_sum <= 0) {
     return absl::InvalidArgumentError("Probabilities sum is not positive.");
   }
   // Normalizes the probabilities.
-  std::for_each (distribution->begin(), distribution->end(),
-                 [probabilities_sum](DistributionChoice& choice) {
+  for (DistributionChoice& choice : *distribution) {
     choice.probability /= probabilities_sum;
-  });
+  }
   return absl::make_unique<DistributedConsistentHashing>(
       std::move(distribution));
 }
