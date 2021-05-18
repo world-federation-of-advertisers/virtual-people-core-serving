@@ -19,6 +19,7 @@
 #include "absl/status/statusor.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "src/test/cc/testutil/matchers.h"
 #include "src/test/cc/testutil/status_macros.h"
 
 namespace wfa_virtual_people {
@@ -28,26 +29,26 @@ constexpr int kSeedNumber = 10000;
 
 TEST(DistributedConsistentHashingTest, TestEmptyDistribution) {
   auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
-  auto hashing =
-      DistributedConsistentHashing::Build(std::move(distribution));
-  EXPECT_EQ(hashing.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(
+      DistributedConsistentHashing::Build(std::move(distribution)).status(),
+      wfa::StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(DistributedConsistentHashingTest, TestZeroProbabilitiesSum) {
   auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
   distribution->emplace_back(0, 0);
   distribution->emplace_back(1, 0);
-  auto hashing =
-      DistributedConsistentHashing::Build(std::move(distribution));
-  EXPECT_EQ(hashing.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(
+      DistributedConsistentHashing::Build(std::move(distribution)).status(),
+      wfa::StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(DistributedConsistentHashingTest, TestNegativeProbability) {
   auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
   distribution->emplace_back(0, -1);
-  auto hashing =
-      DistributedConsistentHashing::Build(std::move(distribution));
-  EXPECT_EQ(hashing.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(
+      DistributedConsistentHashing::Build(std::move(distribution)).status(),
+      wfa::StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(DistributedConsistentHashingTest, TestOutputDistribution) {
@@ -243,7 +244,6 @@ TEST(DistributedConsistentHashingTest, TestOutputChangeCount) {
   // The number of outputs different between 2 hashings is guaranteed to be less
   // than L1 distance of the 2 distributions, which is 40% of total counts here.
   EXPECT_LE(diff_output_count, kSeedNumber * 0.4);
-  std::cerr << "diff_output_count: " << diff_output_count;
 }
 
 }  // namespace

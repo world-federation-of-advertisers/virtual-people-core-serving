@@ -70,6 +70,7 @@ cc_test(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
         "@cross_media_measurement//src/test/cc/testutil:status_macros",
     ],
 )
