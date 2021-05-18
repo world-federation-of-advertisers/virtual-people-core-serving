@@ -65,7 +65,7 @@ TEST(DistributedConsistentHashingTest, TestOutputDistribution) {
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
-  absl::flat_hash_map<int32_t, int> ouptut_counts = {
+  absl::flat_hash_map<int32_t, int> output_counts = {
       {0, 0},
       {1, 0},
       {2, 0},
@@ -73,21 +73,21 @@ TEST(DistributedConsistentHashingTest, TestOutputDistribution) {
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
     // The output should always be one of [0, 1, 2, 3].
-    EXPECT_TRUE(ouptut_counts.find(output) != ouptut_counts.end());
-    ++ouptut_counts[output];
+    EXPECT_TRUE(output_counts.find(output) != output_counts.end());
+    ++output_counts[output];
   }
   // Absolute error more than 2% is very unlikely.
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[0]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[0]) / static_cast<double>(kSeedNumber),
       0.4, 0.02);
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[1]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[1]) / static_cast<double>(kSeedNumber),
       0.2, 0.02);
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[2]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[2]) / static_cast<double>(kSeedNumber),
       0.2, 0.02);
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[3]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[3]) / static_cast<double>(kSeedNumber),
       0.2, 0.02);
 }
 
@@ -106,7 +106,7 @@ TEST(DistributedConsistentHashingTest, TestNormalize) {
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
-  absl::flat_hash_map<int32_t, int> ouptut_counts = {
+  absl::flat_hash_map<int32_t, int> output_counts = {
       {0, 0},
       {1, 0},
       {2, 0},
@@ -114,21 +114,21 @@ TEST(DistributedConsistentHashingTest, TestNormalize) {
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
     // The output should always be one of [0, 1, 2, 3].
-    EXPECT_TRUE(ouptut_counts.find(output) != ouptut_counts.end());
-    ++ouptut_counts[output];
+    EXPECT_TRUE(output_counts.find(output) != output_counts.end());
+    ++output_counts[output];
   }
   // Absolute error more than 2% is very unlikely.
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[0]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[0]) / static_cast<double>(kSeedNumber),
       0.4, 0.02);
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[1]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[1]) / static_cast<double>(kSeedNumber),
       0.2, 0.02);
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[2]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[2]) / static_cast<double>(kSeedNumber),
       0.2, 0.02);
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[3]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[3]) / static_cast<double>(kSeedNumber),
       0.2, 0.02);
 }
 
@@ -180,7 +180,7 @@ TEST(DistributedConsistentHashingTest,
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
-  absl::flat_hash_map<int32_t, int> ouptut_counts = {
+  absl::flat_hash_map<int32_t, int> output_counts = {
       {0, 0},
       {2, 0},
       {4, 0},
@@ -188,21 +188,21 @@ TEST(DistributedConsistentHashingTest,
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
     // The output should always be one of [0, 2, 4, 6].
-    EXPECT_TRUE(ouptut_counts.find(output) != ouptut_counts.end());
-    ++ouptut_counts[output];
+    EXPECT_TRUE(output_counts.find(output) != output_counts.end());
+    ++output_counts[output];
   }
   // Absolute error more than 2% is very unlikely.
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[0]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[0]) / static_cast<double>(kSeedNumber),
       0.4, 0.02);
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[2]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[2]) / static_cast<double>(kSeedNumber),
       0.2, 0.02);
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[4]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[4]) / static_cast<double>(kSeedNumber),
       0.2, 0.02);
   EXPECT_NEAR(
-      static_cast<double>(ouptut_counts[6]) / static_cast<double>(kSeedNumber),
+      static_cast<double>(output_counts[6]) / static_cast<double>(kSeedNumber),
       0.2, 0.02);
 }
 
