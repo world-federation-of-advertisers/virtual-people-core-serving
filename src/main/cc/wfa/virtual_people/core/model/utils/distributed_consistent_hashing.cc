@@ -74,17 +74,16 @@ double ComputeXi(
 // https://github.com/world-federation-of-advertisers/virtual_people_examples/blob/main/notebooks/Consistent_Hashing.ipynb
 int32_t DistributedConsistentHashing::Hash(
     absl::string_view random_seed) const {
-  auto it = distribution_.begin();
-  int32_t choice = it->choice_id;
-  double choice_xi = ComputeXi(random_seed, it->choice_id, it->probability);
-  for (++it; it != distribution_.end(); ++it) {
-    double xi = ComputeXi(random_seed, it->choice_id, it->probability);
+  int32_t choice_id = 0;
+  double choice_xi = std::numeric_limits<double>::max();
+  for (const auto& choice : distribution_) {
+    double xi = ComputeXi(random_seed, choice.choice_id, choice.probability);
     if (choice_xi > xi) {
-      choice = it->choice_id;
+      choice_id = choice.choice_id;
       choice_xi = xi;
     }
   }
-  return choice;
+  return choice_id;
 }
 
 }  // namespace wfa_virtual_people
