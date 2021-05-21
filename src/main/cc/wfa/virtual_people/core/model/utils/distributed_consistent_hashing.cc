@@ -27,14 +27,15 @@ namespace wfa_virtual_people {
 
 absl::StatusOr<std::unique_ptr<DistributedConsistentHashing>>
 DistributedConsistentHashing::Build(
-    std::unique_ptr<std::vector<DistributionChoice>> distribution) {
-  if (distribution->empty()) {
+    std::vector<DistributionChoice>&& distribution) {
+  std::vector<DistributionChoice> raw_distribution(distribution);
+  if (raw_distribution.empty()) {
     return absl::InvalidArgumentError("The given distribution is empty.");
   }
   // Returns error status for any negative probability, and gets sum of
   // probabilities.
   double probabilities_sum = 0.0;
-  for (const DistributionChoice& choice : *distribution) {
+  for (const DistributionChoice& choice : raw_distribution) {
     if (choice.probability < 0) {
       return absl::InvalidArgumentError("Negative probability is provided.");
     }
@@ -45,11 +46,11 @@ DistributedConsistentHashing::Build(
     return absl::InvalidArgumentError("Probabilities sum is not positive.");
   }
   // Normalizes the probabilities.
-  for (DistributionChoice& choice : *distribution) {
+  for (DistributionChoice& choice : raw_distribution) {
     choice.probability /= probabilities_sum;
   }
   return absl::make_unique<DistributedConsistentHashing>(
-      std::move(distribution));
+      std::move(raw_distribution));
 }
 
 std::string GetFullSeed(
@@ -73,10 +74,10 @@ double ComputeXi(
 // https://github.com/world-federation-of-advertisers/virtual_people_examples/blob/main/notebooks/Consistent_Hashing.ipynb
 int32_t DistributedConsistentHashing::Hash(
     absl::string_view random_seed) const {
-  auto it = distribution_->begin();
+  auto it = distribution_.begin();
   int32_t choice = it->choice_id;
   double choice_xi = ComputeXi(random_seed, it->choice_id, it->probability);
-  for (++it; it != distribution_->end(); ++it) {
+  for (++it; it != distribution_.end(); ++it) {
     double xi = ComputeXi(random_seed, it->choice_id, it->probability);
     if (choice_xi > xi) {
       choice = it->choice_id;

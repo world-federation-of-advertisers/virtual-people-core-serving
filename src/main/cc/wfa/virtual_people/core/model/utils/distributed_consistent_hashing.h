@@ -48,18 +48,18 @@ class DistributedConsistentHashing {
   //   Any probability in @distribution is negative.
   //   Sum of probabilities in @distribution is not positive.
   static absl::StatusOr<std::unique_ptr<DistributedConsistentHashing>> Build(
-      std::unique_ptr<std::vector<DistributionChoice>> distribution);
+      std::vector<DistributionChoice>&& distribution);
 
   // Never call the constructor directly.
   explicit DistributedConsistentHashing(
-      std::unique_ptr<std::vector<DistributionChoice>> distribution):
+      std::vector<DistributionChoice>&& distribution):
       distribution_(std::move(distribution)) {}
 
   // Returns the selected choice id.
   int32_t Hash(absl::string_view random_seed) const;
 
  private:
-  std::unique_ptr<std::vector<DistributionChoice>> distribution_;
+  std::vector<DistributionChoice> distribution_;
 };
 
 }  // namespace wfa_virtual_people

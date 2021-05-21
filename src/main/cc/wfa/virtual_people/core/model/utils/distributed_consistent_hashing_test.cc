@@ -28,24 +28,26 @@ namespace {
 constexpr int kSeedNumber = 10000;
 
 TEST(DistributedConsistentHashingTest, TestEmptyDistribution) {
-  auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
+  std::vector<DistributionChoice> distribution;
   EXPECT_THAT(
       DistributedConsistentHashing::Build(std::move(distribution)).status(),
       wfa::StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(DistributedConsistentHashingTest, TestZeroProbabilitiesSum) {
-  auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
-  distribution->emplace_back(0, 0);
-  distribution->emplace_back(1, 0);
+  std::vector<DistributionChoice> distribution({
+    DistributionChoice(0, 0),
+    DistributionChoice(1, 0)
+  });
   EXPECT_THAT(
       DistributedConsistentHashing::Build(std::move(distribution)).status(),
       wfa::StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(DistributedConsistentHashingTest, TestNegativeProbability) {
-  auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
-  distribution->emplace_back(0, -1);
+  std::vector<DistributionChoice> distribution({
+    DistributionChoice(0, -1)
+  });
   EXPECT_THAT(
       DistributedConsistentHashing::Build(std::move(distribution)).status(),
       wfa::StatusIs(absl::StatusCode::kInvalidArgument, ""));
@@ -58,11 +60,12 @@ TEST(DistributedConsistentHashingTest, TestOutputDistribution) {
   // 1         0.2
   // 2         0.2
   // 3         0.2
-  auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
-  distribution->emplace_back(0, 0.4);
-  distribution->emplace_back(1, 0.2);
-  distribution->emplace_back(2, 0.2);
-  distribution->emplace_back(3, 0.2);
+  std::vector<DistributionChoice> distribution({
+    DistributionChoice(0, 0.4),
+    DistributionChoice(1, 0.2),
+    DistributionChoice(2, 0.2),
+    DistributionChoice(3, 0.2)
+  });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
@@ -99,11 +102,12 @@ TEST(DistributedConsistentHashingTest, TestNormalize) {
   // 1         0.4                           0.2
   // 2         0.4                           0.2
   // 3         0.4                           0.2
-  auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
-  distribution->emplace_back(0, 0.8);
-  distribution->emplace_back(1, 0.4);
-  distribution->emplace_back(2, 0.4);
-  distribution->emplace_back(3, 0.4);
+  std::vector<DistributionChoice> distribution({
+    DistributionChoice(0, 0.8),
+    DistributionChoice(1, 0.4),
+    DistributionChoice(2, 0.4),
+    DistributionChoice(3, 0.4)
+  });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
@@ -138,9 +142,10 @@ TEST(DistributedConsistentHashingTest, TestZeroProbability) {
   // choice_id probability
   // 0         0
   // 1         1
-  auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
-  distribution->emplace_back(0, 0);
-  distribution->emplace_back(1, 1);
+  std::vector<DistributionChoice> distribution({
+    DistributionChoice(0, 0),
+    DistributionChoice(1, 1)
+  });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
@@ -154,9 +159,10 @@ TEST(DistributedConsistentHashingTest, TestZeroAfterNormalization) {
   // choice_id probability_before_normalized       normalized_probability
   // 0         std::numeric_limits<double>::min()  0
   // 1         std::numeric_limits<double>::max()  1
-  auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
-  distribution->emplace_back(0, std::numeric_limits<double>::min());
-  distribution->emplace_back(1, std::numeric_limits<double>::max());
+  std::vector<DistributionChoice> distribution({
+    DistributionChoice(0, std::numeric_limits<double>::min()),
+    DistributionChoice(1, std::numeric_limits<double>::max())
+  });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
@@ -173,11 +179,12 @@ TEST(DistributedConsistentHashingTest,
   // 2         0.2
   // 4         0.2
   // 6         0.2
-  auto distribution = absl::make_unique<std::vector<DistributionChoice>>();
-  distribution->emplace_back(0, 0.4);
-  distribution->emplace_back(2, 0.2);
-  distribution->emplace_back(4, 0.2);
-  distribution->emplace_back(6, 0.2);
+  std::vector<DistributionChoice> distribution({
+    DistributionChoice(0, 0.4),
+    DistributionChoice(2, 0.2),
+    DistributionChoice(4, 0.2),
+    DistributionChoice(6, 0.2)
+  });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
@@ -214,21 +221,21 @@ TEST(DistributedConsistentHashingTest, TestOutputChangeCount) {
   // 1         0.2           0.2
   // 2         0.2           0.2
   // 3         0.2           0.4
-  auto distribution_1 =
-      absl::make_unique<std::vector<DistributionChoice>>();
-  distribution_1->emplace_back(0, 0.4);
-  distribution_1->emplace_back(1, 0.2);
-  distribution_1->emplace_back(2, 0.2);
-  distribution_1->emplace_back(3, 0.2);
+  std::vector<DistributionChoice> distribution_1({
+    DistributionChoice(0, 0.4),
+    DistributionChoice(1, 0.2),
+    DistributionChoice(2, 0.2),
+    DistributionChoice(3, 0.2)
+  });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing_1,
       DistributedConsistentHashing::Build(std::move(distribution_1)));
-  auto distribution_2 =
-      absl::make_unique<std::vector<DistributionChoice>>();
-  distribution_2->emplace_back(0, 0.2);
-  distribution_2->emplace_back(1, 0.2);
-  distribution_2->emplace_back(2, 0.2);
-  distribution_2->emplace_back(3, 0.4);
+  std::vector<DistributionChoice> distribution_2({
+    DistributionChoice(0, 0.2),
+    DistributionChoice(1, 0.2),
+    DistributionChoice(2, 0.2),
+    DistributionChoice(3, 0.4)
+  });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing_2,
       DistributedConsistentHashing::Build(std::move(distribution_2)));
