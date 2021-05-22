@@ -21,9 +21,6 @@
 namespace wfa_virtual_people {
 
 struct DistributionChoice {
-  DistributionChoice(int32_t init_choice_id, double init_probability):
-      choice_id(init_choice_id), probability(init_probability) {}
-
   int32_t choice_id;
   double probability;
 };

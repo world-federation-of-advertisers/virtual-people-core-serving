@@ -36,8 +36,8 @@ TEST(DistributedConsistentHashingTest, TestEmptyDistribution) {
 
 TEST(DistributedConsistentHashingTest, TestZeroProbabilitiesSum) {
   std::vector<DistributionChoice> distribution({
-    DistributionChoice(0, 0),
-    DistributionChoice(1, 0)
+    DistributionChoice({0, 0}),
+    DistributionChoice({1, 0})
   });
   EXPECT_THAT(
       DistributedConsistentHashing::Build(std::move(distribution)).status(),
@@ -46,7 +46,7 @@ TEST(DistributedConsistentHashingTest, TestZeroProbabilitiesSum) {
 
 TEST(DistributedConsistentHashingTest, TestNegativeProbability) {
   std::vector<DistributionChoice> distribution({
-    DistributionChoice(0, -1)
+    DistributionChoice({0, -1})
   });
   EXPECT_THAT(
       DistributedConsistentHashing::Build(std::move(distribution)).status(),
@@ -61,10 +61,10 @@ TEST(DistributedConsistentHashingTest, TestOutputDistribution) {
   // 2         0.2
   // 3         0.2
   std::vector<DistributionChoice> distribution({
-    DistributionChoice(0, 0.4),
-    DistributionChoice(1, 0.2),
-    DistributionChoice(2, 0.2),
-    DistributionChoice(3, 0.2)
+    DistributionChoice({0, 0.4}),
+    DistributionChoice({1, 0.2}),
+    DistributionChoice({2, 0.2}),
+    DistributionChoice({3, 0.2})
   });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
@@ -103,10 +103,10 @@ TEST(DistributedConsistentHashingTest, TestNormalize) {
   // 2         0.4                           0.2
   // 3         0.4                           0.2
   std::vector<DistributionChoice> distribution({
-    DistributionChoice(0, 0.8),
-    DistributionChoice(1, 0.4),
-    DistributionChoice(2, 0.4),
-    DistributionChoice(3, 0.4)
+    DistributionChoice({0, 0.8}),
+    DistributionChoice({1, 0.4}),
+    DistributionChoice({2, 0.4}),
+    DistributionChoice({3, 0.4})
   });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
@@ -143,8 +143,8 @@ TEST(DistributedConsistentHashingTest, TestZeroProbability) {
   // 0         0
   // 1         1
   std::vector<DistributionChoice> distribution({
-    DistributionChoice(0, 0),
-    DistributionChoice(1, 1)
+    DistributionChoice({0, 0}),
+    DistributionChoice({1, 1})
   });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
@@ -160,8 +160,8 @@ TEST(DistributedConsistentHashingTest, TestZeroAfterNormalization) {
   // 0         std::numeric_limits<double>::min()  0
   // 1         std::numeric_limits<double>::max()  1
   std::vector<DistributionChoice> distribution({
-    DistributionChoice(0, std::numeric_limits<double>::min()),
-    DistributionChoice(1, std::numeric_limits<double>::max())
+    DistributionChoice({0, std::numeric_limits<double>::min()}),
+    DistributionChoice({1, std::numeric_limits<double>::max()})
   });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
@@ -180,10 +180,10 @@ TEST(DistributedConsistentHashingTest,
   // 4         0.2
   // 6         0.2
   std::vector<DistributionChoice> distribution({
-    DistributionChoice(0, 0.4),
-    DistributionChoice(2, 0.2),
-    DistributionChoice(4, 0.2),
-    DistributionChoice(6, 0.2)
+    DistributionChoice({0, 0.4}),
+    DistributionChoice({2, 0.2}),
+    DistributionChoice({4, 0.2}),
+    DistributionChoice({6, 0.2})
   });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
@@ -222,19 +222,19 @@ TEST(DistributedConsistentHashingTest, TestOutputChangeCount) {
   // 2         0.2           0.2
   // 3         0.2           0.4
   std::vector<DistributionChoice> distribution_1({
-    DistributionChoice(0, 0.4),
-    DistributionChoice(1, 0.2),
-    DistributionChoice(2, 0.2),
-    DistributionChoice(3, 0.2)
+    DistributionChoice({0, 0.4}),
+    DistributionChoice({1, 0.2}),
+    DistributionChoice({2, 0.2}),
+    DistributionChoice({3, 0.2})
   });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing_1,
       DistributedConsistentHashing::Build(std::move(distribution_1)));
   std::vector<DistributionChoice> distribution_2({
-    DistributionChoice(0, 0.2),
-    DistributionChoice(1, 0.2),
-    DistributionChoice(2, 0.2),
-    DistributionChoice(3, 0.4)
+    DistributionChoice({0, 0.2}),
+    DistributionChoice({1, 0.2}),
+    DistributionChoice({2, 0.2}),
+    DistributionChoice({3, 0.4})
   });
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing_2,
