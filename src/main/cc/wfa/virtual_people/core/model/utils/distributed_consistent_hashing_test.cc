@@ -163,7 +163,7 @@ TEST(DistributedConsistentHashingTest, TestZeroAfterNormalization) {
 }
 
 TEST(DistributedConsistentHashingTest,
-     TestOutputDistribution_NonConsecutiveChoiceId) {
+     TestOutputDistributionNonConsecutiveChoiceId) {
   // Distribution:
   // choice_id probability
   // 0         0.4
