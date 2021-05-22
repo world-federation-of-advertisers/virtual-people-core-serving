@@ -25,13 +25,15 @@
 namespace wfa_virtual_people {
 namespace {
 
+using ::wfa::StatusIs;
+
 constexpr int kSeedNumber = 10000;
 
 TEST(DistributedConsistentHashingTest, TestEmptyDistribution) {
   std::vector<DistributionChoice> distribution;
   EXPECT_THAT(
       DistributedConsistentHashing::Build(std::move(distribution)).status(),
-      wfa::StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(DistributedConsistentHashingTest, TestZeroProbabilitiesSum) {
@@ -41,7 +43,7 @@ TEST(DistributedConsistentHashingTest, TestZeroProbabilitiesSum) {
   });
   EXPECT_THAT(
       DistributedConsistentHashing::Build(std::move(distribution)).status(),
-      wfa::StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(DistributedConsistentHashingTest, TestNegativeProbability) {
@@ -50,7 +52,7 @@ TEST(DistributedConsistentHashingTest, TestNegativeProbability) {
   });
   EXPECT_THAT(
       DistributedConsistentHashing::Build(std::move(distribution)).status(),
-      wfa::StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(DistributedConsistentHashingTest, TestOutputDistribution) {
