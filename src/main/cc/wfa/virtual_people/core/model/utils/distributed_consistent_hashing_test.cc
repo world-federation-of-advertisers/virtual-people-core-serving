@@ -25,6 +25,9 @@
 namespace wfa_virtual_people {
 namespace {
 
+using ::testing::DoubleNear;
+using ::testing::Pair;
+using ::testing::UnorderedElementsAre;
 using ::wfa::StatusIs;
 
 constexpr int kSeedNumber = 10000;
@@ -71,30 +74,23 @@ TEST(DistributedConsistentHashingTest, TestOutputDistribution) {
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
-  absl::flat_hash_map<int32_t, int> output_counts = {
-      {0, 0},
-      {1, 0},
-      {2, 0},
-      {3, 0}};
+  absl::flat_hash_map<int32_t, double> output_counts;
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
-    // The output should always be one of [0, 1, 2, 3].
-    EXPECT_TRUE(output_counts.find(output) != output_counts.end());
+    if (output_counts.find(output) == output_counts.end()) {
+      output_counts[output] = 0;
+    }
     ++output_counts[output];
   }
+  for (auto& [key, value] : output_counts) {
+    value /= static_cast<double>(kSeedNumber);
+  }
   // Absolute error more than 2% is very unlikely.
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[0]) / static_cast<double>(kSeedNumber),
-      0.4, 0.02);
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[1]) / static_cast<double>(kSeedNumber),
-      0.2, 0.02);
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[2]) / static_cast<double>(kSeedNumber),
-      0.2, 0.02);
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[3]) / static_cast<double>(kSeedNumber),
-      0.2, 0.02);
+  EXPECT_THAT(output_counts, UnorderedElementsAre(
+      Pair(0, DoubleNear(0.4, 0.02)),
+      Pair(1, DoubleNear(0.2, 0.02)),
+      Pair(2, DoubleNear(0.2, 0.02)),
+      Pair(3, DoubleNear(0.2, 0.02))));
 }
 
 TEST(DistributedConsistentHashingTest, TestNormalize) {
@@ -113,30 +109,23 @@ TEST(DistributedConsistentHashingTest, TestNormalize) {
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
-  absl::flat_hash_map<int32_t, int> output_counts = {
-      {0, 0},
-      {1, 0},
-      {2, 0},
-      {3, 0}};
+  absl::flat_hash_map<int32_t, double> output_counts;
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
-    // The output should always be one of [0, 1, 2, 3].
-    EXPECT_TRUE(output_counts.find(output) != output_counts.end());
+    if (output_counts.find(output) == output_counts.end()) {
+      output_counts[output] = 0;
+    }
     ++output_counts[output];
   }
+  for (auto& [key, value] : output_counts) {
+    value /= static_cast<double>(kSeedNumber);
+  }
   // Absolute error more than 2% is very unlikely.
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[0]) / static_cast<double>(kSeedNumber),
-      0.4, 0.02);
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[1]) / static_cast<double>(kSeedNumber),
-      0.2, 0.02);
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[2]) / static_cast<double>(kSeedNumber),
-      0.2, 0.02);
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[3]) / static_cast<double>(kSeedNumber),
-      0.2, 0.02);
+  EXPECT_THAT(output_counts, UnorderedElementsAre(
+      Pair(0, DoubleNear(0.4, 0.02)),
+      Pair(1, DoubleNear(0.2, 0.02)),
+      Pair(2, DoubleNear(0.2, 0.02)),
+      Pair(3, DoubleNear(0.2, 0.02))));
 }
 
 TEST(DistributedConsistentHashingTest, TestZeroProbability) {
@@ -190,30 +179,23 @@ TEST(DistributedConsistentHashingTest,
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
-  absl::flat_hash_map<int32_t, int> output_counts = {
-      {0, 0},
-      {2, 0},
-      {4, 0},
-      {6, 0}};
+  absl::flat_hash_map<int32_t, double> output_counts;
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
-    // The output should always be one of [0, 2, 4, 6].
-    EXPECT_TRUE(output_counts.find(output) != output_counts.end());
+    if (output_counts.find(output) == output_counts.end()) {
+      output_counts[output] = 0;
+    }
     ++output_counts[output];
   }
+  for (auto& [key, value] : output_counts) {
+    value /= static_cast<double>(kSeedNumber);
+  }
   // Absolute error more than 2% is very unlikely.
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[0]) / static_cast<double>(kSeedNumber),
-      0.4, 0.02);
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[2]) / static_cast<double>(kSeedNumber),
-      0.2, 0.02);
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[4]) / static_cast<double>(kSeedNumber),
-      0.2, 0.02);
-  EXPECT_NEAR(
-      static_cast<double>(output_counts[6]) / static_cast<double>(kSeedNumber),
-      0.2, 0.02);
+  EXPECT_THAT(output_counts, UnorderedElementsAre(
+      Pair(0, DoubleNear(0.4, 0.02)),
+      Pair(2, DoubleNear(0.2, 0.02)),
+      Pair(4, DoubleNear(0.2, 0.02)),
+      Pair(6, DoubleNear(0.2, 0.02))));
 }
 
 TEST(DistributedConsistentHashingTest, TestOutputChangeCount) {
