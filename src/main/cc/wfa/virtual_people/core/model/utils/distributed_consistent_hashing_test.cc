@@ -77,9 +77,6 @@ TEST(DistributedConsistentHashingTest, TestOutputDistribution) {
   absl::flat_hash_map<int32_t, double> output_counts;
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
-    if (output_counts.find(output) == output_counts.end()) {
-      output_counts[output] = 0;
-    }
     ++output_counts[output];
   }
   for (auto& [key, value] : output_counts) {
@@ -112,9 +109,6 @@ TEST(DistributedConsistentHashingTest, TestNormalize) {
   absl::flat_hash_map<int32_t, double> output_counts;
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
-    if (output_counts.find(output) == output_counts.end()) {
-      output_counts[output] = 0;
-    }
     ++output_counts[output];
   }
   for (auto& [key, value] : output_counts) {
@@ -182,9 +176,6 @@ TEST(DistributedConsistentHashingTest,
   absl::flat_hash_map<int32_t, double> output_counts;
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
-    if (output_counts.find(output) == output_counts.end()) {
-      output_counts[output] = 0;
-    }
     ++output_counts[output];
   }
   for (auto& [key, value] : output_counts) {
