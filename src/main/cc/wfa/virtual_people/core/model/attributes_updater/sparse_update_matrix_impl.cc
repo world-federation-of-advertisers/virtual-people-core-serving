@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wfa/virtual_people/core/model/attributes_updater/update_matrix_impl.h"
+#include "wfa/virtual_people/core/model/attributes_updater/sparse_update_matrix_impl.h"
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -30,12 +30,18 @@
 
 namespace wfa_virtual_people {
 
+struct RowsDistribution {
+  std::unique_ptr<DistributedConsistentHashing> hashing;
+  std::vector<LabelerEvent> rows;
+};
+
 absl::StatusOr<std::unique_ptr<HashFieldMaskMatcher>> BuildHashFieldMaskMatcher(
-    const google::protobuf::RepeatedPtrField<LabelerEvent>& columns,
+    const google::protobuf::RepeatedPtrField<SparseUpdateMatrix::Column>&
+        columns,
     const google::protobuf::FieldMask& hash_field_mask) {
   std::vector<const LabelerEvent*> events;
-  for (const LabelerEvent& column : columns) {
-    events.emplace_back(&column);
+  for (const SparseUpdateMatrix::Column& column : columns) {
+    events.emplace_back(&column.column_attrs());
   }
   return HashFieldMaskMatcher::Build(events, hash_field_mask);
 }
@@ -43,31 +49,58 @@ absl::StatusOr<std::unique_ptr<HashFieldMaskMatcher>> BuildHashFieldMaskMatcher(
 // Converts each column to a FieldFilter, and builds a FieldFiltersMatcher
 // with all the FieldFilters.
 absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> BuildFieldFiltersMatcher(
-    const google::protobuf::RepeatedPtrField<LabelerEvent>& columns) {
+    const google::protobuf::RepeatedPtrField<SparseUpdateMatrix::Column>&
+        columns) {
   std::vector<std::unique_ptr<FieldFilter>> filters;
-  for (const LabelerEvent& column : columns) {
+  for (const SparseUpdateMatrix::Column& column : columns) {
     filters.emplace_back();
-    ASSIGN_OR_RETURN(filters.back(), FieldFilter::New(column));
+    ASSIGN_OR_RETURN(filters.back(), FieldFilter::New(column.column_attrs()));
   }
   return FieldFiltersMatcher::Build(std::move(filters));
 }
 
-absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> UpdateMatrixImpl::Build(
-    const UpdateMatrix& config) {
-  int row_count = config.rows_size();
-  int column_count = config.columns_size();
-  if (row_count == 0) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "No row exists in UpdateMatrix: ", config.DebugString()));
+absl::StatusOr<RowsDistribution> ProcessRowsInColumn(
+    const SparseUpdateMatrix::Column& column) {
+  RowsDistribution rows_distribution;
+  // Gets the probabilities distribution of the rows, and build the hashing.
+  std::vector<DistributionChoice> distribution;
+  // Gets the rows.
+  for (int i = 0; i < column.probabilities_size(); i++) {
+    distribution.emplace_back(
+        DistributionChoice({i, static_cast<double>(column.probabilities(i))}));
+    rows_distribution.rows.emplace_back(column.rows(i));
   }
-  if (column_count == 0) {
+  ASSIGN_OR_RETURN(
+      rows_distribution.hashing,
+      DistributedConsistentHashing::Build(std::move(distribution)));
+
+  return rows_distribution;
+}
+
+absl::StatusOr<std::unique_ptr<SparseUpdateMatrixImpl>>
+SparseUpdateMatrixImpl::Build(const SparseUpdateMatrix& config) {
+  if (config.columns_size() == 0) {
     return absl::InvalidArgumentError(absl::StrCat(
-        "No column exists in UpdateMatrix: ", config.DebugString()));
+        "No column exists in SparseUpdateMatrix: ", config.DebugString()));
   }
-  if (row_count * column_count != config.probabilities_size()) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "Probabilities count must equal to row * column: ",
-        config.DebugString()));
+
+  for (const SparseUpdateMatrix::Column& column : config.columns()) {
+    if (!column.has_column_attrs()) {
+      return absl::InvalidArgumentError(absl::StrCat(
+        "No column_attrs in the column in SparseUpdateMatrix: ",
+        column.DebugString()));
+    }
+    if (column.rows_size() == 0) {
+      return absl::InvalidArgumentError(absl::StrCat(
+        "No row exists in the column in SparseUpdateMatrix: ",
+        column.DebugString()));
+    }
+    if (column.rows_size() != column.probabilities_size()) {
+      return absl::InvalidArgumentError(absl::StrCat(
+        "Rows and probabilities are not aligned in the column in "
+        "SparseUpdateMatrix: ",
+        column.DebugString()));
+    }
   }
 
   std::unique_ptr<HashFieldMaskMatcher> hash_matcher = nullptr;
@@ -84,33 +117,22 @@ absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> UpdateMatrixImpl::Build(
   // Converts the probabilities distribution of each column to
   // DistributedConsistentHashing.
   std::vector<std::unique_ptr<DistributedConsistentHashing>> row_hashings;
-  for (int column_index = 0; column_index < column_count; ++column_index) {
-    // Gets the probabilities distribution of the column, and build the hashing.
-    std::vector<DistributionChoice> distribution;
-    for (int row_index = 0; row_index < row_count; ++row_index) {
-      float probability =
-          config.probabilities(row_index * column_count + column_index);
-      distribution.emplace_back(
-          DistributionChoice({row_index, static_cast<double>(probability)}));
-    }
-    row_hashings.emplace_back();
+  // Keeps the rows of each column.
+  std::vector<std::vector<LabelerEvent>> rows;
+  for (const SparseUpdateMatrix::Column& column : config.columns()) {
     ASSIGN_OR_RETURN(
-        row_hashings.back(),
-        DistributedConsistentHashing::Build(std::move(distribution)));
+        RowsDistribution rows_distribution, ProcessRowsInColumn(column));
+    row_hashings.emplace_back(std::move(rows_distribution.hashing));
+    rows.emplace_back(std::move(rows_distribution.rows));
   }
 
-  std::vector<LabelerEvent> rows;
-  for (const LabelerEvent& row : config.rows()) {
-    rows.emplace_back(row);
-  }
-
-  return absl::make_unique<UpdateMatrixImpl>(
+  return absl::make_unique<SparseUpdateMatrixImpl>(
       std::move(hash_matcher), std::move(filters_matcher),
       std::move(row_hashings), config.random_seed(), std::move(rows),
       config.pass_through_non_matches());
 }
 
-absl::Status UpdateMatrixImpl::Update(LabelerEvent& event) const {
+absl::Status SparseUpdateMatrixImpl::Update(LabelerEvent& event) const {
   ASSIGN_OR_RETURN(
       MatrixIndexes indexes,
       SelectFromMatrix(
@@ -124,7 +146,7 @@ absl::Status UpdateMatrixImpl::Update(LabelerEvent& event) const {
           "No column matching for event: ", event.DebugString()));
     }
   }
-  event.MergeFrom(rows_[indexes.row_index]);
+  event.MergeFrom(rows_[indexes.column_index][indexes.row_index]);
   return absl::OkStatus();
 }
 

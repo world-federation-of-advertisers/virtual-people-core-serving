@@ -665,8 +665,7 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
       }
   )pb", &config));
   ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<ModelNode> node,
-      ModelNodeFactory().NewModelNode(config));
+      std::unique_ptr<ModelNode> node, ModelNode::Build(config));
 
   // Test for COUNTRY_1
   LabelerEvent input;
