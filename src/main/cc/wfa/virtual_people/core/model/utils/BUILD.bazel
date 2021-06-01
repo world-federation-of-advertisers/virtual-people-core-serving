@@ -46,3 +46,31 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "distributed_consistent_hashing",
+    srcs = ["distributed_consistent_hashing.cc"],
+    hdrs = ["distributed_consistent_hashing.h"],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_farmhash//:farmhash",
+    ],
+)
+
+cc_test(
+    name = "distributed_consistent_hashing_test",
+    srcs = ["distributed_consistent_hashing_test.cc"],
+    deps = [
+        ":distributed_consistent_hashing",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+    ],
+)
