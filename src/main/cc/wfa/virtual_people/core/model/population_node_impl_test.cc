@@ -17,17 +17,25 @@
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "src/test/cc/testutil/matchers.h"
+#include "src/test/cc/testutil/status_macros.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/model_node_factory.h"
 
 namespace wfa_virtual_people {
 namespace {
 
+using ::testing::DoubleNear;
+using ::testing::Pair;
+using ::testing::UnorderedElementsAre;
+using ::wfa::IsOk;
+using ::wfa::StatusIs;
+
 constexpr int kFingerprintNumber = 10000;
 
 TEST(PopulationNodeImplTest, TestApply) {
   CompiledNode config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"PROTO(
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       name: "TestPopulationNode"
       index: 1
       population_node {
@@ -45,51 +53,42 @@ TEST(PopulationNodeImplTest, TestApply) {
         }
         random_seed: "TestRandomSeed"
       }
-  )PROTO", &config));
+  )pb", &config));
 
-  // The pools have 10 possible virtual person ids:
-  //   10, 11, 12, 30, 31, 32, 20, 21, 22, 23
-  absl::flat_hash_map<int64_t, int> id_counts = {
-      {10, 0},
-      {11, 0},
-      {12, 0},
-      {30, 0},
-      {31, 0},
-      {32, 0},
-      {20, 0},
-      {21, 0},
-      {22, 0},
-      {23, 0}
-    };
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelNode> node,
+      ModelNodeFactory().NewModelNode(config));
 
-  auto node_or = ModelNodeFactory().NewModelNode(config);
-  EXPECT_TRUE(node_or.ok());
-  std::unique_ptr<ModelNode> node = std::move(node_or.value());
-
+  absl::flat_hash_map<int64_t, double> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
-    EXPECT_TRUE(node->Apply(&input).ok());
-    int64_t id = input.virtual_person_activities(0).virtual_person_id();
-    // The virtual person id should be one of the 10 possible values.
-    EXPECT_TRUE(id_counts.find(id) != id_counts.end());
-    ++id_counts[id];
+    EXPECT_THAT(node->Apply(&input), IsOk());
+    ++id_counts[input.virtual_person_activities(0).virtual_person_id()];
+  }
+  for (auto& [key, value] : id_counts) {
+    value /= static_cast<double>(kFingerprintNumber);
   }
 
-  for (auto const& x : id_counts) {
-    int count = x.second;
-    // The expected ratio for getting a given virtual person id is 1 / 10 = 10%.
-    // Absolute error more than 2% is very unlikely.
-    EXPECT_NEAR(
-        static_cast<double>(count) / static_cast<double>(kFingerprintNumber),
-        0.1, 0.02);
-  }
+  // The expected ratio for getting a given virtual person id is 1 / 10 = 10%.
+  // Absolute error more than 2% is very unlikely.
+  EXPECT_THAT(id_counts, UnorderedElementsAre(
+      Pair(10, DoubleNear(0.1, 0.02)),
+      Pair(11, DoubleNear(0.1, 0.02)),
+      Pair(12, DoubleNear(0.1, 0.02)),
+      Pair(30, DoubleNear(0.1, 0.02)),
+      Pair(31, DoubleNear(0.1, 0.02)),
+      Pair(32, DoubleNear(0.1, 0.02)),
+      Pair(20, DoubleNear(0.1, 0.02)),
+      Pair(21, DoubleNear(0.1, 0.02)),
+      Pair(22, DoubleNear(0.1, 0.02)),
+      Pair(23, DoubleNear(0.1, 0.02))));
 }
 
 TEST(PopulationNodeImplTest, TestInvalidPools) {
   // The node is invalid as the total pools size is 0.
   CompiledNode config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"PROTO(
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       name: "TestPopulationNode"
       index: 1
       population_node {
@@ -107,10 +106,11 @@ TEST(PopulationNodeImplTest, TestInvalidPools) {
         }
         random_seed: "TestRandomSeed"
       }
-  )PROTO", &config));
+  )pb", &config));
 
-  auto node_or = ModelNodeFactory().NewModelNode(config);
-  EXPECT_EQ(node_or.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(
+      ModelNodeFactory().NewModelNode(config).status(),
+      StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 }  // namespace
