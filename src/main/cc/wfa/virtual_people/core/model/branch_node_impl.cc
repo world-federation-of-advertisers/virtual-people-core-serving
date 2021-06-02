@@ -39,7 +39,8 @@ absl::Status AppendChildNode(
     // object in ResolveChildReferences.
     child_nodes.emplace_back(branch.node_index());
     return absl::OkStatus();
-  } else if (branch.has_node()) {
+  }
+  if (branch.has_node()) {
     // Create the ModelNode object and store.
     child_nodes.emplace_back();
     ASSIGN_OR_RETURN(child_nodes.back(), factory.NewModelNode(branch.node()));
