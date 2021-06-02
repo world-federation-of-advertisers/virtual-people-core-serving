@@ -79,7 +79,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeByChance) {
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
-    EXPECT_THAT(node->Apply(&input), IsOk());
+    EXPECT_THAT(node->Apply(input), IsOk());
     ++id_counts[input.virtual_person_activities(0).virtual_person_id()];
   }
   for (auto& [key, value] : id_counts) {
@@ -152,13 +152,13 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
       node_refs[3],
       ModelNodeFactory().NewModelNode(population_node_config_2));
 
-  EXPECT_THAT(branch_node->ResolveChildReferences(&node_refs), IsOk());
+  EXPECT_THAT(branch_node->ResolveChildReferences(node_refs), IsOk());
 
   absl::flat_hash_map<int64_t, double> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
-    EXPECT_THAT(branch_node->Apply(&input), IsOk());
+    EXPECT_THAT(branch_node->Apply(input), IsOk());
     ++id_counts[input.virtual_person_activities(0).virtual_person_id()];
   }
   for (auto& [key, value] : id_counts) {
@@ -221,19 +221,19 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeByCondition) {
 
   LabelerEvent input_1;
   input_1.set_person_country_code("country_code_1");
-  EXPECT_THAT(node->Apply(&input_1), IsOk());
+  EXPECT_THAT(node->Apply(input_1), IsOk());
   EXPECT_EQ(input_1.virtual_person_activities(0).virtual_person_id(), 10);
 
   LabelerEvent input_2;
   input_2.set_person_country_code("country_code_2");
-  EXPECT_THAT(node->Apply(&input_2), IsOk());
+  EXPECT_THAT(node->Apply(input_2), IsOk());
   EXPECT_EQ(input_2.virtual_person_activities(0).virtual_person_id(), 20);
 
   // No branch matches. Returns error status.
   LabelerEvent input_3;
   input_3.set_person_country_code("country_code_3");
   EXPECT_THAT(
-      node->Apply(&input_3),
+      node->Apply(input_3),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
@@ -266,7 +266,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexNotResolved) {
   LabelerEvent input;
   input.set_acting_fingerprint(0);
   EXPECT_THAT(
-    branch_node->Apply(&input),
+    branch_node->Apply(input),
     StatusIs(absl::StatusCode::kFailedPrecondition, ""));
 }
 
@@ -354,7 +354,7 @@ TEST(BranchNodeImplTest, TestResolveChildReferencesIndexNotFound) {
 
   absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
   EXPECT_THAT(
-      node->ResolveChildReferences(&node_refs),
+      node->ResolveChildReferences(node_refs),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 

@@ -44,10 +44,10 @@ class ModelNode {
   // actual ModelNode objects immediately. And this method is required to be
   // called to resolve those indexes of the child nodes.
   virtual absl::Status ResolveChildReferences(
-      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>* node_refs) = 0;
+      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) = 0;
 
   // Applies the node to the @event.
-  virtual absl::Status Apply(LabelerEvent* event) const = 0;
+  virtual absl::Status Apply(LabelerEvent& event) const = 0;
 
   ModelNode(const ModelNode&) = delete;
   ModelNode& operator=(const ModelNode&) = delete;

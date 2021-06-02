@@ -28,6 +28,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:variant",
         "@com_google_farmhash//:farmhash",
         "@cross_media_measurement//src/main/cc/wfa/measurement/common:macros",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",

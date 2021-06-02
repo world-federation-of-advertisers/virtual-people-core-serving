@@ -33,16 +33,16 @@ namespace wfa_virtual_people {
 absl::Status AppendChildNode(
     const BranchNode::Branch& branch,
     const ModelNodeFactory& factory,
-    std::vector<ChildNodeRef>* child_nodes) {
+    std::vector<ChildNodeRef>& child_nodes) {
   if (branch.has_node_index()) {
     // Store the index of the child node. Will be resolved to the ModelNode
     // object in ResolveChildReferences.
-    child_nodes->emplace_back(branch.node_index());
+    child_nodes.emplace_back(branch.node_index());
     return absl::OkStatus();
   } else if (branch.has_node()) {
     // Create the ModelNode object and store.
-    child_nodes->emplace_back();
-    ASSIGN_OR_RETURN(child_nodes->back(), factory.NewModelNode(branch.node()));
+    child_nodes.emplace_back();
+    ASSIGN_OR_RETURN(child_nodes.back(), factory.NewModelNode(branch.node()));
     return absl::OkStatus();
   }
   return absl::InvalidArgumentError(
@@ -65,7 +65,7 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
   std::vector<ChildNodeRef> child_nodes;
   ModelNodeFactory factory;
   for (const BranchNode::Branch& branch : branch_node.branches()) {
-    RETURN_IF_ERROR(AppendChildNode(branch, factory, &child_nodes));
+    RETURN_IF_ERROR(AppendChildNode(branch, factory, child_nodes));
   }
 
   // Checks if there is any
@@ -138,19 +138,19 @@ BranchNodeImpl::BranchNodeImpl(
 // Also resolve the child references of the sub-tree of the @child_node.
 absl::Status ResolveChildReference(
     ChildNodeRef& child_node,
-    absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>* node_refs) {
+    absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
   if (child_node.index() == 0) {
     // The child node is referenced by node index. Need to resolve to the
     // ModelNode object.
     uint32_t node_index = std::get<0>(child_node);
-    if (node_refs->find(node_index) == node_refs->end()) {
+    if (node_refs.find(node_index) == node_refs.end()) {
       return absl::InvalidArgumentError(
           "The ModelNode object of the child ndoe index is not provided.");
     }
-    child_node.emplace<1>(std::move(node_refs->at(node_index)));
+    child_node.emplace<1>(std::move(node_refs.at(node_index)));
     // The owner of the corresponding ModelNode pointer is its parent node
     // now. Delete the key value pair.
-    node_refs->erase(node_index);
+    node_refs.erase(node_index);
   }
 
   if (child_node.index() != 1) {
@@ -163,22 +163,22 @@ absl::Status ResolveChildReference(
 }
 
 absl::Status BranchNodeImpl::ResolveChildReferences(
-    absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>* node_refs) {
+    absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
   for (ChildNodeRef& child_node : child_nodes_) {
     RETURN_IF_ERROR(ResolveChildReference(child_node, node_refs));
   }
   return absl::OkStatus();
 }
 
-absl::Status BranchNodeImpl::Apply(LabelerEvent* event) const {
+absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
   int selected_index = -1;
   if (hashing_) {
     // Select by chance.
     selected_index = hashing_->Hash(
-        absl::StrCat(random_seed_, event->acting_fingerprint()));
+        absl::StrCat(random_seed_, event.acting_fingerprint()));
   } else if (matcher_) {
     // Select by condition.
-    selected_index = matcher_->GetFirstMatch(*event);
+    selected_index = matcher_->GetFirstMatch(event);
     if (selected_index == -1) {
       return absl::InvalidArgumentError(
           "No condition matches the input event.");

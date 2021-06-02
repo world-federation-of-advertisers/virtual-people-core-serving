@@ -19,6 +19,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/variant.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
@@ -26,7 +27,11 @@
 
 namespace wfa_virtual_people {
 
-typedef std::variant<uint32_t, std::unique_ptr<ModelNode>> ChildNodeRef;
+// uint32_t: An index refers to a child node. Will be replaced with the
+//   corresponding std::unique_ptr<ModelNode> after calling
+//   ResolveChildReferences.
+// std::unique_ptr<ModelNode>: A child node.
+using ChildNodeRef = absl::variant<uint32_t, std::unique_ptr<ModelNode>>;
 
 // The implementation of the CompiledNode with branch_node set.
 //
@@ -78,12 +83,12 @@ class BranchNodeImpl : public ModelNode {
   //
   // TODO(@tcsnfkx): Resolve the child references of the UpdateTree if exists.
   absl::Status ResolveChildReferences(
-      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>* node_refs
+      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs
   ) override;
 
   // Uses @hashing_ or @matcher_ to select one of the ModelNodes in
   // @child_nodes_, and apply the selected ModelNode.
-  absl::Status Apply(LabelerEvent* event) const override;
+  absl::Status Apply(LabelerEvent& event) const override;
 
   BranchNodeImpl(const BranchNodeImpl&) = delete;
   BranchNodeImpl& operator=(const BranchNodeImpl&) = delete;
