@@ -144,14 +144,14 @@ absl::Status ResolveChildReference(
     // The child node is referenced by node index. Need to resolve to the
     // ModelNode object.
     uint32_t node_index = std::get<0>(child_node);
-    if (node_refs.find(node_index) == node_refs.end()) {
+    // The owner of the corresponding ModelNode pointer will be its parent node.
+    // Gets the key value pair, and deletes them from the map.
+    auto nh = node_refs.extract(node_index);
+    if (nh.empty()) {
       return absl::InvalidArgumentError(
-          "The ModelNode object of the child ndoe index is not provided.");
+          "The ModelNode object of the child node index is not provided.");
     }
-    child_node.emplace<1>(std::move(node_refs.at(node_index)));
-    // The owner of the corresponding ModelNode pointer is its parent node
-    // now. Delete the key value pair.
-    node_refs.erase(node_index);
+    child_node.emplace<1>(std::move(nh.mapped()));
   }
 
   if (child_node.index() != 1) {
@@ -185,11 +185,12 @@ absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
           "No condition matches the input event.");
     }
   }
-  if (child_nodes_[selected_index].index() != 1) {
+  const ChildNodeRef& selected_node = child_nodes_[selected_index];
+  if (selected_node.index() != 1) {
     return absl::FailedPreconditionError(
         "The child node reference must be resolved before apply.");
   }
-  return std::get<1>(child_nodes_[selected_index])->Apply(event);
+  return std::get<1>(selected_node)->Apply(event);
 }
 
 }  // namespace wfa_virtual_people
