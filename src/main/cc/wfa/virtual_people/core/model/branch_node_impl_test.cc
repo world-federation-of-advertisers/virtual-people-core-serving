@@ -237,6 +237,117 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeByCondition) {
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
+TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
+  // The branch node has 2 branches.
+  // One branch is selected with 40% chance, which is a branch node refers to a
+  // single population node always assigning virtual person id 10.
+  // The other branch is selected with 60% chance, which is a branch node refers
+  // to a single population node always assigning virtual person id 20.
+  CompiledNode branch_node_config_1;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      name: "TestBranchNode1"
+      index: 1
+      branch_node {
+        branches {
+          node_index: 2
+          chance: 0.4
+        }
+        branches {
+          node_index: 3
+          chance: 0.6
+        }
+        random_seed: "TestBranchNodeSeed1"
+      }
+  )pb", &branch_node_config_1));
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelNode> branch_node_1,
+      ModelNodeFactory().NewModelNode(branch_node_config_1));
+
+  // Set up map from indexes to child nodes.
+  absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
+
+  CompiledNode branch_node_config_2;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      name: "TestBranchNode2"
+      index: 2
+      branch_node {
+        branches {
+          node_index: 4
+          chance: 1
+        }
+        random_seed: "TestBranchNodeSeed2"
+      }
+  )pb", &branch_node_config_2));
+  ASSERT_OK_AND_ASSIGN(
+      node_refs[2],
+      ModelNodeFactory().NewModelNode(branch_node_config_2));
+
+  CompiledNode branch_node_config_3;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      name: "TestBranchNode3"
+      index: 3
+      branch_node {
+        branches {
+          node_index: 5
+          chance: 1
+        }
+        random_seed: "TestBranchNodeSeed3"
+      }
+  )pb", &branch_node_config_3));
+  ASSERT_OK_AND_ASSIGN(
+      node_refs[3],
+      ModelNodeFactory().NewModelNode(branch_node_config_3));
+
+  CompiledNode population_node_config_1;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      name: "TestPopulationNode1"
+      index: 4
+      population_node {
+        pools {
+          population_offset: 10
+          total_population: 1
+        }
+        random_seed: "TestPopulationNodeSeed1"
+      }
+  )pb", &population_node_config_1));
+  ASSERT_OK_AND_ASSIGN(
+      node_refs[4],
+      ModelNodeFactory().NewModelNode(population_node_config_1));
+
+  CompiledNode population_node_config_2;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      name: "TestPopulationNode2"
+      index: 5
+      population_node {
+        pools {
+          population_offset: 20
+          total_population: 1
+        }
+        random_seed: "TestPopulationNodeSeed2"
+      }
+  )pb", &population_node_config_2));
+  ASSERT_OK_AND_ASSIGN(
+      node_refs[5],
+      ModelNodeFactory().NewModelNode(population_node_config_2));
+
+  EXPECT_THAT(branch_node_1->ResolveChildReferences(node_refs), IsOk());
+
+  absl::flat_hash_map<int64_t, double> id_counts;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    EXPECT_THAT(branch_node_1->Apply(input), IsOk());
+    ++id_counts[input.virtual_person_activities(0).virtual_person_id()];
+  }
+  for (auto& [key, value] : id_counts) {
+    value /= static_cast<double>(kFingerprintNumber);
+  }
+  // Absolute error more than 2% is very unlikely.
+  EXPECT_THAT(id_counts, UnorderedElementsAre(
+      Pair(10, DoubleNear(0.4, 0.02)),
+      Pair(20, DoubleNear(0.6, 0.02))));
+}
+
 TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexNotResolved) {
   // The branch node has 2 branches.
   // One branch is selected with 40% chance, which is a population node always
