@@ -196,11 +196,11 @@ absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
     return absl::InternalError("No select options is set for the BranchNode.");
   }
   const ChildNodeRef& selected_node = child_nodes_[selected_index];
-  if (selected_node.index() != 1) {
-    return absl::FailedPreconditionError(
-        "The child node reference must be resolved before apply.");
+  if (const std::unique_ptr<ModelNode>* node = std::get_if<1>(&selected_node)) {
+    return (*node)->Apply(event);
   }
-  return std::get<1>(selected_node)->Apply(event);
+  return absl::FailedPreconditionError(
+      "The child node reference must be resolved before apply.");
 }
 
 }  // namespace wfa_virtual_people
