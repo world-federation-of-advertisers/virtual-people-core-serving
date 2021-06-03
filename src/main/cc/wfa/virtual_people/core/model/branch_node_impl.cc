@@ -55,6 +55,30 @@ absl::Status AppendChildNode(
       "BranchNode must have one of node_index and node.");
 }
 
+// Builds hashing based on the chances distribution.
+// All branches must have chance set.
+absl::StatusOr<std::unique_ptr<DistributedConsistentHashing>> BuildHashing(
+    const google::protobuf::RepeatedPtrField<BranchNode::Branch>& branches) {
+  std::vector<DistributionChoice> distribution;
+  int index = 0;
+  for (const BranchNode::Branch& branch : branches) {
+    distribution.emplace_back(DistributionChoice({index, branch.chance()}));
+    ++index;
+  }
+  return DistributedConsistentHashing::Build(std::move(distribution));
+}
+
+// Builds matcher based on the conditions.
+// All branches must have condition set.
+absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> BuildMatcher(
+    const google::protobuf::RepeatedPtrField<BranchNode::Branch>& branches) {
+  std::vector<const FieldFilterProto*> filter_configs;
+  for (const BranchNode::Branch& branch : branches) {
+    filter_configs.emplace_back(&branch.condition());
+  }
+  return FieldFiltersMatcher::Build(filter_configs);
+}
+
 absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
     const CompiledNode& node_config) {
   if (!node_config.has_branch_node()) {
@@ -101,25 +125,10 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
   std::unique_ptr<DistributedConsistentHashing> hashing = nullptr;
   std::unique_ptr<FieldFiltersMatcher> matcher = nullptr;
   if (select_by == SelectBranchBy::CHANCE) {
-    // All branches have chance set. The child node is selected by consistent
-    // hashing.
-    std::vector<DistributionChoice> distribution;
-    int index = 0;
-    for (const BranchNode::Branch& branch : branch_node.branches()) {
-      distribution.emplace_back(DistributionChoice({index, branch.chance()}));
-      ++index;
-    }
-    ASSIGN_OR_RETURN(
-        hashing, DistributedConsistentHashing::Build(std::move(distribution)));
+    ASSIGN_OR_RETURN(hashing, BuildHashing(branch_node.branches()));
   }
   if (select_by == SelectBranchBy::CONDITION) {
-    // All branches have condition set. The child node is selected by condition
-    // matching.
-    std::vector<const FieldFilterProto*> filter_configs;
-    for (const BranchNode::Branch& branch : branch_node.branches()) {
-      filter_configs.emplace_back(&branch.condition());
-    }
-    ASSIGN_OR_RETURN(matcher, FieldFiltersMatcher::Build(filter_configs));
+    ASSIGN_OR_RETURN(matcher, BuildMatcher(branch_node.branches()));
   }
 
   return absl::make_unique<BranchNodeImpl>(
