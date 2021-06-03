@@ -144,7 +144,7 @@ BranchNodeImpl::BranchNodeImpl(
 
 // If @child_node is set as an index, replaces it with the corresponding
 // ModelNode object if found in @node_refs, and deletes the index / ModelNode
-// pair from @node_refs.
+// pair from @node_refs. Returns error status if not found.
 // Also resolve the child references of the sub-tree of the @child_node.
 absl::Status ResolveChildReference(
     ChildNodeRef& child_node,
