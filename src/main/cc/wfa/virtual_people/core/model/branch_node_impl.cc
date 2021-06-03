@@ -101,7 +101,7 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
   std::unique_ptr<DistributedConsistentHashing> hashing = nullptr;
   std::unique_ptr<FieldFiltersMatcher> matcher = nullptr;
   if (select_by == SelectBranchBy::CHANCE) {
-    // All branches have chance set. The child node is selected by cosistent
+    // All branches have chance set. The child node is selected by consistent
     // hashing.
     std::vector<DistributionChoice> distribution;
     int index = 0;
