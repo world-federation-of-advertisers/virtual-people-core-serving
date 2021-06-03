@@ -54,7 +54,7 @@ int FieldFiltersMatcher::GetFirstMatch(const LabelerEvent& event) const {
     }
     ++index;
   }
-  return -1;
+  return kNoMatchingIndex;
 }
 
 }  // namespace wfa_virtual_people

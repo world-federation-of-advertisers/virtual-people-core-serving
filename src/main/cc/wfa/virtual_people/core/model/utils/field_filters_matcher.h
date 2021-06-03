@@ -22,6 +22,8 @@
 
 namespace wfa_virtual_people {
 
+constexpr int kNoMatchingIndex = -1;
+
 // Selects the field filter that a LabelerEvent matches.
 class FieldFiltersMatcher {
  public:
@@ -43,7 +45,7 @@ class FieldFiltersMatcher {
   FieldFiltersMatcher& operator=(const FieldFiltersMatcher&) = delete;
 
   // Returns the index of the first matching FieldFilter in @filters_.
-  // Returns -1 if no matching.
+  // Returns @kNoMatchingIndex if no matching.
   //
   // The matching is performed on @event.
   int GetFirstMatch(const LabelerEvent& event) const;
