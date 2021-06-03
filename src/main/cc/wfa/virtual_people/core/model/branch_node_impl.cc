@@ -188,10 +188,12 @@ absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
   } else if (matcher_) {
     // Select by condition.
     selected_index = matcher_->GetFirstMatch(event);
-    if (selected_index == -1) {
+    if (selected_index < 0) {
       return absl::InvalidArgumentError(
           "No condition matches the input event.");
     }
+  } else {
+    return absl::InternalError("No select options is set for the BranchNode.");
   }
   const ChildNodeRef& selected_node = child_nodes_[selected_index];
   if (selected_node.index() != 1) {
