@@ -154,12 +154,12 @@ absl::Status ResolveChildReference(
     // ModelNode object.
     // The owner of the corresponding ModelNode pointer will be its parent node.
     // Gets the key value pair, and deletes them from the map.
-    auto nh = node_refs.extract(*node_index);
-    if (nh.empty()) {
+    auto node = node_refs.extract(*node_index);
+    if (node.empty()) {
       return absl::InvalidArgumentError(
           "The ModelNode object of the child node index is not provided.");
     }
-    child_node.emplace<1>(std::move(nh.mapped()));
+    child_node.emplace<1>(std::move(node.mapped()));
   }
 
   if (child_node.index() != 1) {
