@@ -149,13 +149,12 @@ BranchNodeImpl::BranchNodeImpl(
 absl::Status ResolveChildReference(
     ChildNodeRef& child_node,
     absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
-  if (child_node.index() == 0) {
+  if (uint32_t* node_index = std::get_if<0>(&child_node)) {
     // The child node is referenced by node index. Need to resolve to the
     // ModelNode object.
-    uint32_t node_index = std::get<0>(child_node);
     // The owner of the corresponding ModelNode pointer will be its parent node.
     // Gets the key value pair, and deletes them from the map.
-    auto nh = node_refs.extract(node_index);
+    auto nh = node_refs.extract(*node_index);
     if (nh.empty()) {
       return absl::InvalidArgumentError(
           "The ModelNode object of the child node index is not provided.");
