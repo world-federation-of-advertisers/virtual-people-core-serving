@@ -162,13 +162,13 @@ absl::Status ResolveChildReference(
     child_node.emplace<1>(std::move(node.mapped()));
   }
 
-  if (child_node.index() != 1) {
-    return absl::InternalError(
-        "Neither node index nor ModelNode object is set for a child node.");
+  if (std::unique_ptr<ModelNode>* node = std::get_if<1>(&child_node)) {
+    // Resolve the child node references of the sub tree here, because this node
+    // is the only owner of the pointers to the child nodes.
+    return (*node)->ResolveChildReferences(node_refs);
   }
-  // Resolve the child node references of the sub tree here, because this node
-  // is the only owner of the pointers to the child nodes.
-  return std::get<1>(child_node)->ResolveChildReferences(node_refs);
+  return absl::InternalError(
+      "Neither node index nor ModelNode object is set for a child node.");
 }
 
 absl::Status BranchNodeImpl::ResolveChildReferences(
