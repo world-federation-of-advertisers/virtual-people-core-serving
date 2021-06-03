@@ -66,6 +66,9 @@ class BranchNodeImpl : public ModelNode {
       std::unique_ptr<FieldFiltersMatcher> matcher);
   ~BranchNodeImpl() override {}
 
+  BranchNodeImpl(const BranchNodeImpl&) = delete;
+  BranchNodeImpl& operator=(const BranchNodeImpl&) = delete;
+
   // Replaces all indexes in @child_nodes_ with the corresponding ModelNode
   // objects.
   // For any resolved index, the index / ModelNode object pair is deleted from
@@ -89,9 +92,6 @@ class BranchNodeImpl : public ModelNode {
   // Uses @hashing_ or @matcher_ to select one of the ModelNodes in
   // @child_nodes_, and apply the selected ModelNode.
   absl::Status Apply(LabelerEvent& event) const override;
-
-  BranchNodeImpl(const BranchNodeImpl&) = delete;
-  BranchNodeImpl& operator=(const BranchNodeImpl&) = delete;
 
  private:
   // Include the child nodes in all the branches, in the same order as the
