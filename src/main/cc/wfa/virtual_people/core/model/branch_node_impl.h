@@ -107,7 +107,8 @@ class BranchNodeImpl : public ModelNode {
   const std::string random_seed_;
 
   // If condition is set in each branches in @node_config, matcher_ is set, and
-  // used to select the first child node whose condition matches.
+  // used to select the first child node whose condition matches when Apply is
+  // called.
   std::unique_ptr<FieldFiltersMatcher> matcher_;
 };
 
