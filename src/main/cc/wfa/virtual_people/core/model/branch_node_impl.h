@@ -47,14 +47,14 @@ class BranchNodeImpl : public ModelNode {
   // class directly.
   //
   // Returns error status if any of the following happens:
-  //   @node_config.branch_node is not set.
-  //   @node_config.branch_node.branches is empty.
-  //   Neither node_index nor node is set in at least one of the
-  //     @node_config.branch_node.branches.
-  //   Neither chance nor condition is set in at least one of the
-  //     @node_config.branch_node.branches.
-  //   At least one of @node_config.branch_node.branches has chance set, and at
-  //     least one of @node_config.branch_node.branches has condition set.
+  // * @node_config.branch_node is not set.
+  // * @node_config.branch_node.branches is empty.
+  // * There is at least one of @node_config.branch_node.branches, which has
+  //   neither node_index nor node set.
+  // * There is at least one of @node_config.branch_node.branches, which has
+  //   neither chance nor condition set.
+  // * At least one of @node_config.branch_node.branches has chance set, and at
+  //   least one of @node_config.branch_node.branches has condition set.
   static absl::StatusOr<std::unique_ptr<BranchNodeImpl>> Build(
       const CompiledNode& node_config);
 
@@ -75,11 +75,11 @@ class BranchNodeImpl : public ModelNode {
   // sub-tree starting from this node recursively.
   //
   // Returns error status if any of the following happens:
-  //   Any index in @child_nodes_ does not have an entry in @node_refs.
-  //   Neither index nor ModelNode is set in at least one entry in
-  //     @child_nodes_.
-  //   It returns error status when resolving the child references for any node
-  //     in the sub-tree.
+  // * Any index in @child_nodes_ does not have an entry in @node_refs.
+  // * There is at least one entry in @child_nodes_, which has neither index
+  //   nor nor ModelNode set.
+  // * It returns error status when resolving the child references for any node
+  //   in the sub-tree.
   //
   // TODO(@tcsnfkx): Resolve the child references of the UpdateTree if exists.
   absl::Status ResolveChildReferences(
