@@ -29,6 +29,11 @@
 
 namespace wfa_virtual_people {
 
+enum SelectBranchBy {
+  CHANCE = 1,
+  CONDITION = 2,
+};
+
 // Converts @branch to a child node and appends to @child_nodes.
 absl::Status AppendChildNode(
     const BranchNode::Branch& branch,
@@ -69,27 +74,33 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
     RETURN_IF_ERROR(AppendChildNode(branch, factory, child_nodes));
   }
 
-  // Checks if there is any
-  //   @branch_node.branches.chance and
-  //   @branch_node.branches.condition
-  // Breaks if at least one @branch_node.branches has neither chance nor
-  // condition.
-  bool has_chance = false;
-  bool has_condition = false;
+  // If all @branch_node.branches have chance, use chance.
+  // If all @branch_node.branches have condition, use condition.
+  // Else return error.
+  SelectBranchBy select_by;
+  if (branch_node.branches(0).has_chance()) {
+    select_by = SelectBranchBy::CHANCE;
+  } else if (branch_node.branches(0).has_condition()) {
+    select_by = SelectBranchBy::CONDITION;
+  } else {
+    return absl::InvalidArgumentError(
+        "BranchNode must have one of chance and condition.");
+  }
+
   for (const BranchNode::Branch& branch : branch_node.branches()) {
-    if (branch.has_chance()) {
-      has_chance = true;
-    } else if (branch.has_condition()) {
-      has_condition = true;
-    } else {
+    if (select_by == SelectBranchBy::CHANCE && !branch.has_chance()) {
       return absl::InvalidArgumentError(
-          "BranchNode must have one of chance and condition.");
+          "BranchNode must have chance set.");
+    }
+    if (select_by == SelectBranchBy::CONDITION && !branch.has_condition()) {
+      return absl::InvalidArgumentError(
+          "BranchNode must have condition set.");
     }
   }
 
   std::unique_ptr<DistributedConsistentHashing> hashing = nullptr;
   std::unique_ptr<FieldFiltersMatcher> matcher = nullptr;
-  if (has_chance && !has_condition) {
+  if (select_by == SelectBranchBy::CHANCE) {
     // All branches have chance set. The child node is selected by cosistent
     // hashing.
     std::vector<DistributionChoice> distribution;
@@ -100,7 +111,8 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
     }
     ASSIGN_OR_RETURN(
         hashing, DistributedConsistentHashing::Build(std::move(distribution)));
-  } else if (!has_chance && has_condition) {
+  }
+  if (select_by == SelectBranchBy::CONDITION) {
     // All branches have condition set. The child node is selected by condition
     // matching.
     std::vector<const FieldFilterProto*> filter_configs;
@@ -108,9 +120,6 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
       filter_configs.emplace_back(&branch.condition());
     }
     ASSIGN_OR_RETURN(matcher, FieldFiltersMatcher::Build(filter_configs));
-  } else {
-    return absl::InvalidArgumentError(
-        "All branches must have same type of select_by set.");
   }
 
   return absl::make_unique<BranchNodeImpl>(
