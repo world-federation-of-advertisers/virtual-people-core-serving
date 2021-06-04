@@ -114,21 +114,28 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
   for (const BranchNode::Branch& branch : branch_node.branches()) {
     if (select_by == SelectBranchBy::CHANCE && !branch.has_chance()) {
       return absl::InvalidArgumentError(
-          "BranchNode must have chance set.");
+          "All branches should use the same select_by type.");
     }
     if (select_by == SelectBranchBy::CONDITION && !branch.has_condition()) {
       return absl::InvalidArgumentError(
-          "BranchNode must have condition set.");
+          "All branches should use the same select_by type.");
     }
   }
 
   std::unique_ptr<DistributedConsistentHashing> hashing = nullptr;
   std::unique_ptr<FieldFiltersMatcher> matcher = nullptr;
-  if (select_by == SelectBranchBy::CHANCE) {
-    ASSIGN_OR_RETURN(hashing, BuildHashing(branch_node.branches()));
-  }
-  if (select_by == SelectBranchBy::CONDITION) {
-    ASSIGN_OR_RETURN(matcher, BuildMatcher(branch_node.branches()));
+  switch (select_by) {
+    case SelectBranchBy::CHANCE: {
+      ASSIGN_OR_RETURN(hashing, BuildHashing(branch_node.branches()));
+      break;
+    }
+    case SelectBranchBy::CONDITION: {
+      ASSIGN_OR_RETURN(matcher, BuildMatcher(branch_node.branches()));
+      break;
+    }
+    default:
+      // This should never happen.
+      return absl::InternalError("Invalid select_by type.");
   }
 
   return absl::make_unique<BranchNodeImpl>(
@@ -158,7 +165,7 @@ BranchNodeImpl::BranchNodeImpl(
 absl::Status ResolveChildReference(
     ChildNodeRef& child_node,
     absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
-  if (uint32_t* node_index = std::get_if<0>(&child_node)) {
+  if (uint32_t* node_index = std::get_if<uint32_t>(&child_node)) {
     // The child node is referenced by node index. Need to resolve to the
     // ModelNode object.
     // The owner of the corresponding ModelNode pointer will be its parent node.
@@ -171,7 +178,8 @@ absl::Status ResolveChildReference(
     child_node.emplace<1>(std::move(node.mapped()));
   }
 
-  if (std::unique_ptr<ModelNode>* node = std::get_if<1>(&child_node)) {
+  if (std::unique_ptr<ModelNode>* node =
+      std::get_if<std::unique_ptr<ModelNode>>(&child_node)) {
     // Resolve the child node references of the sub tree here, because this node
     // is the only owner of the pointers to the child nodes.
     return (*node)->ResolveChildReferences(node_refs);
@@ -189,7 +197,7 @@ absl::Status BranchNodeImpl::ResolveChildReferences(
 }
 
 absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
-  int selected_index = -1;
+  int selected_index = kNoMatchingIndex;
   if (hashing_) {
     // Select by chance.
     selected_index = hashing_->Hash(
@@ -197,15 +205,17 @@ absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
   } else if (matcher_) {
     // Select by condition.
     selected_index = matcher_->GetFirstMatch(event);
-    if (selected_index < 0) {
+    if (selected_index == kNoMatchingIndex) {
       return absl::InvalidArgumentError(
           "No condition matches the input event.");
     }
   } else {
     return absl::InternalError("No select options is set for the BranchNode.");
   }
+
   const ChildNodeRef& selected_node = child_nodes_[selected_index];
-  if (const std::unique_ptr<ModelNode>* node = std::get_if<1>(&selected_node)) {
+  if (const std::unique_ptr<ModelNode>* node =
+      std::get_if<std::unique_ptr<ModelNode>>(&selected_node)) {
     return (*node)->Apply(event);
   }
   return absl::FailedPreconditionError(
