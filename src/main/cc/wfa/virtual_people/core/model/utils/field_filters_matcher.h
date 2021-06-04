@@ -22,7 +22,7 @@
 
 namespace wfa_virtual_people {
 
-inline const int kNoMatchingIndex = -1;
+inline constexpr int kNoMatchingIndex = -1;
 
 // Selects the field filter that a LabelerEvent matches.
 class FieldFiltersMatcher {
