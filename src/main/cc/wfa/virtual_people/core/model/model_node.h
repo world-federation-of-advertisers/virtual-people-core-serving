@@ -35,7 +35,7 @@ class ModelNode {
   virtual ~ModelNode() = default;
 
   // This method is to replace the child node indexes with the initialized
-  // ModelNode objects.
+  // ModelNode objects. Should only be used by Labeler during model loading.
   //
   // @node_refs is the mapping from indexes to the ModelNode objects.
   //
