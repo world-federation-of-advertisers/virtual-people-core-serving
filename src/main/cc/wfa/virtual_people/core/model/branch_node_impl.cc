@@ -29,11 +29,6 @@
 
 namespace wfa_virtual_people {
 
-enum SelectBranchBy {
-  CHANCE = 1,
-  CONDITION = 2,
-};
-
 // Converts @branch to a child node and appends to @child_nodes.
 absl::Status AppendChildNode(
     const BranchNode::Branch& branch,
@@ -101,22 +96,10 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
   // If all @branch_node.branches have chance, use chance.
   // If all @branch_node.branches have condition, use condition.
   // Else return error.
-  SelectBranchBy select_by;
-  if (branch_node.branches(0).has_chance()) {
-    select_by = SelectBranchBy::CHANCE;
-  } else if (branch_node.branches(0).has_condition()) {
-    select_by = SelectBranchBy::CONDITION;
-  } else {
-    return absl::InvalidArgumentError(
-        "BranchNode must have one of chance and condition.");
-  }
-
+  BranchNode::Branch::SelectByCase select_by_case =
+      branch_node.branches(0).select_by_case();
   for (const BranchNode::Branch& branch : branch_node.branches()) {
-    if (select_by == SelectBranchBy::CHANCE && !branch.has_chance()) {
-      return absl::InvalidArgumentError(
-          "All branches should use the same select_by type.");
-    }
-    if (select_by == SelectBranchBy::CONDITION && !branch.has_condition()) {
+    if (select_by_case != branch.select_by_case()) {
       return absl::InvalidArgumentError(
           "All branches should use the same select_by type.");
     }
@@ -124,18 +107,19 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
 
   std::unique_ptr<DistributedConsistentHashing> hashing = nullptr;
   std::unique_ptr<FieldFiltersMatcher> matcher = nullptr;
-  switch (select_by) {
-    case SelectBranchBy::CHANCE: {
+  switch (select_by_case) {
+    case BranchNode::Branch::kChance: {
       ASSIGN_OR_RETURN(hashing, BuildHashing(branch_node.branches()));
       break;
     }
-    case SelectBranchBy::CONDITION: {
+    case BranchNode::Branch::kCondition: {
       ASSIGN_OR_RETURN(matcher, BuildMatcher(branch_node.branches()));
       break;
     }
     default:
       // This should never happen.
-      return absl::InternalError("Invalid select_by type.");
+      return absl::InvalidArgumentError(
+          "BranchNode must have one of chance and condition.");
   }
 
   return absl::make_unique<BranchNodeImpl>(
