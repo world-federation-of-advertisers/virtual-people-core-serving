@@ -117,7 +117,7 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
       break;
     }
     default:
-      // This should never happen.
+      // No select_by is set.
       return absl::InvalidArgumentError(
           "BranchNode must have one of chance and condition.");
   }
