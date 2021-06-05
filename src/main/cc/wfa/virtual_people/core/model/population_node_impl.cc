@@ -51,9 +51,9 @@ PopulationNodeImpl::PopulationNodeImpl(
     virtual_person_selector_(std::move(virtual_person_selector)),
     random_seed_(random_seed) {}
 
-absl::Status PopulationNodeImpl::Apply(LabelerEvent* event) const {
+absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
   uint64_t seed = util::Fingerprint64(
-      absl::StrCat(random_seed_, event->acting_fingerprint()));
+      absl::StrCat(random_seed_, event.acting_fingerprint()));
 
   // Gets virtual person id from the pools.
   int64_t virtual_person_id =
@@ -65,10 +65,10 @@ absl::Status PopulationNodeImpl::Apply(LabelerEvent* event) const {
   // If a virtual_person_activities was added by a previous node, the virtual
   // person id is written to it. Otherwise, create a new
   // virtual_person_activities and write the virtual person id.
-  if (event->virtual_person_activities_size() == 0) {
-    event->add_virtual_person_activities();
+  if (event.virtual_person_activities_size() == 0) {
+    event.add_virtual_person_activities();
   }
-  event->mutable_virtual_person_activities(0)->set_virtual_person_id(
+  event.mutable_virtual_person_activities(0)->set_virtual_person_id(
       virtual_person_id);
   return absl::OkStatus();
 }

@@ -63,7 +63,7 @@ TEST(PopulationNodeImplTest, TestApply) {
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
-    EXPECT_THAT(node->Apply(&input), IsOk());
+    EXPECT_THAT(node->Apply(input), IsOk());
     ++id_counts[input.virtual_person_activities(0).virtual_person_id()];
   }
   for (auto& [key, value] : id_counts) {

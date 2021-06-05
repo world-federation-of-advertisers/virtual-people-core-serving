@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 
@@ -33,8 +34,20 @@ class ModelNode {
   explicit ModelNode(const CompiledNode& node_config);
   virtual ~ModelNode() = default;
 
+  // This method is to replace the child node indexes with the initialized
+  // ModelNode objects. Should only be used by Labeler during model loading.
+  //
+  // @node_refs is the mapping from indexes to the ModelNode objects.
+  //
+  // In the ModelNode constructor, if node_index is used to represent the child
+  // node, we keep the indexes of the child nodes rather than replacing with the
+  // actual ModelNode objects immediately. And this method is required to be
+  // called to resolve those indexes of the child nodes.
+  virtual absl::Status ResolveChildReferences(
+      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) = 0;
+
   // Applies the node to the @event.
-  virtual absl::Status Apply(LabelerEvent* event) const = 0;
+  virtual absl::Status Apply(LabelerEvent& event) const = 0;
 
   ModelNode(const ModelNode&) = delete;
   ModelNode& operator=(const ModelNode&) = delete;

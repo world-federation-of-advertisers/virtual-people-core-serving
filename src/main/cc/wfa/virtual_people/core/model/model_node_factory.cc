@@ -16,6 +16,7 @@
 
 #include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/core/model/branch_node_impl.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/population_node_impl.h"
 
@@ -25,7 +26,7 @@ absl::StatusOr<std::unique_ptr<ModelNode>> ModelNodeFactory::NewModelNode(
     const CompiledNode& config) const {
   switch(config.type_case()) {
     case CompiledNode::TypeCase::kBranchNode:
-      return absl::UnimplementedError("BranchNode is not implemented.");
+      return BranchNodeImpl::Build(config);
     case CompiledNode::TypeCase::kStopNode:
       return absl::UnimplementedError("StopNode is not implemented.");
     case CompiledNode::TypeCase::kPopulationNode:

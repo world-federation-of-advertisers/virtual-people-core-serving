@@ -7,22 +7,28 @@ _INCLUDE_PREFIX = "/src/main/cc"
 cc_library(
     name = "model_node",
     srcs = [
+        "branch_node_impl.cc",
         "model_node.cc",
         "model_node_factory.cc",
         "population_node_impl.cc",
     ],
     hdrs = [
+        "branch_node_impl.h",
         "model_node.h",
         "model_node_factory.h",
         "population_node_impl.h",
     ],
     strip_include_prefix = _INCLUDE_PREFIX,
     deps = [
+        "//src/main/cc/wfa/virtual_people/core/model/utils:distributed_consistent_hashing",
+        "//src/main/cc/wfa/virtual_people/core/model/utils:field_filters_matcher",
         "//src/main/cc/wfa/virtual_people/core/model/utils:virtual_person_selector",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:variant",
         "@com_google_farmhash//:farmhash",
         "@cross_media_measurement//src/main/cc/wfa/measurement/common:macros",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
@@ -32,6 +38,20 @@ cc_library(
 cc_test(
     name = "population_node_impl_test",
     srcs = ["population_node_impl_test.cc"],
+    deps = [
+        ":model_node",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "branch_node_impl_test",
+    srcs = ["branch_node_impl_test.cc"],
     deps = [
         ":model_node",
         "@com_google_absl//absl/container:flat_hash_map",
