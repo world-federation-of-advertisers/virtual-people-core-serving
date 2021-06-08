@@ -553,7 +553,7 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
     LabelerEvent input;
     input.set_person_country_code("RAW_COUNTRY_1");
     input.set_acting_fingerprint(fingerprint);
-    EXPECT_THAT(node->Apply(input), IsOk());
+    ASSERT_THAT(node->Apply(input), IsOk());
     absl::string_view person_country_code = input.person_country_code();
     int64_t id = input.virtual_person_activities(0).virtual_person_id();
     EXPECT_THAT(
@@ -579,7 +579,7 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
     LabelerEvent input;
     input.set_person_country_code("RAW_COUNTRY_2");
     input.set_acting_fingerprint(fingerprint);
-    EXPECT_THAT(node->Apply(input), IsOk());
+    ASSERT_THAT(node->Apply(input), IsOk());
     absl::string_view person_country_code = input.person_country_code();
     int64_t id = input.virtual_person_activities(0).virtual_person_id();
     EXPECT_THAT(
@@ -664,7 +664,7 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
   LabelerEvent input;
   input.set_person_country_code("COUNTRY_1");
   input.set_acting_fingerprint(1);
-  EXPECT_THAT(node->Apply(input), IsOk());
+  ASSERT_THAT(node->Apply(input), IsOk());
   EXPECT_EQ(input.person_country_code(), "COUNTRY_3");
   EXPECT_EQ(input.virtual_person_activities(0).virtual_person_id(), 10);
 }
