@@ -132,6 +132,11 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
       updaters.emplace_back();
       ASSIGN_OR_RETURN(
           updaters.back(), AttributesUpdaterInterface::Build(config));
+      if (!updaters.back()) {
+        return absl::InternalError(absl::StrCat(
+            "Failed to build AttributesUpdater with config: ",
+            config.DebugString()));
+      }
     }
   }
 
