@@ -37,7 +37,7 @@ absl::StatusOr<std::unique_ptr<HashFieldMaskMatcher>> BuildHashFieldMaskMatcher(
     const google::protobuf::FieldMask& hash_field_mask) {
   std::vector<const LabelerEvent*> events;
   for (const LabelerEvent& column : columns) {
-    events.emplace_back(&column);
+    events.push_back(&column);
   }
   return HashFieldMaskMatcher::Build(events, hash_field_mask);
 }
@@ -92,7 +92,7 @@ absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> UpdateMatrixImpl::Build(
     for (int row_index = 0; row_index < row_count; ++row_index) {
       float probability =
           config.probabilities(row_index * column_count + column_index);
-      distribution.emplace_back(
+      distribution.push_back(
           DistributionChoice({row_index, static_cast<double>(probability)}));
     }
     row_hashings.emplace_back();
@@ -103,10 +103,14 @@ absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> UpdateMatrixImpl::Build(
 
   std::vector<LabelerEvent> rows = {config.rows().begin(), config.rows().end()};
 
+  PassThroughNonMatches pass_through_non_matches =
+      config.pass_through_non_matches() ?
+      PassThroughNonMatches::kYes : PassThroughNonMatches::kNo;
+
   return absl::make_unique<UpdateMatrixImpl>(
       std::move(hash_matcher), std::move(filters_matcher),
       std::move(row_hashings), config.random_seed(), std::move(rows),
-      config.pass_through_non_matches());
+      pass_through_non_matches);
 }
 
 absl::Status UpdateMatrixImpl::Update(LabelerEvent& event) const {
@@ -119,7 +123,7 @@ absl::Status UpdateMatrixImpl::Update(LabelerEvent& event) const {
     return absl::InternalError("No column matcher is set.");
   }
   if (column_index == kNoMatchingIndex) {
-    if (pass_through_non_matches_) {
+    if (pass_through_non_matches_ == PassThroughNonMatches::kYes) {
       return absl::OkStatus();
     } else {
       return absl::InvalidArgumentError(absl::StrCat(
