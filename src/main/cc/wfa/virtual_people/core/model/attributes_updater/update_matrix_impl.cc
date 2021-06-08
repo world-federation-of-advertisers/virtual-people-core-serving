@@ -101,10 +101,7 @@ absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> UpdateMatrixImpl::Build(
         DistributedConsistentHashing::Build(std::move(distribution)));
   }
 
-  std::vector<LabelerEvent> rows;
-  for (const LabelerEvent& row : config.rows()) {
-    rows.emplace_back(row);
-  }
+  std::vector<LabelerEvent> rows = {config.rows().begin(), config.rows().end()};
 
   return absl::make_unique<UpdateMatrixImpl>(
       std::move(hash_matcher), std::move(filters_matcher),

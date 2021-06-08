@@ -26,6 +26,7 @@
 namespace wfa_virtual_people {
 namespace {
 
+using ::testing::AnyOf;
 using ::testing::DoubleNear;
 using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
@@ -554,15 +555,10 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
     input.set_acting_fingerprint(fingerprint);
     EXPECT_THAT(node->Apply(input), IsOk());
     absl::string_view person_country_code = input.person_country_code();
-    EXPECT_TRUE(
-        person_country_code == "country_code_1" ||
-        person_country_code == "country_code_2");
     int64_t id = input.virtual_person_activities(0).virtual_person_id();
-    if (person_country_code == "country_code_1") {
-      EXPECT_EQ(id, 10);
-    } else {
-      EXPECT_EQ(id, 20);
-    }
+    EXPECT_THAT(
+        std::pair(person_country_code, id),
+        AnyOf(Pair("country_code_1", 10), Pair("country_code_2", 20)));
     ++id_counts_1[id];
   }
   for (auto& [key, value] : id_counts_1) {
@@ -585,15 +581,10 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
     input.set_acting_fingerprint(fingerprint);
     EXPECT_THAT(node->Apply(input), IsOk());
     absl::string_view person_country_code = input.person_country_code();
-    EXPECT_TRUE(
-        person_country_code == "country_code_1" ||
-        person_country_code == "country_code_2");
     int64_t id = input.virtual_person_activities(0).virtual_person_id();
-    if (person_country_code == "country_code_1") {
-      EXPECT_EQ(id, 10);
-    } else {
-      EXPECT_EQ(id, 20);
-    }
+    EXPECT_THAT(
+        std::pair(person_country_code, id),
+        AnyOf(Pair("country_code_1", 10), Pair("country_code_2", 20)));
     ++id_counts_2[id];
   }
   for (auto& [key, value] : id_counts_2) {
