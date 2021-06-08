@@ -59,11 +59,11 @@ HashFieldMaskMatcher::Build(
           "An event is null when building HashFieldMaskMatcher.");
     }
     uint64_t hash = HashLabelerEvent(*event, hash_field_mask);
-    if (hashes.find(hash) != hashes.end()) {
+    auto [iterator, inserted] = hashes.insert_or_assign(hash, index);
+    if (!inserted) {
       return absl::InvalidArgumentError(
           "Multiple events have the same hash when applying hash field mask.");
     }
-    hashes[hash] = index;
     ++index;
   }
 
