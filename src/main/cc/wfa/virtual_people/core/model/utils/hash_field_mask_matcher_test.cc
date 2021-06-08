@@ -26,12 +26,20 @@
 namespace wfa_virtual_people {
 namespace {
 
+using ::google::protobuf::FieldMask;
 using ::wfa::StatusIs;
+
+FieldMask MakeFieldMask(absl::Span<const std::string> paths) {
+  FieldMask field_mask;
+  for (const std::string& path : paths) {
+    field_mask.add_paths(path);
+  }
+  return field_mask;
+}
 
 TEST(HashFieldMaskMatcherTest, EmptyEvents) {
   std::vector<const LabelerEvent*> events;
-  google::protobuf::FieldMask hash_field_mask;
-  hash_field_mask.add_paths("person_country_code");
+  FieldMask hash_field_mask = MakeFieldMask({"person_country_code"});
   EXPECT_THAT(
       HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
@@ -40,8 +48,7 @@ TEST(HashFieldMaskMatcherTest, EmptyEvents) {
 TEST(HashFieldMaskMatcherTest, NullEvent) {
   std::vector<const LabelerEvent*> events;
   events.emplace_back(nullptr);
-  google::protobuf::FieldMask hash_field_mask;
-  hash_field_mask.add_paths("person_country_code");
+  FieldMask hash_field_mask = MakeFieldMask({"person_country_code"});
   EXPECT_THAT(
       HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
@@ -52,7 +59,7 @@ TEST(HashFieldMaskMatcherTest, EmptyHashFieldMask) {
   LabelerEvent input_event;
   input_event.set_person_country_code("COUNTRY_1");
   events.emplace_back(&input_event);
-  google::protobuf::FieldMask hash_field_mask;
+  FieldMask hash_field_mask;
   EXPECT_THAT(
       HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
@@ -69,8 +76,7 @@ TEST(HashFieldMaskMatcherTest, EventsHaveSameHash) {
   input_event_2.set_person_region_code("REGION_2");
   events.emplace_back(&input_event_2);
 
-  google::protobuf::FieldMask hash_field_mask;
-  hash_field_mask.add_paths("person_country_code");
+  FieldMask hash_field_mask = MakeFieldMask({"person_country_code"});
   EXPECT_THAT(
       HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
@@ -87,9 +93,7 @@ TEST(HashFieldMaskMatcherTest, TestGetMatch) {
   input_event_2.set_person_region_code("REGION_2");
   events.emplace_back(&input_event_2);
 
-  google::protobuf::FieldMask hash_field_mask;
-  hash_field_mask.add_paths("person_country_code");
-
+  FieldMask hash_field_mask = MakeFieldMask({"person_country_code"});
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<HashFieldMaskMatcher> matcher,
       HashFieldMaskMatcher::Build(events, hash_field_mask));
@@ -131,10 +135,8 @@ TEST(HashFieldMaskMatcherTest, TestUnsetField) {
   input_event_2.set_person_region_code("REGION_2");
   events.emplace_back(&input_event_2);
 
-  google::protobuf::FieldMask hash_field_mask;
-  hash_field_mask.add_paths("person_country_code");
-  hash_field_mask.add_paths("person_region_code");
-
+  FieldMask hash_field_mask = MakeFieldMask(
+      {"person_country_code", "person_region_code"});
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<HashFieldMaskMatcher> matcher,
       HashFieldMaskMatcher::Build(events, hash_field_mask));
