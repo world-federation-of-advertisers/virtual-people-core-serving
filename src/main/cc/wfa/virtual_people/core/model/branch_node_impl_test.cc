@@ -554,6 +554,8 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
     input.set_person_country_code("RAW_COUNTRY_1");
     input.set_acting_fingerprint(fingerprint);
     ASSERT_THAT(node->Apply(input), IsOk());
+    // Fingerprint is not changed.
+    EXPECT_EQ(input.acting_fingerprint(), fingerprint);
     absl::string_view person_country_code = input.person_country_code();
     int64_t id = input.virtual_person_activities(0).virtual_person_id();
     EXPECT_THAT(
@@ -666,6 +668,8 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
     input.set_person_country_code("COUNTRY_1");
     input.set_acting_fingerprint(fingerprint);
     ASSERT_THAT(node->Apply(input), IsOk());
+    // Fingerprint is not changed.
+    EXPECT_EQ(input.acting_fingerprint(), fingerprint);
     EXPECT_EQ(input.person_country_code(), "COUNTRY_3");
     EXPECT_EQ(input.virtual_person_activities(0).virtual_person_id(), 10);
   }
