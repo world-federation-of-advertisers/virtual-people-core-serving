@@ -50,14 +50,6 @@ class PopulationNodeImpl : public ModelNode {
   PopulationNodeImpl(const PopulationNodeImpl&) = delete;
   PopulationNodeImpl& operator=(const PopulationNodeImpl&) = delete;
 
-  // No operation is needed as PopulationNode should always be leaf node without
-  // any child node.
-  absl::Status ResolveChildReferences(
-      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs
-  ) override {
-    return absl::OkStatus();
-  }
-
   // When Apply is called, exactly one id will be selected from the pools in
   // population_node, and assigned to virtual_person_activities[0] in @event.
   absl::Status Apply(LabelerEvent& event) const override;
