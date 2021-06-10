@@ -22,8 +22,10 @@
 #include "absl/strings/string_view.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/measurement/common/macros.h"
+#include "wfa/virtual_people/core/model/attributes_updater/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/model_node_factory.h"
+#include "wfa/virtual_people/core/model/utils/constants.h"
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 #include "wfa/virtual_people/core/model/utils/field_filters_matcher.h"
 
@@ -122,12 +124,29 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
           "BranchNode must have one of chance and condition.");
   }
 
+  // Builds attributes updaters.
+  std::vector<std::unique_ptr<AttributesUpdaterInterface>> updaters;
+  if (branch_node.has_updates()) {
+    for (const BranchNode::AttributesUpdater& config :
+            branch_node.updates().updates()) {
+      updaters.emplace_back();
+      ASSIGN_OR_RETURN(
+          updaters.back(), AttributesUpdaterInterface::Build(config));
+      if (!updaters.back()) {
+        return absl::InternalError(absl::StrCat(
+            "Failed to build AttributesUpdater with config: ",
+            config.DebugString()));
+      }
+    }
+  }
+
   return absl::make_unique<BranchNodeImpl>(
       node_config,
       std::move(child_nodes),
       std::move(hashing),
       branch_node.random_seed(),
-      std::move(matcher));
+      std::move(matcher),
+      std::move(updaters));
 }
 
 BranchNodeImpl::BranchNodeImpl(
@@ -135,12 +154,14 @@ BranchNodeImpl::BranchNodeImpl(
     std::vector<ChildNodeRef>&& child_nodes,
     std::unique_ptr<DistributedConsistentHashing> hashing,
     absl::string_view random_seed,
-    std::unique_ptr<FieldFiltersMatcher> matcher):
+    std::unique_ptr<FieldFiltersMatcher> matcher,
+    std::vector<std::unique_ptr<AttributesUpdaterInterface>>&& updaters):
     ModelNode(node_config),
     child_nodes_(std::move(child_nodes)),
     hashing_(std::move(hashing)),
     random_seed_(random_seed),
-    matcher_(std::move(matcher)) {}
+    matcher_(std::move(matcher)),
+    updaters_(std::move(updaters)) {}
 
 // If @child_node is set as an index, replaces it with the corresponding
 // ModelNode object if found in @node_refs, and deletes the index / ModelNode
@@ -181,6 +202,11 @@ absl::Status BranchNodeImpl::ResolveChildReferences(
 }
 
 absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
+  // Applies attributes updaters.
+  for (auto& updater : updaters_) {
+    RETURN_IF_ERROR(updater->Update(event));
+  }
+
   int selected_index = kNoMatchingIndex;
   if (hashing_) {
     // Select by chance.

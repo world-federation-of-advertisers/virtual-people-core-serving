@@ -37,7 +37,7 @@ new_git_repository(
 git_repository(
   name = "virtual_people_common",
   remote = "https://github.com/world-federation-of-advertisers/virtual-people-common",
-  commit = "dba478e13d64bdcb37a4997ba2d21b801e22b516",
+  commit = "701c83eb8a71c7b9d4180226b4ded746812624a0",
 )
 
 git_repository(
