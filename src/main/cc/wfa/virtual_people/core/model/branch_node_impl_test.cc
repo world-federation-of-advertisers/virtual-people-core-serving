@@ -661,12 +661,14 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
       ModelNodeFactory().NewModelNode(config));
 
   // Test for COUNTRY_1
-  LabelerEvent input;
-  input.set_person_country_code("COUNTRY_1");
-  input.set_acting_fingerprint(1);
-  ASSERT_THAT(node->Apply(input), IsOk());
-  EXPECT_EQ(input.person_country_code(), "COUNTRY_3");
-  EXPECT_EQ(input.virtual_person_activities(0).virtual_person_id(), 10);
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_person_country_code("COUNTRY_1");
+    input.set_acting_fingerprint(fingerprint);
+    ASSERT_THAT(node->Apply(input), IsOk());
+    EXPECT_EQ(input.person_country_code(), "COUNTRY_3");
+    EXPECT_EQ(input.virtual_person_activities(0).virtual_person_id(), 10);
+  }
 }
 
 }  // namespace
