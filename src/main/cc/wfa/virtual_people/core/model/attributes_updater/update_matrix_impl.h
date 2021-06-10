@@ -70,7 +70,7 @@ class UpdateMatrixImpl : public AttributesUpdaterInterface {
   //    the column.
   //
   // Returns error status if no column matches @event, and
-  // pass_through_non_matches_ is false.
+  // pass_through_non_matches_ is kNo.
   absl::Status Update(LabelerEvent& event) const override;
 
  private:
@@ -89,7 +89,7 @@ class UpdateMatrixImpl : public AttributesUpdaterInterface {
   // All the rows, of which the selected row will be merged to the input event.
   std::vector<LabelerEvent> rows_;
   // When calling Update, if no column matches, returns OkStatus if
-  // pass_through_non_matches_ is true, otherwise returns error status.
+  // pass_through_non_matches_ is kYes, otherwise returns error status.
   PassThroughNonMatches pass_through_non_matches_;
 };
 

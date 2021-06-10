@@ -30,9 +30,10 @@ class HashFieldMaskMatcher {
   // call the constructor below directly.
   //
   // Returns error status if any of the following happens:
-  //   @events is empty.
-  //   Any entry in @events is null.
-  //   @hash_field_mask.paths is empty.
+  // * @events is empty.
+  // * Any entry in @events is null.
+  // * @hash_field_mask.paths is empty.
+  // * Multiple entries in @events have the same hash value.
   static absl::StatusOr<std::unique_ptr<HashFieldMaskMatcher>> Build(
       const std::vector<const LabelerEvent*>& events,
       const google::protobuf::FieldMask& hash_field_mask);
