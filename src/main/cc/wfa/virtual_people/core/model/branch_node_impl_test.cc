@@ -602,9 +602,9 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
 
 TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
   // The branch node has 2 attributes updater and 1 branches.
-  // The 1st update matrix always chances person_country_code from COUNTRY_1 to
+  // The 1st update matrix always changes person_country_code from COUNTRY_1 to
   // COUNTRY_2.
-  // The 2nd update matrix always chances person_country_code from COUNTRY_2 to
+  // The 2nd update matrix always changes person_country_code from COUNTRY_2 to
   // COUNTRY_3.
   //
   // One branch is selected if person_country_code is "COUNTRY_3", which is a
