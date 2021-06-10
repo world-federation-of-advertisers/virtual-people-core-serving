@@ -116,6 +116,7 @@ TEST(HashFieldMaskMatcherTest, TestGetMatch) {
   EXPECT_EQ(matcher->GetMatch(event_3), 1);
 
   // events[1] matches. Returns 1.
+  // person_region_code is ignored as not included in hash_field_mask.
   LabelerEvent event_4;
   event_4.set_person_country_code("COUNTRY_2");
   event_4.set_person_region_code("REGION_3");
