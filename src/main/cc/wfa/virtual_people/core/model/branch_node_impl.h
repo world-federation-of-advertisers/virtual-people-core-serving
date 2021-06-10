@@ -21,6 +21,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/variant.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/core/model/attributes_updater/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 #include "wfa/virtual_people/core/model/utils/field_filters_matcher.h"
@@ -63,7 +64,8 @@ class BranchNodeImpl : public ModelNode {
       std::vector<ChildNodeRef>&& child_nodes,
       std::unique_ptr<DistributedConsistentHashing> hashing,
       absl::string_view random_seed,
-      std::unique_ptr<FieldFiltersMatcher> matcher);
+      std::unique_ptr<FieldFiltersMatcher> matcher,
+      std::vector<std::unique_ptr<AttributesUpdaterInterface>>&& updaters);
   ~BranchNodeImpl() override {}
 
   BranchNodeImpl(const BranchNodeImpl&) = delete;
@@ -89,8 +91,10 @@ class BranchNodeImpl : public ModelNode {
       absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs
   ) override;
 
-  // Uses @hashing_ or @matcher_ to select one of the ModelNodes in
-  // @child_nodes_, and apply the selected ModelNode.
+  // Steps:
+  // 1. Updates @event using @updaters_.
+  // 2. Uses @hashing_ or @matcher_ to select one of @child_nodes_, and apply
+  // the selected node to @event.
   absl::Status Apply(LabelerEvent& event) const override;
 
  private:
@@ -110,6 +114,11 @@ class BranchNodeImpl : public ModelNode {
   // used to select the first child node whose condition matches when Apply is
   // called.
   std::unique_ptr<FieldFiltersMatcher> matcher_;
+
+  // If updates is set in @node_config, updaters_ is set.
+  // When calling Apply, entries of @updaters_ is applied to the event in order.
+  // Each entry of @updaters_ updates the value of some fields in the event.
+  std::vector<std::unique_ptr<AttributesUpdaterInterface>> updaters_;
 };
 
 }  // namespace wfa_virtual_people

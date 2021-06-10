@@ -22,8 +22,6 @@
 
 namespace wfa_virtual_people {
 
-inline constexpr int kNoMatchingIndex = -1;
-
 // Selects the field filter that a LabelerEvent matches.
 class FieldFiltersMatcher {
  public:
@@ -35,6 +33,9 @@ class FieldFiltersMatcher {
   //   Any FieldFilterProto in @filter_configs is invalid.
   static absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> Build(
       const std::vector<const FieldFilterProto*>& filter_configs);
+
+  static absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> Build(
+      std::vector<std::unique_ptr<FieldFilter>>&& filters);
 
   // Never call the constructor directly.
   explicit FieldFiltersMatcher(

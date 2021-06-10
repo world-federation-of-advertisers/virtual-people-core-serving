@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
@@ -24,6 +25,7 @@
 namespace wfa_virtual_people {
 namespace {
 
+using ::testing::AnyOf;
 using ::testing::DoubleNear;
 using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
@@ -466,6 +468,210 @@ TEST(BranchNodeImplTest, TestResolveChildReferencesIndexNotFound) {
   EXPECT_THAT(
       node->ResolveChildReferences(node_refs),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
+  // The branch node has 1 attributes updater and 2 branches.
+  // The update matrix is
+  //                     "RAW_COUNTRY_1" "RAW_COUNTRY_2"
+  // "country_code_1"         0.8             0.2
+  // "country_code_2"         0.2             0.8
+  //
+  // One branch is selected if person_country_code is "country_code_1", which is
+  // a population node always assigns virtual person id 10.
+  // The other branch is selected if person_country_code is "country_code_2",
+  // which is a population node always assigns virtual person id 20.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      name: "TestBranchNode"
+      index: 1
+      branch_node {
+        branches {
+          node {
+            population_node {
+              pools {
+                population_offset: 10
+                total_population: 1
+              }
+              random_seed: "TestPopulationNodeSeed1"
+            }
+          }
+          condition {
+            name: "person_country_code"
+            op: EQUAL
+            value: "country_code_1"
+          }
+        }
+        branches {
+          node {
+            population_node {
+              pools {
+                population_offset: 20
+                total_population: 1
+              }
+              random_seed: "TestPopulationNodeSeed1"
+            }
+          }
+          condition {
+            name: "person_country_code"
+            op: EQUAL
+            value: "country_code_2"
+          }
+        }
+        updates {
+          updates {
+            update_matrix {
+              columns {
+                person_country_code: "RAW_COUNTRY_1"
+              }
+              columns {
+                person_country_code: "RAW_COUNTRY_2"
+              }
+              rows {
+                person_country_code: "country_code_1"
+              }
+              rows {
+                person_country_code: "country_code_2"
+              }
+              probabilities: 0.8
+              probabilities: 0.2
+              probabilities: 0.2
+              probabilities: 0.8
+            }
+          }
+        }
+      }
+  )pb", &config));
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelNode> node,
+      ModelNode::Build(config));
+
+  // Test for RAW_COUNTRY_1
+  absl::flat_hash_map<int64_t, double> id_counts_1;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_person_country_code("RAW_COUNTRY_1");
+    input.set_acting_fingerprint(fingerprint);
+    ASSERT_THAT(node->Apply(input), IsOk());
+    // Fingerprint is not changed.
+    EXPECT_EQ(input.acting_fingerprint(), fingerprint);
+    absl::string_view person_country_code = input.person_country_code();
+    int64_t id = input.virtual_person_activities(0).virtual_person_id();
+    EXPECT_THAT(
+        std::pair(person_country_code, id),
+        AnyOf(Pair("country_code_1", 10), Pair("country_code_2", 20)));
+    ++id_counts_1[id];
+  }
+  for (auto& [key, value] : id_counts_1) {
+    value /= static_cast<double>(kFingerprintNumber);
+  }
+  // The selected column is
+  //                     "RAW_COUNTRY_1"
+  // "country_code_1"         0.8
+  // "country_code_2"         0.2
+  // Absolute error more than 2% is very unlikely.
+  EXPECT_THAT(id_counts_1, UnorderedElementsAre(
+      Pair(10, DoubleNear(0.8, 0.02)),
+      Pair(20, DoubleNear(0.2, 0.02))));
+
+  // Test for RAW_COUNTRY_2
+  absl::flat_hash_map<int64_t, double> id_counts_2;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_person_country_code("RAW_COUNTRY_2");
+    input.set_acting_fingerprint(fingerprint);
+    ASSERT_THAT(node->Apply(input), IsOk());
+    absl::string_view person_country_code = input.person_country_code();
+    int64_t id = input.virtual_person_activities(0).virtual_person_id();
+    EXPECT_THAT(
+        std::pair(person_country_code, id),
+        AnyOf(Pair("country_code_1", 10), Pair("country_code_2", 20)));
+    ++id_counts_2[id];
+  }
+  for (auto& [key, value] : id_counts_2) {
+    value /= static_cast<double>(kFingerprintNumber);
+  }
+  // The selected column is
+  //                     "RAW_COUNTRY_2"
+  // "country_code_1"         0.2
+  // "country_code_2"         0.8
+  // Absolute error more than 2% is very unlikely.
+  EXPECT_THAT(id_counts_2, UnorderedElementsAre(
+      Pair(10, DoubleNear(0.2, 0.02)),
+      Pair(20, DoubleNear(0.8, 0.02))));
+}
+
+TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
+  // The branch node has 2 attributes updater and 1 branches.
+  // The 1st update matrix always changes person_country_code from COUNTRY_1 to
+  // COUNTRY_2.
+  // The 2nd update matrix always changes person_country_code from COUNTRY_2 to
+  // COUNTRY_3.
+  //
+  // One branch is selected if person_country_code is "COUNTRY_3", which is a
+  // population node always assigns virtual person id 10.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      name: "TestBranchNode"
+      index: 1
+      branch_node {
+        branches {
+          node {
+            population_node {
+              pools {
+                population_offset: 10
+                total_population: 1
+              }
+              random_seed: "TestPopulationNodeSeed1"
+            }
+          }
+          condition {
+            name: "person_country_code"
+            op: EQUAL
+            value: "COUNTRY_3"
+          }
+        }
+        updates {
+          updates {
+            update_matrix {
+              columns {
+                person_country_code: "COUNTRY_1"
+              }
+              rows {
+                person_country_code: "COUNTRY_2"
+              }
+              probabilities: 1
+            }
+          }
+          updates {
+            update_matrix {
+              columns {
+                person_country_code: "COUNTRY_2"
+              }
+              rows {
+                person_country_code: "COUNTRY_3"
+              }
+              probabilities: 1
+            }
+          }
+        }
+      }
+  )pb", &config));
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelNode> node,
+      ModelNode::Build(config));
+
+  // Test for COUNTRY_1
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_person_country_code("COUNTRY_1");
+    input.set_acting_fingerprint(fingerprint);
+    ASSERT_THAT(node->Apply(input), IsOk());
+    // Fingerprint is not changed.
+    EXPECT_EQ(input.acting_fingerprint(), fingerprint);
+    EXPECT_EQ(input.person_country_code(), "COUNTRY_3");
+    EXPECT_EQ(input.virtual_person_activities(0).virtual_person_id(), 10);
+  }
 }
 
 }  // namespace

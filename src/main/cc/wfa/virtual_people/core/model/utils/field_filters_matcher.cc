@@ -22,11 +22,11 @@
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/common/field_filter/field_filter.h"
+#include "wfa/virtual_people/core/model/utils/constants.h"
 
 namespace wfa_virtual_people {
 
-absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>>
-FieldFiltersMatcher::Build(
+absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> FieldFiltersMatcher::Build(
     const std::vector<const FieldFilterProto*>& filter_configs) {
   if (filter_configs.empty()) {
     return absl::InvalidArgumentError(
@@ -43,6 +43,11 @@ FieldFiltersMatcher::Build(
         FieldFilter::New(LabelerEvent().GetDescriptor(), *filter_config));
   }
 
+  return absl::make_unique<FieldFiltersMatcher>(std::move(filters));
+}
+
+absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> FieldFiltersMatcher::Build(
+    std::vector<std::unique_ptr<FieldFilter>>&& filters) {
   return absl::make_unique<FieldFiltersMatcher>(std::move(filters));
 }
 
