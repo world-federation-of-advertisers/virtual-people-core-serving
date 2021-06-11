@@ -53,7 +53,7 @@ ConditionalMergeImpl::Build(const ConditionalMerge& config) {
         FieldFilter::New(LabelerEvent().GetDescriptor(), node.condition()));
     
     if (!filters.back()) {
-      return absl::InternalError("Field filter should never be NULL.");
+      return absl::InternalError("FieldFilter::New should never return NULL.");
     }
 
     updates.emplace_back(node.update());
