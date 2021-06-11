@@ -50,6 +50,10 @@ absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> BuildFieldFiltersMatcher(
   for (const SparseUpdateMatrix::Column& column : columns) {
     filters.emplace_back();
     ASSIGN_OR_RETURN(filters.back(), FieldFilter::New(column.column_attrs()));
+
+    if (!filters.back()) {
+      return absl::InternalError("FieldFilter::New should never return NULL.");
+    }
   }
   return FieldFiltersMatcher::Build(std::move(filters));
 }
@@ -111,6 +115,11 @@ SparseUpdateMatrixImpl::Build(const SparseUpdateMatrix& config) {
     row_hashings.emplace_back();
     ASSIGN_OR_RETURN(
         row_hashings.back(), BuildRowsHashing(column));
+
+    if (!row_hashings.back()) {
+      return absl::InternalError(
+          "DistributedConsistentHashing::Build should never return NULL.");
+    }
 
     // Gets the rows.
     rows.push_back(std::vector<LabelerEvent>(
