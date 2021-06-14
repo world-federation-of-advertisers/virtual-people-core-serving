@@ -43,7 +43,7 @@ using ChildNodeRef = absl::variant<uint32_t, std::unique_ptr<ModelNode>>;
 // TODO(@tcsnfkx): Implement multiplicity.
 class BranchNodeImpl : public ModelNode {
  public:
-  // Always use ModelNodeFactory.NewModelNode to get a ModelNode object.
+  // Always use ModelNode::Build to get a ModelNode object.
   // Users should never call the factory function or constructor of the derived
   // class directly.
   //

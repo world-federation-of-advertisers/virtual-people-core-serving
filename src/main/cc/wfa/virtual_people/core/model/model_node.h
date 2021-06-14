@@ -19,6 +19,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 
 namespace wfa_virtual_people {
@@ -31,6 +32,12 @@ namespace wfa_virtual_people {
 // Only fields required for all model node classes should be added here.
 class ModelNode {
  public:
+  // Always use ModelNode::Build to get a ModelNode object.
+  // Users should never call the factory function or constructor of the derived
+  // class directly.
+  static absl::StatusOr<std::unique_ptr<ModelNode>> Build(
+      const CompiledNode& config);
+
   explicit ModelNode(const CompiledNode& node_config);
   virtual ~ModelNode() = default;
 

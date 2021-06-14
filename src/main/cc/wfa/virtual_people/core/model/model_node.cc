@@ -14,9 +14,26 @@
 
 #include "wfa/virtual_people/core/model/model_node.h"
 
+#include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/core/model/branch_node_impl.h"
+#include "wfa/virtual_people/core/model/population_node_impl.h"
 
 namespace wfa_virtual_people {
+
+absl::StatusOr<std::unique_ptr<ModelNode>> ModelNode::Build(
+    const CompiledNode& config) {
+  switch(config.type_case()) {
+    case CompiledNode::TypeCase::kBranchNode:
+      return BranchNodeImpl::Build(config);
+    case CompiledNode::TypeCase::kStopNode:
+      return absl::UnimplementedError("StopNode is not implemented.");
+    case CompiledNode::TypeCase::kPopulationNode:
+      return PopulationNodeImpl::Build(config);
+    default:
+      return absl::UnimplementedError("Node type is not set.");
+  }
+}
 
 ModelNode::ModelNode(const CompiledNode& node_config):
     name_(node_config.name()),
