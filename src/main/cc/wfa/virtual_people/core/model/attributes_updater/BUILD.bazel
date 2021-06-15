@@ -8,11 +8,13 @@ cc_library(
     name = "attributes_updater",
     srcs = [
         "attributes_updater.cc",
+        "conditional_merge_impl.cc",
         "sparse_update_matrix_impl.cc",
         "update_matrix_impl.cc",
     ],
     hdrs = [
         "attributes_updater.h",
+        "conditional_merge_impl.h",
         "sparse_update_matrix_impl.h",
         "update_matrix_impl.h",
     ],
@@ -53,6 +55,21 @@ cc_test(
     deps = [
         ":attributes_updater",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "conditional_merge_impl_test",
+    srcs = ["conditional_merge_impl_test.cc"],
+    deps = [
+        ":attributes_updater",
         "@com_google_absl//absl/status:status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
