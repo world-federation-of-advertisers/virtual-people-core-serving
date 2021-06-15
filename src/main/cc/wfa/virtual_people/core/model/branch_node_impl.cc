@@ -193,7 +193,7 @@ absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
 
   if (selected_index < 0 || selected_index >= child_nodes_.size()) {
     // This should never happen.
-    return absl::InternalError("Invalid index was returned.");
+    return absl::InternalError("The returned index is out of range.");
   }
 
   return child_nodes_[selected_index]->Apply(event);
