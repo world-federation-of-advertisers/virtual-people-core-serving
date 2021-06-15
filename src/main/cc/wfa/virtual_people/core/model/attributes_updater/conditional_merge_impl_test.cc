@@ -58,7 +58,9 @@ TEST(ConditionalMergeImplTest, TestNoCondition) {
 }
 
 TEST(ConditionalMergeImplTest, TestInvalidCondition) {
-  // Name and value must be set for EQUAL field filter.
+  // Name and value must be set for EQUAL field filter. So the build of the
+  // field filter condition of the 1st node will fail, thus the buid of the
+  // conditional merge will fail.
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       conditional_merge {

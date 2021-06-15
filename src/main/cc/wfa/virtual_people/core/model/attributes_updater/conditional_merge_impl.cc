@@ -47,9 +47,8 @@ ConditionalMergeImpl::Build(const ConditionalMerge& config) {
         "No update in the node in ConditionalMerge: ", node.DebugString()));
     }
 
-    filters.emplace_back();
     ASSIGN_OR_RETURN(
-        filters.back(),
+        filters.emplace_back(),
         FieldFilter::New(LabelerEvent().GetDescriptor(), node.condition()));
 
     if (!filters.back()) {
