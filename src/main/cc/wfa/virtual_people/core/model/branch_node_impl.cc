@@ -191,6 +191,11 @@ absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
     return absl::InternalError("No select options is set for the BranchNode.");
   }
 
+  if (selected_index < 0 || selected_index >= child_nodes_.size()) {
+    // This should never happen.
+    return absl::InternalError("Invalid index was returned.");
+  }
+
   return child_nodes_[selected_index]->Apply(event);
 }
 

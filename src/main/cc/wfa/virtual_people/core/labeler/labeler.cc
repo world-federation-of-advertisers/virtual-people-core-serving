@@ -48,13 +48,13 @@ absl::StatusOr<std::unique_ptr<Labeler>> Labeler::Build(
           "No node is allowed after the root node.");
     }
     if (node_config.has_index()) {
-      if (node_refs.find(node_config.index()) != node_refs.end()) {
+      ASSIGN_OR_RETURN(
+          std::unique_ptr<ModelNode> node,
+          ModelNode::Build(node_config, node_refs));
+      if (!node_refs.insert({node_config.index(), std::move(node)}).second) {
         return absl::InvalidArgumentError(
             absl::StrCat("Duplicated indexes: ", node_config.index()));
       }
-      ASSIGN_OR_RETURN(
-          node_refs[node_config.index()],
-          ModelNode::Build(node_config, node_refs));
     } else {
       ASSIGN_OR_RETURN(
           root, ModelNode::Build(node_config, node_refs));
@@ -83,7 +83,7 @@ absl::StatusOr<std::unique_ptr<Labeler>> Labeler::Build(
   return absl::make_unique<Labeler>(std::move(root));
 }
 
-void GenerateFingerprintForUserInfo(UserInfo& user_info) {
+void SetUserInfoFingerprint(UserInfo& user_info) {
   if (user_info.has_user_id()) {
     user_info.set_user_id_fingerprint(util::Fingerprint64(user_info.user_id()));
   }
@@ -91,7 +91,7 @@ void GenerateFingerprintForUserInfo(UserInfo& user_info) {
 
 // Generates fingerprints for event_id and user_id.
 // The default value of acting_fingerprint is the fingerprint of event_id.
-void GenerateFingerprints(LabelerEvent& event) {
+void SetFingerprints(LabelerEvent& event) {
   LabelerInput* labeler_input = event.mutable_labeler_input();
 
   if (labeler_input->has_event_id()) {
@@ -106,13 +106,13 @@ void GenerateFingerprints(LabelerEvent& event) {
   }
   ProfileInfo* profile_info = labeler_input->mutable_profile_info();
   if (profile_info->has_email_user_info()) {
-    GenerateFingerprintForUserInfo(*profile_info->mutable_email_user_info());
+    SetUserInfoFingerprint(*profile_info->mutable_email_user_info());
   }
   if (profile_info->has_phone_user_info()) {
-    GenerateFingerprintForUserInfo(*profile_info->mutable_phone_user_info());
+    SetUserInfoFingerprint(*profile_info->mutable_phone_user_info());
   }
   if (profile_info->has_proprietary_id_space_1_user_info()) {
-    GenerateFingerprintForUserInfo(
+    SetUserInfoFingerprint(
         *profile_info->mutable_proprietary_id_space_1_user_info());
   }
 }
@@ -122,7 +122,7 @@ absl::Status Labeler::Label(
   // Prepare labeler event.
   LabelerEvent event;
   *event.mutable_labeler_input() = input;
-  GenerateFingerprints(event);
+  SetFingerprints(event);
 
   // Apply model.
   RETURN_IF_ERROR(root_->Apply(event));

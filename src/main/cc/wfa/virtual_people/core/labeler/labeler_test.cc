@@ -96,7 +96,6 @@ TEST(LabelerTest, TestBuildFromNodesRootWithIndex) {
   // * 40% probability to assign virtual person id 10
   // * 60% probability to assign virtual person id 20
   std::vector<CompiledNode> nodes;
-  nodes.emplace_back();
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 2
       name: "TestNode2"
@@ -107,8 +106,7 @@ TEST(LabelerTest, TestBuildFromNodesRootWithIndex) {
         }
         random_seed: "TestPopulationNodeSeed1"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 3
       name: "TestNode3"
@@ -119,8 +117,7 @@ TEST(LabelerTest, TestBuildFromNodesRootWithIndex) {
         }
         random_seed: "TestPopulationNodeSeed2"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 1
       name: "TestNode1"
@@ -135,7 +132,7 @@ TEST(LabelerTest, TestBuildFromNodesRootWithIndex) {
         }
         random_seed: "TestBranchNodeSeed"
       }
-  )pb", &nodes.back()));
+  )pb", &nodes.emplace_back()));
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
 
@@ -162,7 +159,6 @@ TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
   // * 40% probability to assign virtual person id 10
   // * 60% probability to assign virtual person id 20
   std::vector<CompiledNode> nodes;
-  nodes.emplace_back();
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 2
       name: "TestNode2"
@@ -173,8 +169,7 @@ TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
         }
         random_seed: "TestPopulationNodeSeed1"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 3
       name: "TestNode3"
@@ -185,8 +180,7 @@ TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
         }
         random_seed: "TestPopulationNodeSeed2"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       name: "TestNode1"
       branch_node {
@@ -200,7 +194,7 @@ TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
         }
         random_seed: "TestBranchNodeSeed"
       }
-  )pb", &nodes.back()));
+  )pb", &nodes.emplace_back()));
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
 
@@ -223,7 +217,6 @@ TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
 
 TEST(LabelerTest, TestBuildFromNodesNodeAfterRoot) {
   std::vector<CompiledNode> nodes;
-  nodes.emplace_back();
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 3
       name: "TestNode3"
@@ -234,8 +227,7 @@ TEST(LabelerTest, TestBuildFromNodesNodeAfterRoot) {
         }
         random_seed: "TestPopulationNodeSeed2"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       name: "TestNode1"
       branch_node {
@@ -245,8 +237,7 @@ TEST(LabelerTest, TestBuildFromNodesNodeAfterRoot) {
         }
         random_seed: "TestBranchNodeSeed"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       name: "TestNode2"
       population_node {
@@ -256,7 +247,7 @@ TEST(LabelerTest, TestBuildFromNodesNodeAfterRoot) {
         }
         random_seed: "TestPopulationNodeSeed1"
       }
-  )pb", &nodes.back()));
+  )pb", &nodes.emplace_back()));
   EXPECT_THAT(
       Labeler::Build(nodes).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
@@ -267,7 +258,6 @@ TEST(LabelerTest, TestBuildFromNodesMultipleRoots) {
   // 1 -> 3, 4
   // 2 -> 5
   std::vector<CompiledNode> nodes;
-  nodes.emplace_back();
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 3
       name: "TestNode3"
@@ -278,8 +268,7 @@ TEST(LabelerTest, TestBuildFromNodesMultipleRoots) {
         }
         random_seed: "TestPopulationNodeSeed1"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 4
       name: "TestNode4"
@@ -290,8 +279,7 @@ TEST(LabelerTest, TestBuildFromNodesMultipleRoots) {
         }
         random_seed: "TestPopulationNodeSeed2"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 5
       name: "TestNode5"
@@ -302,8 +290,7 @@ TEST(LabelerTest, TestBuildFromNodesMultipleRoots) {
         }
         random_seed: "TestPopulationNodeSeed3"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 1
       name: "TestNode1"
@@ -318,8 +305,7 @@ TEST(LabelerTest, TestBuildFromNodesMultipleRoots) {
         }
         random_seed: "TestBranchNodeSeed1"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 2
       name: "TestNode2"
@@ -330,7 +316,7 @@ TEST(LabelerTest, TestBuildFromNodesMultipleRoots) {
         }
         random_seed: "TestBranchNodeSeed2"
       }
-  )pb", &nodes.back()));
+  )pb", &nodes.emplace_back()));
   EXPECT_THAT(
       Labeler::Build(nodes).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
@@ -340,7 +326,6 @@ TEST(LabelerTest, TestBuildFromNodesNoRoot) {
   // Nodes 1 and 2 reference each other as child node. No root node can be
   // recognized.
   std::vector<CompiledNode> nodes;
-  nodes.emplace_back();
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 1
       name: "TestNode1"
@@ -351,8 +336,7 @@ TEST(LabelerTest, TestBuildFromNodesNoRoot) {
         }
         random_seed: "TestBranchNodeSeed1"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 2
       name: "TestNode2"
@@ -363,7 +347,7 @@ TEST(LabelerTest, TestBuildFromNodesNoRoot) {
         }
         random_seed: "TestBranchNodeSeed2"
       }
-  )pb", &nodes.back()));
+  )pb", &nodes.emplace_back()));
   EXPECT_THAT(
       Labeler::Build(nodes).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
@@ -371,7 +355,6 @@ TEST(LabelerTest, TestBuildFromNodesNoRoot) {
 
 TEST(LabelerTest, TestBuildFromNodesNoNodeForIndex) {
   std::vector<CompiledNode> nodes;
-  nodes.emplace_back();
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 1
       name: "TestNode1"
@@ -382,7 +365,7 @@ TEST(LabelerTest, TestBuildFromNodesNoNodeForIndex) {
         }
         random_seed: "TestBranchNodeSeed1"
       }
-  )pb", &nodes.back()));
+  )pb", &nodes.emplace_back()));
   EXPECT_THAT(
       Labeler::Build(nodes).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
@@ -390,7 +373,6 @@ TEST(LabelerTest, TestBuildFromNodesNoNodeForIndex) {
 
 TEST(LabelerTest, TestBuildFromNodesDuplicatedIndexes) {
   std::vector<CompiledNode> nodes;
-  nodes.emplace_back();
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 2
       name: "TestNode2"
@@ -401,8 +383,7 @@ TEST(LabelerTest, TestBuildFromNodesDuplicatedIndexes) {
         }
         random_seed: "TestPopulationNodeSeed1"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       index: 2
       name: "TestNode3"
@@ -413,8 +394,7 @@ TEST(LabelerTest, TestBuildFromNodesDuplicatedIndexes) {
         }
         random_seed: "TestPopulationNodeSeed2"
       }
-  )pb", &nodes.back()));
-  nodes.emplace_back();
+  )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
       name: "TestNode1"
       branch_node {
@@ -424,7 +404,7 @@ TEST(LabelerTest, TestBuildFromNodesDuplicatedIndexes) {
         }
         random_seed: "TestBranchNodeSeed1"
       }
-  )pb", &nodes.back()));
+  )pb", &nodes.emplace_back()));
   EXPECT_THAT(
       Labeler::Build(nodes).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
