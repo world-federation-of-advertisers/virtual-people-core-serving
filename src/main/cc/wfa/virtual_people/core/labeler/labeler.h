@@ -30,14 +30,16 @@ class Labeler {
   // Users should never call the constructor directly.
   //
   // There are 3 ways to represent a full model:
-  // * A single root node, with all the other nodes in the model tree attached
+  // * Option 1:
+  //   A single root node, with all the other nodes in the model tree attached
   //   directly to their parent nodes. Example (node1 is the root node):
   //       _node1_
   //      |       |
   //   node2    _node3_
   //      |    |       |
   //   node4  node5 node6
-  // * A list of nodes. All nodes except the root node must have index set.
+  // * Option 2:
+  //   A list of nodes. All nodes except the root node must have index set.
   //   For any node with child nodes, the child nodes are referenced by indexes.
   //   Example (node1 is the root node):
   //   node1: index = null, child_nodes = [2, 3]
@@ -46,7 +48,8 @@ class Labeler {
   //   node4: index = 4, child_nodes = []
   //   node5: index = 5, child_nodes = []
   //   node6: index = 6, child_nodes = []
-  // * Mix of the above 2. Some nodes are referenced directly, while others are
+  // * Option 3:
+  //   Mix of the above 2. Some nodes are referenced directly, while others are
   //   referenced by indexes. For any node referenced by index, an entry must be
   //   included in @nodes, with the index field set.
   //   Example (node1 is the root node):
@@ -63,7 +66,7 @@ class Labeler {
   //   node5: index = 5
   //   node6: index = 6
 
-  // Build the model with the @root node.
+  // Build the model with the @root node. Handles option 1 above.
   //
   // All the other nodes are referenced directly in branch_node.branches.node of
   // the parent nodes.
@@ -71,7 +74,7 @@ class Labeler {
   static absl::StatusOr<std::unique_ptr<Labeler>> Build(
       const CompiledNode& root);
 
-  // Build the model with all the @nodes.
+  // Build the model with all the @nodes. Handles option 2 and 3 above.
   //
   // Nodes are allowed to be referenced by branch_node.branches.node_index.
   //
