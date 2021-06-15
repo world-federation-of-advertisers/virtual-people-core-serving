@@ -57,6 +57,27 @@ TEST(ConditionalMergeImplTest, TestNoCondition) {
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
+TEST(ConditionalMergeImplTest, TestInvalidCondition) {
+  // Name and value must be set for EQUAL field filter.
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      conditional_merge {
+        nodes {
+          condition {
+            op: EQUAL
+          }
+          update {
+            person_country_code: "UPDATED_COUNTRY_1"
+          }
+        }
+        pass_through_non_matches: false
+      }
+  )pb", &config));
+  EXPECT_THAT(
+      AttributesUpdaterInterface::Build(config).status(),
+      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
 TEST(ConditionalMergeImplTest, TestNoUpdate) {
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -107,11 +128,13 @@ TEST(ConditionalMergeImplTest, TestUpdateEvents) {
       std::unique_ptr<AttributesUpdaterInterface> updater,
       AttributesUpdaterInterface::Build(config));
 
+  // Matches the 1st node, update the event.
   LabelerEvent event_1;
   event_1.set_person_country_code("COUNTRY_1");
   EXPECT_THAT(updater->Update(event_1), IsOk());
   EXPECT_EQ(event_1.person_country_code(), "UPDATED_COUNTRY_1");
 
+  // Matches the 2nd node, update the event.
   LabelerEvent event_2;
   event_2.set_person_country_code("COUNTRY_2");
   EXPECT_THAT(updater->Update(event_2), IsOk());
@@ -149,6 +172,7 @@ TEST(ConditionalMergeImplTest, TestNoMatchingNotPass) {
       std::unique_ptr<AttributesUpdaterInterface> updater,
       AttributesUpdaterInterface::Build(config));
 
+  // No matching. Returns error status as pass_through_non_matches is false.
   LabelerEvent event;
   event.set_person_country_code("COUNTRY_3");
   EXPECT_THAT(
@@ -227,6 +251,7 @@ TEST(ConditionalMergeImplTest, TestNoMatchingPass) {
       std::unique_ptr<AttributesUpdaterInterface> updater,
       AttributesUpdaterInterface::Build(config));
 
+  // No matching. Returns OK status as pass_through_non_matches is true.
   LabelerEvent event;
   event.set_person_country_code("COUNTRY_3");
   EXPECT_THAT(updater->Update(event), IsOk());

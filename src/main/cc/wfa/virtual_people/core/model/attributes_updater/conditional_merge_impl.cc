@@ -51,7 +51,7 @@ ConditionalMergeImpl::Build(const ConditionalMerge& config) {
     ASSIGN_OR_RETURN(
         filters.back(),
         FieldFilter::New(LabelerEvent().GetDescriptor(), node.condition()));
-    
+
     if (!filters.back()) {
       return absl::InternalError("FieldFilter::New should never return NULL.");
     }
@@ -61,6 +61,11 @@ ConditionalMergeImpl::Build(const ConditionalMerge& config) {
   ASSIGN_OR_RETURN(
       std::unique_ptr<FieldFiltersMatcher> matcher,
       FieldFiltersMatcher::Build(std::move(filters)));
+
+  if (!matcher) {
+    return absl::InternalError(
+        "FieldFiltersMatcher::Build should never return NULL.");
+  }
 
   PassThroughNonMatches pass_through_non_matches =
       config.pass_through_non_matches() ?
@@ -81,6 +86,12 @@ absl::Status ConditionalMergeImpl::Update(LabelerEvent& event) const {
           "No node matching for event: ", event.DebugString()));
     }
   }
+
+  if (index < 0 || index >= updates_.size()) {
+    // This should never happen.
+    return absl::InternalError("The returned index is out of range.");
+  }
+
   event.MergeFrom(updates_[index]);
   return absl::OkStatus();
 }
