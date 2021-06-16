@@ -26,6 +26,40 @@
 
 namespace wfa_virtual_people {
 
+// An representation of update matrix, which only contains the entries that the
+// probabilities are not zero.
+// Example:
+// The following sparse update matrix
+//     columns {
+//       column_attrs { person_country_code: "COUNTRY_1" }
+//       rows { person_country_code: "UPDATED_COUNTRY_1" }
+//       rows { person_country_code: "UPDATED_COUNTRY_2" }
+//       probabilities: 0.8
+//       probabilities: 0.2
+//     }
+//     columns {
+//       column_attrs { person_country_code: "COUNTRY_2" }
+//       rows { person_country_code: "UPDATED_COUNTRY_1" }
+//       rows { person_country_code: "UPDATED_COUNTRY_2" }
+//       rows { person_country_code: "UPDATED_COUNTRY_3" }
+//       probabilities: 0.2
+//       probabilities: 0.4
+//       probabilities: 0.4
+//     }
+//     columns {
+//       column_attrs { person_country_code: "COUNTRY_3" }
+//       rows { person_country_code: "UPDATED_COUNTRY_3" }
+//       probabilities: 1.0
+//     }
+//     pass_through_non_matches: false
+//     random_seed: "TestSeed"
+// represents the matrix
+//                          "COUNTRY_1"  "COUNTRY_2"  "COUNTRY_3"
+//     "UPDATED_COUNTRY_1"      0.8          0.2            0
+//     "UPDATED_COUNTRY_2"      0.2          0.4            0
+//     "UPDATED_COUNTRY_3"        0          0.4          1.0
+// The column is selected by the matched person_country_code, and the row is
+// selected by probabilities of the selected column.
 class SparseUpdateMatrixImpl : public AttributesUpdaterInterface {
  public:
   // Always use AttributesUpdaterInterface::Build to get an
@@ -85,7 +119,7 @@ class SparseUpdateMatrixImpl : public AttributesUpdaterInterface {
   // distribution of a column.
   // The size of the vector is the columns count.
   std::vector<std::unique_ptr<DistributedConsistentHashing>> row_hashings_;
-  // The seed used in hashing.
+  // The seed used in hashing during row selection after a column is matched.
   std::string random_seed_;
   // Each entry of the vector contains all the rows of the corresponding column.
   // The selected row will be merged to the input event.
