@@ -26,7 +26,7 @@
 
 namespace wfa_virtual_people {
 
-// An representation of update matrix, which only contains the entries that the
+// A representation of update matrix, which only contains the entries that the
 // probabilities are not zero.
 // Example:
 // The following sparse update matrix
