@@ -48,8 +48,8 @@ absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> BuildFieldFiltersMatcher(
         columns) {
   std::vector<std::unique_ptr<FieldFilter>> filters;
   for (const SparseUpdateMatrix::Column& column : columns) {
-    filters.emplace_back();
-    ASSIGN_OR_RETURN(filters.back(), FieldFilter::New(column.column_attrs()));
+    ASSIGN_OR_RETURN(
+        filters.emplace_back(), FieldFilter::New(column.column_attrs()));
 
     if (!filters.back()) {
       return absl::InternalError("FieldFilter::New should never return NULL.");
