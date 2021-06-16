@@ -101,9 +101,17 @@ SparseUpdateMatrixImpl::Build(const SparseUpdateMatrix& config) {
     ASSIGN_OR_RETURN(
         hash_matcher,
         BuildHashFieldMaskMatcher(config.columns(), config.hash_field_mask()));
+    if (!hash_matcher) {
+      return absl::InternalError(
+          "HashFieldMaskMatcher::Build should never return NULL.");
+    }
   } else {
     ASSIGN_OR_RETURN(
         filters_matcher, BuildFieldFiltersMatcher(config.columns()));
+    if (!filters_matcher) {
+      return absl::InternalError(
+          "FieldFiltersMatcher::Build should never return NULL.");
+    }
   }
 
   // Converts the probabilities distribution of each column to
