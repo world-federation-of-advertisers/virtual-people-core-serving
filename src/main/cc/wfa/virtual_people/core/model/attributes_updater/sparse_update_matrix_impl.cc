@@ -149,7 +149,9 @@ absl::Status SparseUpdateMatrixImpl::Update(LabelerEvent& event) const {
       SelectFromMatrix(
           hash_matcher_.get(), filters_matcher_.get(), row_hashings_,
           random_seed_, event));
-  if (indexes.column_index == kNoMatchingIndex) {
+  int column_index = indexes.column_index;
+  int row_index = indexes.row_index;
+  if (column_index == kNoMatchingIndex) {
     if (pass_through_non_matches_ == PassThroughNonMatches::kYes) {
       return absl::OkStatus();
     } else {
@@ -157,7 +159,15 @@ absl::Status SparseUpdateMatrixImpl::Update(LabelerEvent& event) const {
           "No column matching for event: ", event.DebugString()));
     }
   }
-  event.MergeFrom(rows_[indexes.column_index][indexes.row_index]);
+
+  if (column_index < 0 || column_index >= rows_.size()) {
+    return absl::InternalError("The returned column index is out of range.");
+  }
+  if (row_index < 0 || row_index >= rows_[column_index].size()) {
+    return absl::InternalError("The returned row index is out of range.");
+  }
+
+  event.MergeFrom(rows_[column_index][row_index]);
   return absl::OkStatus();
 }
 
