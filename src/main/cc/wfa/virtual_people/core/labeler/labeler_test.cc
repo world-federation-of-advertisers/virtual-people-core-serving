@@ -410,5 +410,49 @@ TEST(LabelerTest, TestBuildFromNodesDuplicatedIndexes) {
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
+TEST(LabelerTest, TestBuildFromNodesMultipleParents) {
+  // This is invalid as node 3 is the child node of both node 1 and node 2.
+  std::vector<CompiledNode> nodes;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      index: 3
+      name: "TestNode3"
+      population_node {
+        pools {
+          population_offset: 10
+          total_population: 1
+        }
+        random_seed: "TestPopulationNodeSeed1"
+      }
+  )pb", &nodes.emplace_back()));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      index: 2
+      name: "TestNode2"
+      branch_node {
+        branches {
+          node_index: 3
+          chance: 1
+        }
+        random_seed: "TestBranchNodeSeed2"
+      }
+  )pb", &nodes.emplace_back()));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      name: "TestNode1"
+      branch_node {
+        branches {
+          node_index: 2
+          chance: 0.5
+        }
+        branches {
+          node_index: 3
+          chance: 0.5
+        }
+        random_seed: "TestBranchNodeSeed1"
+      }
+  )pb", &nodes.emplace_back()));
+  EXPECT_THAT(
+      Labeler::Build(nodes).status(),
+      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
 }  // namespace
 }  // namespace wfa_virtual_people
