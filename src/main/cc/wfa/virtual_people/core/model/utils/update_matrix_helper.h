@@ -35,7 +35,7 @@ struct MatrixIndexes {
 // Row is selected by applying the hashing of the selected column from
 // @row_hashings.
 //
-// When no column is selected, returns {-1, -1}.
+// When no column is selected, returns {kNoMatchingIndex, kNoMatchingIndex}.
 //
 // @random_seed is used as part of the seed when selecting row by hashing.
 //

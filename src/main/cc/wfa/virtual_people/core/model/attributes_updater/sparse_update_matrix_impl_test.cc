@@ -402,6 +402,7 @@ TEST(SparseUpdateMatrixImplTest, TestNoMatchingPass) {
       std::unique_ptr<AttributesUpdaterInterface> updater,
       AttributesUpdaterInterface::Build(config));
 
+  // No match. Returns OK status as pass_through_non_matches is true.
   LabelerEvent event;
   event.set_person_country_code("COUNTRY_2");
   event.set_acting_fingerprint(0);
@@ -502,7 +503,7 @@ TEST(UpdateMatrixImplTest, TestHashFieldMaskFieldNotSet) {
   EXPECT_EQ(event_1.person_country_code(), "UPDATED_COUNTRY_1");
   EXPECT_EQ(event_1.person_region_code(), "UPDATED_REGION_1");
 
-  // person_country_code not matches, should be not set.
+  // person_country_code does not match, should be not set.
   LabelerEvent event_2;
   event_2.set_person_country_code("COUNTRY_1");
   event_2.set_person_region_code("REGION_1");
