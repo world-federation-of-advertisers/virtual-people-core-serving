@@ -104,6 +104,7 @@ void SetFingerprints(LabelerEvent& event) {
   if (!labeler_input->has_profile_info()) {
     return;
   }
+
   ProfileInfo* profile_info = labeler_input->mutable_profile_info();
   if (profile_info->has_email_user_info()) {
     SetUserInfoFingerprint(*profile_info->mutable_email_user_info());
