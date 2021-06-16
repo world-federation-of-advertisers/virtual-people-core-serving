@@ -130,8 +130,7 @@ SparseUpdateMatrixImpl::Build(const SparseUpdateMatrix& config) {
     }
 
     // Gets the rows.
-    rows.push_back(std::vector<LabelerEvent>(
-        {column.rows().begin(), column.rows().end()}));
+    rows.emplace_back(column.rows().begin(), column.rows().end());
   }
 
   PassThroughNonMatches pass_through_non_matches =
