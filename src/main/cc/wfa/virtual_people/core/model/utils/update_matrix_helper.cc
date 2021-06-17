@@ -43,6 +43,9 @@ absl::StatusOr<MatrixIndexes> SelectFromMatrix(
   if (column_index == kNoMatchingIndex) {
     return MatrixIndexes({kNoMatchingIndex, kNoMatchingIndex});
   }
+  if (column_index < 0 || column_index >= row_hashings.size()) {
+    return absl::InternalError("The returned index is out of range.");
+  }
   int row_index = row_hashings[column_index]->Hash(
       absl::StrCat(random_seed, event.acting_fingerprint()));
   return MatrixIndexes({column_index, row_index});
