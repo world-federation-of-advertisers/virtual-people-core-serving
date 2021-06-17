@@ -37,7 +37,8 @@ class ModelNode {
   // class directly.
   //
   // @node_refs is the mapping from indexes to the ModelNode objects, which
-  // should contain the child nodes referenced by indexes.
+  // should contain the child nodes referenced by indexes. Returns error status
+  // if any child node referenced by index is not found in @node_refs.
   static absl::StatusOr<std::unique_ptr<ModelNode>> Build(
       const CompiledNode& config,
       absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs);
