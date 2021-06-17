@@ -215,6 +215,31 @@ TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
       Pair(20, DoubleNear(0.6, 0.02))));
 }
 
+TEST(LabelerTest, TestBuildFromListWithSingleNode) {
+  // A model with single node, which always assigns virtual person id 10.
+  std::vector<CompiledNode> nodes;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
+      name: "TestNode1"
+      population_node {
+        pools {
+          population_offset: 10
+          total_population: 1
+        }
+        random_seed: "TestPopulationNodeSeed1"
+      }
+  )pb", &nodes.emplace_back()));
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
+
+  for (int event_id = 0; event_id < kEventIdNumber; ++event_id) {
+    LabelerInput input;
+    input.mutable_event_id()->set_id(std::to_string(event_id));
+    LabelerOutput output;
+    EXPECT_THAT(labeler->Label(input, output), IsOk());
+    EXPECT_EQ(output.people(0).virtual_person_id(), 10);
+  }
+}
+
 TEST(LabelerTest, TestBuildFromNodesNodeAfterRoot) {
   std::vector<CompiledNode> nodes;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
