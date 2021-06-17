@@ -18,6 +18,7 @@
 #include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/attributes_updater/conditional_merge_impl.h"
+#include "wfa/virtual_people/core/model/attributes_updater/sparse_update_matrix_impl.h"
 #include "wfa/virtual_people/core/model/attributes_updater/update_matrix_impl.h"
 
 namespace wfa_virtual_people {
@@ -29,7 +30,7 @@ AttributesUpdaterInterface::Build(
     case BranchNode::AttributesUpdater::UpdateCase::kUpdateMatrix:
       return UpdateMatrixImpl::Build(config.update_matrix());
     case BranchNode::AttributesUpdater::UpdateCase::kSparseUpdateMatrix:
-      return absl::UnimplementedError("SparseUpdateMatrix is not implemented.");
+      return SparseUpdateMatrixImpl::Build(config.sparse_update_matrix());
     case BranchNode::AttributesUpdater::UpdateCase::kConditionalMerge:
       return ConditionalMergeImpl::Build(config.conditional_merge());
     case BranchNode::AttributesUpdater::UpdateCase::kUpdateTree:

@@ -658,8 +658,7 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
       }
   )pb", &config));
   ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<ModelNode> node,
-      ModelNode::Build(config));
+      std::unique_ptr<ModelNode> node, ModelNode::Build(config));
 
   // Test for COUNTRY_1
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
