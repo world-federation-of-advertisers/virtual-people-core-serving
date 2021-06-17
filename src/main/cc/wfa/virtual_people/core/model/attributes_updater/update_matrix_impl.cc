@@ -117,7 +117,6 @@ absl::Status UpdateMatrixImpl::Update(LabelerEvent& event) const {
       SelectFromMatrix(
           hash_matcher_.get(), filters_matcher_.get(), row_hashings_,
           random_seed_, event));
-  int row_index = indexes.row_index;
 
   if (indexes.column_index == kNoMatchingIndex) {
     if (pass_through_non_matches_ == PassThroughNonMatches::kYes) {
@@ -128,6 +127,7 @@ absl::Status UpdateMatrixImpl::Update(LabelerEvent& event) const {
     }
   }
 
+  int row_index = indexes.row_index;
   if (row_index < 0 || row_index >= rows_.size()) {
     return absl::InternalError("The returned row index is out of range.");
   }
