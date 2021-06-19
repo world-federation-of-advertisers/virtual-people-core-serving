@@ -28,12 +28,6 @@
 
 namespace wfa_virtual_people {
 
-// uint32_t: An index refers to a child node. Will be replaced with the
-//   corresponding std::unique_ptr<ModelNode> after calling
-//   ResolveChildReferences.
-// std::unique_ptr<ModelNode>: A child node.
-using ChildNodeRef = absl::variant<uint32_t, std::unique_ptr<ModelNode>>;
-
 // The implementation of the CompiledNode with branch_node set.
 //
 // The field branch_node in @node_config must be set.
@@ -56,12 +50,20 @@ class BranchNodeImpl : public ModelNode {
   //   neither chance nor condition set.
   // * At least one of @node_config.branch_node.branches has chance set, and at
   //   least one of @node_config.branch_node.branches has condition set.
+  // * When node_index is set in @node_config.branch_node.branches, @node_refs
+  //   has no entry for this node_index.
+  //
+  // For any @node_config.branch_node.branches with node_index set, the
+  // corresponding child node is retrieved from @node_refs using node_index as
+  // the key. The entry is removed from @node_refs after the ownership of the
+  // std::unique_ptr<ModelNode> is moved to this class.
   static absl::StatusOr<std::unique_ptr<BranchNodeImpl>> Build(
-      const CompiledNode& node_config);
+      const CompiledNode& node_config,
+      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs);
 
   explicit BranchNodeImpl(
       const CompiledNode& node_config,
-      std::vector<ChildNodeRef>&& child_nodes,
+      std::vector<std::unique_ptr<ModelNode>>&& child_nodes,
       std::unique_ptr<DistributedConsistentHashing> hashing,
       absl::string_view random_seed,
       std::unique_ptr<FieldFiltersMatcher> matcher,
@@ -70,26 +72,6 @@ class BranchNodeImpl : public ModelNode {
 
   BranchNodeImpl(const BranchNodeImpl&) = delete;
   BranchNodeImpl& operator=(const BranchNodeImpl&) = delete;
-
-  // Replaces all indexes in @child_nodes_ with the corresponding ModelNode
-  // objects.
-  // For any resolved index, the index / ModelNode object pair is deleted from
-  // @node_refs.
-  //
-  // Calling this method will resolve the child references for any node in the
-  // sub-tree starting from this node recursively.
-  //
-  // Returns error status if any of the following happens:
-  // * Any index in @child_nodes_ does not have an entry in @node_refs.
-  // * There is at least one entry in @child_nodes_, which has neither index
-  //   nor nor ModelNode set.
-  // * It returns error status when resolving the child references for any node
-  //   in the sub-tree.
-  //
-  // TODO(@tcsnfkx): Resolve the child references of the UpdateTree if exists.
-  absl::Status ResolveChildReferences(
-      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs
-  ) override;
 
   // Steps:
   // 1. Updates @event using @updaters_.
@@ -100,10 +82,7 @@ class BranchNodeImpl : public ModelNode {
  private:
   // Include the child nodes in all the branches, in the same order as the
   // branches in @node_config.
-  // When this node is built, each child node can be an index, or a ModelNode
-  // object. Calling ResolveChildReferences will replace all indexes with
-  // corresponding ModelNode objects.
-  std::vector<ChildNodeRef> child_nodes_;
+  std::vector<std::unique_ptr<ModelNode>> child_nodes_;
 
   // If chance is set in each branches in @node_config, hashing_ is set, and
   // used to select a child node with random_seed_ when Apply is called.

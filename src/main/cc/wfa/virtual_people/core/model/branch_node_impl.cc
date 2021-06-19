@@ -33,17 +33,26 @@ namespace wfa_virtual_people {
 // Converts @branch to a child node and appends to @child_nodes.
 absl::Status AppendChildNode(
     const BranchNode::Branch& branch,
-    std::vector<ChildNodeRef>& child_nodes) {
+    std::vector<std::unique_ptr<ModelNode>>& child_nodes,
+    absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
   if (branch.has_node_index()) {
-    // Store the index of the child node. Will be resolved to the ModelNode
-    // object in ResolveChildReferences.
-    child_nodes.emplace_back(branch.node_index());
+    // The child node is referenced by node index. Need to resolve to the
+    // ModelNode object.
+    // The owner of the corresponding ModelNode pointer will be its parent node.
+    // Gets the key value pair, and deletes them from the map.
+    auto node = node_refs.extract(branch.node_index());
+    if (node.empty()) {
+      return absl::InvalidArgumentError(
+          "The ModelNode object of the child node index is not provided.");
+    }
+    child_nodes.emplace_back(std::move(node.mapped()));
     return absl::OkStatus();
   }
   if (branch.has_node()) {
     // Create the ModelNode object and store.
     child_nodes.emplace_back();
-    ASSIGN_OR_RETURN(child_nodes.back(), ModelNode::Build(branch.node()));
+    ASSIGN_OR_RETURN(
+        child_nodes.back(), ModelNode::Build(branch.node(), node_refs));
     return absl::OkStatus();
   }
   return absl::InvalidArgumentError(
@@ -75,7 +84,8 @@ absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> BuildMatcher(
 }
 
 absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
-    const CompiledNode& node_config) {
+    const CompiledNode& node_config,
+    absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
   if (!node_config.has_branch_node()) {
     return absl::InvalidArgumentError("This is not a branch node.");
   }
@@ -85,11 +95,10 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
         "BranchNode must have at least 1 branch.");
   }
 
-  // Converts each Branch to ChildNodeRef. Breaks if encounters any error
-  // status.
-  std::vector<ChildNodeRef> child_nodes;
+  // Converts each Branch to ModelNode. Breaks if encounters any error status.
+  std::vector<std::unique_ptr<ModelNode>> child_nodes;
   for (const BranchNode::Branch& branch : branch_node.branches()) {
-    RETURN_IF_ERROR(AppendChildNode(branch, child_nodes));
+    RETURN_IF_ERROR(AppendChildNode(branch, child_nodes, node_refs));
   }
 
   // If all @branch_node.branches have chance, use chance.
@@ -148,7 +157,7 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
 
 BranchNodeImpl::BranchNodeImpl(
     const CompiledNode& node_config,
-    std::vector<ChildNodeRef>&& child_nodes,
+    std::vector<std::unique_ptr<ModelNode>>&& child_nodes,
     std::unique_ptr<DistributedConsistentHashing> hashing,
     absl::string_view random_seed,
     std::unique_ptr<FieldFiltersMatcher> matcher,
@@ -159,44 +168,6 @@ BranchNodeImpl::BranchNodeImpl(
     random_seed_(random_seed),
     matcher_(std::move(matcher)),
     updaters_(std::move(updaters)) {}
-
-// If @child_node is set as an index, replaces it with the corresponding
-// ModelNode object if found in @node_refs, and deletes the index / ModelNode
-// pair from @node_refs. Returns error status if not found.
-// Also resolve the child references of the sub-tree of the @child_node.
-absl::Status ResolveChildReference(
-    ChildNodeRef& child_node,
-    absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
-  if (uint32_t* node_index = std::get_if<uint32_t>(&child_node)) {
-    // The child node is referenced by node index. Need to resolve to the
-    // ModelNode object.
-    // The owner of the corresponding ModelNode pointer will be its parent node.
-    // Gets the key value pair, and deletes them from the map.
-    auto node = node_refs.extract(*node_index);
-    if (node.empty()) {
-      return absl::InvalidArgumentError(
-          "The ModelNode object of the child node index is not provided.");
-    }
-    child_node.emplace<1>(std::move(node.mapped()));
-  }
-
-  if (std::unique_ptr<ModelNode>* node =
-      std::get_if<std::unique_ptr<ModelNode>>(&child_node)) {
-    // Resolve the child node references of the sub tree here, because this node
-    // is the only owner of the pointers to the child nodes.
-    return (*node)->ResolveChildReferences(node_refs);
-  }
-  return absl::InternalError(
-      "Neither node index nor ModelNode object is set for a child node.");
-}
-
-absl::Status BranchNodeImpl::ResolveChildReferences(
-    absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
-  for (ChildNodeRef& child_node : child_nodes_) {
-    RETURN_IF_ERROR(ResolveChildReference(child_node, node_refs));
-  }
-  return absl::OkStatus();
-}
 
 absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
   // Applies attributes updaters.
@@ -220,13 +191,12 @@ absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
     return absl::InternalError("No select options is set for the BranchNode.");
   }
 
-  const ChildNodeRef& selected_node = child_nodes_[selected_index];
-  if (const std::unique_ptr<ModelNode>* node =
-      std::get_if<std::unique_ptr<ModelNode>>(&selected_node)) {
-    return (*node)->Apply(event);
+  if (selected_index < 0 || selected_index >= child_nodes_.size()) {
+    // This should never happen.
+    return absl::InternalError("The returned index is out of range.");
   }
-  return absl::FailedPreconditionError(
-      "The child node reference must be resolved before apply.");
+
+  return child_nodes_[selected_index]->Apply(event);
 }
 
 }  // namespace wfa_virtual_people
