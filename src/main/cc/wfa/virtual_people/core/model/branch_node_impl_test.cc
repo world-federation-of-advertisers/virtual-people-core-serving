@@ -114,12 +114,6 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
         random_seed: "TestBranchNodeSeed"
       }
   )pb", &branch_node_config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<ModelNode> branch_node,
-      ModelNode::Build(branch_node_config));
-
-  // Set up map from indexes to child nodes.
-  absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
 
   CompiledNode population_node_config_1;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -133,9 +127,6 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
         random_seed: "TestPopulationNodeSeed1"
       }
   )pb", &population_node_config_1));
-  ASSERT_OK_AND_ASSIGN(
-      node_refs[2],
-      ModelNode::Build(population_node_config_1));
 
   CompiledNode population_node_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -149,11 +140,18 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
         random_seed: "TestPopulationNodeSeed2"
       }
   )pb", &population_node_config_2));
+
+  // Set up map from indexes to child nodes.
+  absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
+  ASSERT_OK_AND_ASSIGN(
+      node_refs[2],
+      ModelNode::Build(population_node_config_1));
   ASSERT_OK_AND_ASSIGN(
       node_refs[3],
       ModelNode::Build(population_node_config_2));
-
-  EXPECT_THAT(branch_node->ResolveChildReferences(node_refs), IsOk());
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelNode> branch_node,
+      ModelNode::Build(branch_node_config, node_refs));
 
   absl::flat_hash_map<int64_t, double> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
@@ -260,12 +258,6 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
         random_seed: "TestBranchNodeSeed1"
       }
   )pb", &branch_node_config_1));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<ModelNode> branch_node_1,
-      ModelNode::Build(branch_node_config_1));
-
-  // Set up map from indexes to child nodes.
-  absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
 
   CompiledNode branch_node_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -279,9 +271,6 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
         random_seed: "TestBranchNodeSeed2"
       }
   )pb", &branch_node_config_2));
-  ASSERT_OK_AND_ASSIGN(
-      node_refs[2],
-      ModelNode::Build(branch_node_config_2));
 
   CompiledNode branch_node_config_3;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -295,9 +284,6 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
         random_seed: "TestBranchNodeSeed3"
       }
   )pb", &branch_node_config_3));
-  ASSERT_OK_AND_ASSIGN(
-      node_refs[3],
-      ModelNode::Build(branch_node_config_3));
 
   CompiledNode population_node_config_1;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -311,9 +297,6 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
         random_seed: "TestPopulationNodeSeed1"
       }
   )pb", &population_node_config_1));
-  ASSERT_OK_AND_ASSIGN(
-      node_refs[4],
-      ModelNode::Build(population_node_config_1));
 
   CompiledNode population_node_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
@@ -327,11 +310,24 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
         random_seed: "TestPopulationNodeSeed2"
       }
   )pb", &population_node_config_2));
+
+  // Set up map from indexes to child nodes.
+  absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
+  ASSERT_OK_AND_ASSIGN(
+      node_refs[4],
+      ModelNode::Build(population_node_config_1));
+  ASSERT_OK_AND_ASSIGN(
+      node_refs[2],
+      ModelNode::Build(branch_node_config_2, node_refs));
   ASSERT_OK_AND_ASSIGN(
       node_refs[5],
       ModelNode::Build(population_node_config_2));
-
-  EXPECT_THAT(branch_node_1->ResolveChildReferences(node_refs), IsOk());
+  ASSERT_OK_AND_ASSIGN(
+      node_refs[3],
+      ModelNode::Build(branch_node_config_3, node_refs));
+  ASSERT_OK_AND_ASSIGN(
+      std::unique_ptr<ModelNode> branch_node_1,
+      ModelNode::Build(branch_node_config_1, node_refs));
 
   absl::flat_hash_map<int64_t, double> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
@@ -347,39 +343,6 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
   EXPECT_THAT(id_counts, UnorderedElementsAre(
       Pair(10, DoubleNear(0.4, 0.02)),
       Pair(20, DoubleNear(0.6, 0.02))));
-}
-
-TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexNotResolved) {
-  // The branch node has 2 branches.
-  // One branch is selected with 40% chance, which is a population node always
-  // assigns virtual person id 10.
-  // The other branch is selected with 60% chance, which is a population node
-  // always assigns virtual person id 20.
-  CompiledNode branch_node_config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      name: "TestBranchNode"
-      index: 1
-      branch_node {
-        branches {
-          node_index: 2
-          chance: 0.4
-        }
-        branches {
-          node_index: 3
-          chance: 0.6
-        }
-        random_seed: "TestBranchNodeSeed"
-      }
-  )pb", &branch_node_config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<ModelNode> branch_node,
-      ModelNode::Build(branch_node_config));
-
-  LabelerEvent input;
-  input.set_acting_fingerprint(0);
-  EXPECT_THAT(
-    branch_node->Apply(input),
-    StatusIs(absl::StatusCode::kFailedPrecondition, ""));
 }
 
 TEST(BranchNodeImplTest, TestNoBranch) {
@@ -401,7 +364,7 @@ TEST(BranchNodeImplTest, TestNoChildNode) {
       index: 1
       branch_node {
         branches {
-          chance: 0.5
+          chance: 1
         }
       }
   )pb", &config));
@@ -417,7 +380,15 @@ TEST(BranchNodeImplTest, TestNoSelectBy) {
       index: 1
       branch_node {
         branches {
-          node_index: 2
+          node {
+            population_node {
+              pools {
+                population_offset: 10
+                total_population: 1
+              }
+              random_seed: "TestPopulationNodeSeed1"
+            }
+          }
         }
       }
   )pb", &config));
@@ -433,11 +404,27 @@ TEST(BranchNodeImplTest, TestDifferentSelectBy) {
       index: 1
       branch_node {
         branches {
-          node_index: 2
+          node {
+            population_node {
+              pools {
+                population_offset: 10
+                total_population: 1
+              }
+              random_seed: "TestPopulationNodeSeed1"
+            }
+          }
           chance: 0.5
         }
         branches {
-          node_index: 3
+          node {
+            population_node {
+              pools {
+                population_offset: 20
+                total_population: 1
+              }
+              random_seed: "TestPopulationNodeSeed1"
+            }
+          }
           condition {}
         }
       }
@@ -460,13 +447,8 @@ TEST(BranchNodeImplTest, TestResolveChildReferencesIndexNotFound) {
         random_seed: "TestBranchNodeSeed"
       }
   )pb", &config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<ModelNode> node,
-      ModelNode::Build(config));
-
-  absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
   EXPECT_THAT(
-      node->ResolveChildReferences(node_refs),
+      ModelNode::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 

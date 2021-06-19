@@ -22,10 +22,21 @@
 namespace wfa_virtual_people {
 
 absl::StatusOr<std::unique_ptr<ModelNode>> ModelNode::Build(
+    const CompiledNode& config,
+    absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
+  if (config.type_case() == CompiledNode::TypeCase::kBranchNode) {
+    return BranchNodeImpl::Build(config, node_refs);
+  }
+  return ModelNode::Build(config);
+}
+
+absl::StatusOr<std::unique_ptr<ModelNode>> ModelNode::Build(
     const CompiledNode& config) {
   switch(config.type_case()) {
-    case CompiledNode::TypeCase::kBranchNode:
-      return BranchNodeImpl::Build(config);
+    case CompiledNode::TypeCase::kBranchNode: {
+      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
+      return BranchNodeImpl::Build(config, node_refs);
+    }
     case CompiledNode::TypeCase::kStopNode:
       return absl::UnimplementedError("StopNode is not implemented.");
     case CompiledNode::TypeCase::kPopulationNode:
