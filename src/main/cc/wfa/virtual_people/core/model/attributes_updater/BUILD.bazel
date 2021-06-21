@@ -5,6 +5,8 @@ package(default_visibility = ["//src:__subpackages__"])
 exports_files([
     "attributes_updater.cc",
     "attributes_updater.h",
+    "conditional_assignment_impl.cc",
+    "conditional_assignment_impl.h",
     "conditional_merge_impl.cc",
     "conditional_merge_impl.h",
     "sparse_update_matrix_impl.cc",
@@ -74,6 +76,22 @@ cc_test(
         "@com_google_protobuf//:protobuf",
         "@cross_media_measurement//src/test/cc/testutil:matchers",
         "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "conditional_assignment_impl_test",
+    srcs = ["conditional_assignment_impl_test.cc"],
+    deps = [
+        "//src/main/cc/wfa/virtual_people/core/model:model_node",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:demographic_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )

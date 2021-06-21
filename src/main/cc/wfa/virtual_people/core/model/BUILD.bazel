@@ -11,6 +11,7 @@ cc_library(
         "model_node.cc",
         "population_node_impl.cc",
         "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:attributes_updater.cc",
+        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:conditional_assignment_impl.cc",
         "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:conditional_merge_impl.cc",
         "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:sparse_update_matrix_impl.cc",
         "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:update_matrix_impl.cc",
@@ -22,6 +23,7 @@ cc_library(
         "population_node_impl.h",
         "stop_node_impl.h",
         "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:attributes_updater.h",
+        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:conditional_assignment_impl.h",
         "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:conditional_merge_impl.h",
         "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:sparse_update_matrix_impl.h",
         "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:update_matrix_impl.h",
@@ -45,6 +47,7 @@ cc_library(
         "@com_google_protobuf//:protobuf",
         "@cross_media_measurement//src/main/cc/wfa/measurement/common:macros",
         "@virtual_people_common//src/main/cc/wfa/virtual_people/common/field_filter",
+        "@virtual_people_common//src/main/cc/wfa/virtual_people/common/field_filter/utils:field_util",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
