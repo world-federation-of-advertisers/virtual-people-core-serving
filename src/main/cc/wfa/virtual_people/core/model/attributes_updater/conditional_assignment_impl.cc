@@ -36,6 +36,33 @@ void Assign(
   SetValueToProto<ValueType>(event, target, value);
 }
 
+absl::StatusOr<std::function<void(
+    LabelerEvent&,
+    const std::vector<const google::protobuf::FieldDescriptor*>&,
+    const std::vector<const google::protobuf::FieldDescriptor*>&)>>
+GetAssignmentFunction(
+    const google::protobuf::FieldDescriptor::CppType cpp_type) {
+  switch (cpp_type) {
+    case google::protobuf::FieldDescriptor::CppType::CPPTYPE_INT32:
+      return Assign<int32_t>;
+    case google::protobuf::FieldDescriptor::CppType::CPPTYPE_INT64:
+      return Assign<int64_t>;
+    case google::protobuf::FieldDescriptor::CppType::CPPTYPE_UINT32:
+      return Assign<uint32_t>;
+    case google::protobuf::FieldDescriptor::CppType::CPPTYPE_UINT64:
+      return Assign<uint64_t>;
+    case google::protobuf::FieldDescriptor::CppType::CPPTYPE_BOOL:
+      return Assign<bool>;
+    case google::protobuf::FieldDescriptor::CppType::CPPTYPE_ENUM:
+      return Assign<const google::protobuf::EnumValueDescriptor*>;
+    case google::protobuf::FieldDescriptor::CppType::CPPTYPE_STRING:
+      return Assign<const std::string&>;
+    default:
+      return absl::InvalidArgumentError(
+          "Unsupported field type for ConditionalAssignment.");
+  }
+}
+
 absl::StatusOr<std::unique_ptr<ConditionalAssignmentImpl>>
 ConditionalAssignmentImpl::Build(const ConditionalAssignment& config) {
   if (!config.has_condition()) {
@@ -89,34 +116,9 @@ ConditionalAssignmentImpl::Build(const ConditionalAssignment& config) {
           config.DebugString()));
     }
 
-    switch (assignment.source.back()->cpp_type()) {
-      case google::protobuf::FieldDescriptor::CppType::CPPTYPE_INT32:
-        assignment.assign = Assign<int32_t>;
-        break;
-      case google::protobuf::FieldDescriptor::CppType::CPPTYPE_INT64:
-        assignment.assign = Assign<int64_t>;
-        break;
-      case google::protobuf::FieldDescriptor::CppType::CPPTYPE_UINT32:
-        assignment.assign = Assign<uint32_t>;
-        break;
-      case google::protobuf::FieldDescriptor::CppType::CPPTYPE_UINT64:
-        assignment.assign = Assign<uint64_t>;
-        break;
-      case google::protobuf::FieldDescriptor::CppType::CPPTYPE_BOOL:
-        assignment.assign = Assign<bool>;
-        break;
-      case google::protobuf::FieldDescriptor::CppType::CPPTYPE_ENUM:
-        assignment.assign =
-            Assign<const google::protobuf::EnumValueDescriptor*>;
-        break;
-      case google::protobuf::FieldDescriptor::CppType::CPPTYPE_STRING:
-        assignment.assign = Assign<const std::string&>;
-        break;
-      default:
-        return absl::InvalidArgumentError(absl::StrCat(
-            "Unsupported field type for ConditionalAssignment: ",
-            config.DebugString()));
-    }
+    ASSIGN_OR_RETURN(
+        assignment.assign,
+        GetAssignmentFunction(assignment.source.back()->cpp_type()));
   }
 
   return absl::make_unique<ConditionalAssignmentImpl>(
