@@ -17,6 +17,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/core/model/attributes_updater/conditional_assignment_impl.h"
 #include "wfa/virtual_people/core/model/attributes_updater/conditional_merge_impl.h"
 #include "wfa/virtual_people/core/model/attributes_updater/sparse_update_matrix_impl.h"
 #include "wfa/virtual_people/core/model/attributes_updater/update_matrix_impl.h"
@@ -35,6 +36,8 @@ AttributesUpdaterInterface::Build(
       return ConditionalMergeImpl::Build(config.conditional_merge());
     case BranchNode::AttributesUpdater::UpdateCase::kUpdateTree:
       return absl::UnimplementedError("UpdateTree is not implemented.");
+    case BranchNode::AttributesUpdater::UpdateCase::kConditionalAssignment:
+      return ConditionalAssignmentImpl::Build(config.conditional_assignment());
     default:
       return absl::InvalidArgumentError("config.update is not set.");
   }
