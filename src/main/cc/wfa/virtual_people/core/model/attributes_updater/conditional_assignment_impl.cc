@@ -70,8 +70,8 @@ ConditionalAssignmentImpl::Build(const ConditionalAssignment& config) {
         config.DebugString()));
     }
 
-    assignments.emplace_back();
-    ConditionalAssignmentImpl::Assignment& assignment = assignments.back();
+    ConditionalAssignmentImpl::Assignment& assignment =
+        assignments.emplace_back();
 
     ASSIGN_OR_RETURN(
         assignment.source,
