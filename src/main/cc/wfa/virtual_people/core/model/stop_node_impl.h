@@ -29,7 +29,8 @@ class StopNodeImpl : public ModelNode {
   // Always use ModelNode::Build to get a ModelNode object.
   // Users should never call the factory function or constructor of the derived
   // class directly.
-  static std::unique_ptr<StopNodeImpl> Build(const CompiledNode& node_config) {
+  static absl::StatusOr<std::unique_ptr<StopNodeImpl>> Build(
+      const CompiledNode& node_config) {
     return absl::make_unique<StopNodeImpl>(node_config);
   }
 
