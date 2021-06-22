@@ -7,27 +7,27 @@ _INCLUDE_PREFIX = "/src/main/cc"
 cc_library(
     name = "model_node",
     srcs = [
+        "attributes_updater.cc",
         "branch_node_impl.cc",
+        "conditional_assignment_impl.cc",
+        "conditional_merge_impl.cc",
         "model_node.cc",
         "population_node_impl.cc",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:attributes_updater.cc",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:conditional_assignment_impl.cc",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:conditional_merge_impl.cc",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:sparse_update_matrix_impl.cc",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:update_matrix_impl.cc",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:update_tree_impl.cc",
+        "sparse_update_matrix_impl.cc",
+        "update_matrix_impl.cc",
+        "update_tree_impl.cc",
     ],
     hdrs = [
+        "stop_node_impl.h",
+        "attributes_updater.h",
         "branch_node_impl.h",
+        "conditional_assignment_impl.h",
+        "conditional_merge_impl.h",
         "model_node.h",
         "population_node_impl.h",
-        "stop_node_impl.h",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:attributes_updater.h",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:conditional_assignment_impl.h",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:conditional_merge_impl.h",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:sparse_update_matrix_impl.h",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:update_matrix_impl.h",
-        "//src/main/cc/wfa/virtual_people/core/model/attributes_updater:update_tree_impl.h",
+        "sparse_update_matrix_impl.h",
+        "update_matrix_impl.h",
+        "update_tree_impl.h",
     ],
     strip_include_prefix = _INCLUDE_PREFIX,
     deps = [
@@ -77,6 +77,85 @@ cc_test(
         "@com_google_protobuf//:protobuf",
         "@cross_media_measurement//src/test/cc/testutil:matchers",
         "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "update_matrix_impl_test",
+    srcs = ["update_matrix_impl_test.cc"],
+    deps = [
+        ":model_node",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "update_tree_impl_test",
+    srcs = ["update_tree_impl_test.cc"],
+    deps = [
+        ":model_node",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "sparse_update_matrix_impl_test",
+    srcs = ["sparse_update_matrix_impl_test.cc"],
+    deps = [
+        ":model_node",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "conditional_merge_impl_test",
+    srcs = ["conditional_merge_impl_test.cc"],
+    deps = [
+        ":model_node",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "conditional_assignment_impl_test",
+    srcs = ["conditional_assignment_impl_test.cc"],
+    deps = [
+        ":model_node",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:demographic_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )

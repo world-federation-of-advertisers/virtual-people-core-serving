@@ -22,7 +22,7 @@
 #include "absl/strings/string_view.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/measurement/common/macros.h"
-#include "wfa/virtual_people/core/model/attributes_updater/attributes_updater.h"
+#include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/constants.h"
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"

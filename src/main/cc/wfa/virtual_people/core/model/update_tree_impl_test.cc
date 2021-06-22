@@ -21,7 +21,7 @@
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "src/test/cc/testutil/matchers.h"
 #include "src/test/cc/testutil/status_macros.h"
-#include "wfa/virtual_people/core/model/attributes_updater/attributes_updater.h"
+#include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 
 namespace wfa_virtual_people {

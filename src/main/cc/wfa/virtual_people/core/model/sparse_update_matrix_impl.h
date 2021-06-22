@@ -12,21 +12,55 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_UPDATE_MATRIX_IMPL_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_UPDATE_MATRIX_IMPL_H_
+#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
+#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "wfa/virtual_people/core/model/attributes_updater/attributes_updater.h"
+#include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 #include "wfa/virtual_people/core/model/utils/field_filters_matcher.h"
 #include "wfa/virtual_people/core/model/utils/hash_field_mask_matcher.h"
 
 namespace wfa_virtual_people {
 
-class UpdateMatrixImpl : public AttributesUpdaterInterface {
+// A representation of update matrix, which only contains the entries that the
+// probabilities are not zero.
+// Example:
+// The following sparse update matrix
+//     columns {
+//       column_attrs { person_country_code: "COUNTRY_1" }
+//       rows { person_country_code: "UPDATED_COUNTRY_1" }
+//       rows { person_country_code: "UPDATED_COUNTRY_2" }
+//       probabilities: 0.8
+//       probabilities: 0.2
+//     }
+//     columns {
+//       column_attrs { person_country_code: "COUNTRY_2" }
+//       rows { person_country_code: "UPDATED_COUNTRY_1" }
+//       rows { person_country_code: "UPDATED_COUNTRY_2" }
+//       rows { person_country_code: "UPDATED_COUNTRY_3" }
+//       probabilities: 0.2
+//       probabilities: 0.4
+//       probabilities: 0.4
+//     }
+//     columns {
+//       column_attrs { person_country_code: "COUNTRY_3" }
+//       rows { person_country_code: "UPDATED_COUNTRY_3" }
+//       probabilities: 1.0
+//     }
+//     pass_through_non_matches: false
+//     random_seed: "TestSeed"
+// represents the matrix
+//                          "COUNTRY_1"  "COUNTRY_2"  "COUNTRY_3"
+//     "UPDATED_COUNTRY_1"      0.8          0.2            0
+//     "UPDATED_COUNTRY_2"      0.2          0.4            0
+//     "UPDATED_COUNTRY_3"        0          0.4          1.0
+// The column is selected by the matched person_country_code, and the row is
+// selected by probabilities of the selected column.
+class SparseUpdateMatrixImpl : public AttributesUpdaterInterface {
  public:
   // Always use AttributesUpdaterInterface::Build to get an
   // AttributesUpdaterInterface object. Users should
@@ -34,24 +68,25 @@ class UpdateMatrixImpl : public AttributesUpdaterInterface {
   // directly.
   //
   // Returns error status when any of the following happens:
-  //   @config.rows is empty.
   //   @config.columns is empty.
-  //   In @config, the probabilities count does not equal to rows count
-  //     multiplies columns count.
-  //   Fails to build FieldFilter from any column.
+  //   @config.columns.column_attrs is not set.
+  //   @config.columns.rows is empty.
+  //   In any @config.columns, the counts of probabilities and rows are not
+  //     equal.
+  //   Fails to build FieldFilter from any @config.columns.column_attrs.
   //   Fails to build DistributedConsistentHashing from the probabilities
-  //     distribution of any column.
-  static absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> Build(
-      const UpdateMatrix& config);
+  //     distribution of any @config.columns.
+  static absl::StatusOr<std::unique_ptr<SparseUpdateMatrixImpl>> Build(
+      const SparseUpdateMatrix& config);
 
   enum class PassThroughNonMatches {kNo, kYes};
 
-  explicit UpdateMatrixImpl(
+  explicit SparseUpdateMatrixImpl(
       std::unique_ptr<HashFieldMaskMatcher> hash_matcher,
       std::unique_ptr<FieldFiltersMatcher> filters_matcher,
       std::vector<std::unique_ptr<DistributedConsistentHashing>>&& row_hashings,
       absl::string_view random_seed,
-      std::vector<LabelerEvent>&& rows,
+      std::vector<std::vector<LabelerEvent>>&& rows,
       PassThroughNonMatches pass_through_non_matches):
       hash_matcher_(std::move(hash_matcher)),
       filters_matcher_(std::move(filters_matcher)),
@@ -60,8 +95,8 @@ class UpdateMatrixImpl : public AttributesUpdaterInterface {
       rows_(std::move(rows)),
       pass_through_non_matches_(pass_through_non_matches) {}
 
-  UpdateMatrixImpl(const UpdateMatrixImpl&) = delete;
-  UpdateMatrixImpl& operator=(const UpdateMatrixImpl&) = delete;
+  SparseUpdateMatrixImpl(const SparseUpdateMatrixImpl&) = delete;
+  SparseUpdateMatrixImpl& operator=(const SparseUpdateMatrixImpl&) = delete;
 
   // Updates @event with selected row.
   // The row is selected in 2 steps
@@ -84,10 +119,11 @@ class UpdateMatrixImpl : public AttributesUpdaterInterface {
   // distribution of a column.
   // The size of the vector is the columns count.
   std::vector<std::unique_ptr<DistributedConsistentHashing>> row_hashings_;
-  // The seed used in hashing.
+  // The seed used in hashing during row selection after a column is matched.
   std::string random_seed_;
-  // All the rows, of which the selected row will be merged to the input event.
-  std::vector<LabelerEvent> rows_;
+  // Each entry of the vector contains all the rows of the corresponding column.
+  // The selected row will be merged to the input event.
+  std::vector<std::vector<LabelerEvent>> rows_;
   // When calling Update, if no column matches, returns OkStatus if
   // pass_through_non_matches_ is kYes, otherwise returns error status.
   PassThroughNonMatches pass_through_non_matches_;
@@ -95,4 +131,4 @@ class UpdateMatrixImpl : public AttributesUpdaterInterface {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_UPDATE_MATRIX_IMPL_H_
+#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_

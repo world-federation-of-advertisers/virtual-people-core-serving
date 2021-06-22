@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wfa/virtual_people/core/model/attributes_updater/update_tree_impl.h"
+#include "wfa/virtual_people/core/model/update_tree_impl.h"
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
@@ -20,7 +20,7 @@
 #include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/measurement/common/macros.h"
-#include "wfa/virtual_people/core/model/attributes_updater/attributes_updater.h"
+#include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 
 namespace wfa_virtual_people {

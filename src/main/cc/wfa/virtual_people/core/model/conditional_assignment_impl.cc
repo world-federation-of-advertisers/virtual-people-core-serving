@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wfa/virtual_people/core/model/attributes_updater/conditional_assignment_impl.h"
+#include "wfa/virtual_people/core/model/conditional_assignment_impl.h"
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -23,7 +23,7 @@
 #include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/common/field_filter/field_filter.h"
 #include "wfa/virtual_people/common/field_filter/utils/field_util.h"
-#include "wfa/virtual_people/core/model/attributes_updater/attributes_updater.h"
+#include "wfa/virtual_people/core/model/attributes_updater.h"
 
 namespace wfa_virtual_people {
 
