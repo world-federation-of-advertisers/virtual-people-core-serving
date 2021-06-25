@@ -12,17 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wfa/virtual_people/core/model/attributes_updater/attributes_updater.h"
+#include "wfa/virtual_people/core/model/attributes_updater.h"
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "wfa/virtual_people/core/model/attributes_updater/conditional_assignment_impl.h"
-#include "wfa/virtual_people/core/model/attributes_updater/conditional_merge_impl.h"
-#include "wfa/virtual_people/core/model/attributes_updater/sparse_update_matrix_impl.h"
-#include "wfa/virtual_people/core/model/attributes_updater/update_matrix_impl.h"
+#include "wfa/virtual_people/core/model/conditional_assignment_impl.h"
+#include "wfa/virtual_people/core/model/conditional_merge_impl.h"
+#include "wfa/virtual_people/core/model/sparse_update_matrix_impl.h"
+#include "wfa/virtual_people/core/model/update_matrix_impl.h"
+#include "wfa/virtual_people/core/model/update_tree_impl.h"
+#include "wfa/virtual_people/core/model/model_node.h"
 
 namespace wfa_virtual_people {
+
+absl::StatusOr<std::unique_ptr<AttributesUpdaterInterface>>
+AttributesUpdaterInterface::Build(
+    const BranchNode::AttributesUpdater& config,
+    absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
+  if (config.update_case() ==
+      BranchNode::AttributesUpdater::UpdateCase::kUpdateTree) {
+    return UpdateTreeImpl::Build(config.update_tree(), node_refs);
+  }
+  return AttributesUpdaterInterface::Build(config);
+}
 
 absl::StatusOr<std::unique_ptr<AttributesUpdaterInterface>>
 AttributesUpdaterInterface::Build(
@@ -34,8 +48,10 @@ AttributesUpdaterInterface::Build(
       return SparseUpdateMatrixImpl::Build(config.sparse_update_matrix());
     case BranchNode::AttributesUpdater::UpdateCase::kConditionalMerge:
       return ConditionalMergeImpl::Build(config.conditional_merge());
-    case BranchNode::AttributesUpdater::UpdateCase::kUpdateTree:
-      return absl::UnimplementedError("UpdateTree is not implemented.");
+    case BranchNode::AttributesUpdater::UpdateCase::kUpdateTree: {
+      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
+      return UpdateTreeImpl::Build(config.update_tree(), node_refs);
+    }
     case BranchNode::AttributesUpdater::UpdateCase::kConditionalAssignment:
       return ConditionalAssignmentImpl::Build(config.conditional_assignment());
     default:

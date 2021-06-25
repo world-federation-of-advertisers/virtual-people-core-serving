@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wfa/virtual_people/core/model/attributes_updater/conditional_merge_impl.h"
+#include "wfa/virtual_people/core/model/conditional_merge_impl.h"
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"

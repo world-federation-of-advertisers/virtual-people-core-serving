@@ -18,6 +18,7 @@
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/branch_node_impl.h"
 #include "wfa/virtual_people/core/model/population_node_impl.h"
+#include "wfa/virtual_people/core/model/stop_node_impl.h"
 
 namespace wfa_virtual_people {
 
@@ -38,11 +39,11 @@ absl::StatusOr<std::unique_ptr<ModelNode>> ModelNode::Build(
       return BranchNodeImpl::Build(config, node_refs);
     }
     case CompiledNode::TypeCase::kStopNode:
-      return absl::UnimplementedError("StopNode is not implemented.");
+      return StopNodeImpl::Build(config);
     case CompiledNode::TypeCase::kPopulationNode:
       return PopulationNodeImpl::Build(config);
     default:
-      return absl::UnimplementedError("Node type is not set.");
+      return absl::InvalidArgumentError("Node type is not set.");
   }
 }
 

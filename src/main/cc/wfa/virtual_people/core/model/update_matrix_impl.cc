@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wfa/virtual_people/core/model/attributes_updater/update_matrix_impl.h"
+#include "wfa/virtual_people/core/model/update_matrix_impl.h"
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -24,7 +24,7 @@
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/common/field_filter/field_filter.h"
-#include "wfa/virtual_people/core/model/attributes_updater/attributes_updater.h"
+#include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/utils/constants.h"
 #include "wfa/virtual_people/core/model/utils/update_matrix_helper.h"
 

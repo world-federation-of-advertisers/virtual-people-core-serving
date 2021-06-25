@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_ATTRIBUTES_UPDATER_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_ATTRIBUTES_UPDATER_H_
+#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_
+#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_
 
+#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/core/model/model_node.h"
 
 namespace wfa_virtual_people {
 
@@ -27,6 +29,16 @@ class AttributesUpdaterInterface {
   // Always use Build to get an AttributesUpdaterInterface object. Users should
   // not call the factory method or the constructor of the derived classes
   // directly.
+  //
+  // @node_refs is the mapping from indexes to the ModelNode objects, which
+  // should contain the child nodes referenced by indexes in the attached model
+  // trees.
+  static absl::StatusOr<std::unique_ptr<AttributesUpdaterInterface>> Build(
+      const BranchNode::AttributesUpdater& config,
+      absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs);
+
+  // Builds AttributesUpdater with no attatched model tree, or the model tree is
+  // defined without any child node referenced by index.
   static absl::StatusOr<std::unique_ptr<AttributesUpdaterInterface>> Build(
       const BranchNode::AttributesUpdater& config);
 
@@ -50,4 +62,4 @@ class AttributesUpdaterInterface {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_ATTRIBUTES_UPDATER_H_
+#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_
