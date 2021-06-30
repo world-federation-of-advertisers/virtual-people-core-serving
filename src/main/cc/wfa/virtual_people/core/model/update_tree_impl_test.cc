@@ -42,7 +42,7 @@ TEST(UpdateTreeImplTest, TestEmptyTree) {
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<AttributesUpdaterInterface> updater,
       AttributesUpdaterInterface::Build(config));
-  
+
   LabelerEvent event;
   EXPECT_THAT(updater->Update(event), IsOk());
 }
@@ -76,7 +76,7 @@ TEST(UpdateTreeImplTest, TestSingleBranch) {
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<AttributesUpdaterInterface> updater,
       AttributesUpdaterInterface::Build(config));
-  
+
   LabelerEvent event_1;
   EXPECT_THAT(
       updater->Update(event_1),
@@ -154,7 +154,7 @@ TEST(UpdateTreeImplTest, TestTwoBranches) {
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<AttributesUpdaterInterface> updater,
       AttributesUpdaterInterface::Build(config));
-  
+
   LabelerEvent event_1;
   EXPECT_THAT(
       updater->Update(event_1),
@@ -253,7 +253,7 @@ TEST(UpdateTreeImplTest, TestTwoBranchesWithIndexes) {
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<AttributesUpdaterInterface> updater,
       AttributesUpdaterInterface::Build(config, node_refs));
-  
+
   LabelerEvent event_1;
   EXPECT_THAT(
       updater->Update(event_1),
