@@ -1,0 +1,19 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+package(default_visibility = ["//visibility:private"])
+
+cc_test(
+    name = "labeler_test",
+    srcs = ["labeler_test.cc"],
+    deps = [
+        "//src/main/cc/wfa/virtual_people/core/labeler",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+        "@cross_media_measurement//src/test/cc/testutil:matchers",
+        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:event_cc_proto",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+    ],
+)

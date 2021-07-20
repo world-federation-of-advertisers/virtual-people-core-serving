@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//src:__subpackages__"])
 
@@ -21,22 +21,6 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@cross_media_measurement//src/main/cc/wfa/measurement/common:macros",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:event_cc_proto",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
-    ],
-)
-
-cc_test(
-    name = "labeler_test",
-    srcs = ["labeler_test.cc"],
-    deps = [
-        ":labeler",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:event_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",

@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//src:__subpackages__"])
 
@@ -24,35 +24,11 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "virtual_person_selector_test",
-    srcs = ["virtual_person_selector_test.cc"],
-    deps = [
-        ":virtual_person_selector",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
-    ],
-)
-
 cc_library(
     name = "consistent_hash",
     srcs = ["consistent_hash.cc"],
     hdrs = ["consistent_hash.h"],
     strip_include_prefix = _INCLUDE_PREFIX,
-)
-
-cc_test(
-    name = "consistent_hash_test",
-    srcs = ["consistent_hash_test.cc"],
-    deps = [
-        ":consistent_hash",
-        "@com_google_googletest//:gtest_main",
-    ],
 )
 
 cc_library(
@@ -69,20 +45,6 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "distributed_consistent_hashing_test",
-    srcs = ["distributed_consistent_hashing_test.cc"],
-    deps = [
-        ":distributed_consistent_hashing",
-        "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
-    ],
-)
-
 cc_library(
     name = "field_filters_matcher",
     srcs = ["field_filters_matcher.cc"],
@@ -96,21 +58,6 @@ cc_library(
         "@com_google_protobuf//:protobuf",
         "@cross_media_measurement//src/main/cc/wfa/measurement/common:macros",
         "@virtual_people_common//src/main/cc/wfa/virtual_people/common/field_filter",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:field_filter_cc_proto",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
-    ],
-)
-
-cc_test(
-    name = "field_filters_matcher_test",
-    srcs = ["field_filters_matcher_test.cc"],
-    deps = [
-        ":field_filters_matcher",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:field_filter_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
@@ -133,21 +80,6 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "hash_field_mask_matcher_test",
-    srcs = ["hash_field_mask_matcher_test.cc"],
-    deps = [
-        ":hash_field_mask_matcher",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
-        "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
-    ],
-)
-
 cc_library(
     name = "update_matrix_helper",
     srcs = ["update_matrix_helper.cc"],
@@ -161,20 +93,6 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
-    ],
-)
-
-cc_test(
-    name = "update_matrix_helper_test",
-    srcs = ["update_matrix_helper_test.cc"],
-    deps = [
-        ":distributed_consistent_hashing",
-        ":update_matrix_helper",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
