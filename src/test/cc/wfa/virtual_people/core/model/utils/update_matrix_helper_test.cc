@@ -16,10 +16,10 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "src/test/cc/testutil/matchers.h"
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 
 namespace wfa_virtual_people {
