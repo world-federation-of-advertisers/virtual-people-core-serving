@@ -13,12 +13,12 @@
 // limitations under the License.
 
 #include "absl/container/flat_hash_map.h"
+#include "common_cpp/testing/status_macros.h"
+#include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "src/test/cc/testutil/matchers.h"
-#include "src/test/cc/testutil/status_macros.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 
 namespace wfa_virtual_people {
@@ -34,28 +34,21 @@ constexpr int kFingerprintNumber = 10000;
 
 TEST(PopulationNodeImplTest, TestApply) {
   CompiledNode config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      name: "TestPopulationNode"
-      index: 1
-      population_node {
-        pools {
-          population_offset: 10
-          total_population: 3
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode"
+        index: 1
+        population_node {
+          pools { population_offset: 10 total_population: 3 }
+          pools { population_offset: 30 total_population: 3 }
+          pools { population_offset: 20 total_population: 4 }
+          random_seed: "TestRandomSeed"
         }
-        pools {
-          population_offset: 30
-          total_population: 3
-        }
-        pools {
-          population_offset: 20
-          total_population: 4
-        }
-        random_seed: "TestRandomSeed"
-      }
-  )pb", &config));
+      )pb",
+      &config));
 
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<ModelNode> node, ModelNode::Build(config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
 
   absl::flat_hash_map<int64_t, double> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
@@ -70,45 +63,34 @@ TEST(PopulationNodeImplTest, TestApply) {
 
   // The expected ratio for getting a given virtual person id is 1 / 10 = 10%.
   // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(id_counts, UnorderedElementsAre(
-      Pair(10, DoubleNear(0.1, 0.02)),
-      Pair(11, DoubleNear(0.1, 0.02)),
-      Pair(12, DoubleNear(0.1, 0.02)),
-      Pair(30, DoubleNear(0.1, 0.02)),
-      Pair(31, DoubleNear(0.1, 0.02)),
-      Pair(32, DoubleNear(0.1, 0.02)),
-      Pair(20, DoubleNear(0.1, 0.02)),
-      Pair(21, DoubleNear(0.1, 0.02)),
-      Pair(22, DoubleNear(0.1, 0.02)),
-      Pair(23, DoubleNear(0.1, 0.02))));
+  EXPECT_THAT(
+      id_counts,
+      UnorderedElementsAre(
+          Pair(10, DoubleNear(0.1, 0.02)), Pair(11, DoubleNear(0.1, 0.02)),
+          Pair(12, DoubleNear(0.1, 0.02)), Pair(30, DoubleNear(0.1, 0.02)),
+          Pair(31, DoubleNear(0.1, 0.02)), Pair(32, DoubleNear(0.1, 0.02)),
+          Pair(20, DoubleNear(0.1, 0.02)), Pair(21, DoubleNear(0.1, 0.02)),
+          Pair(22, DoubleNear(0.1, 0.02)), Pair(23, DoubleNear(0.1, 0.02))));
 }
 
 TEST(PopulationNodeImplTest, TestInvalidPools) {
   // The node is invalid as the total pools size is 0.
   CompiledNode config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      name: "TestPopulationNode"
-      index: 1
-      population_node {
-        pools {
-          population_offset: 10
-          total_population: 0
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode"
+        index: 1
+        population_node {
+          pools { population_offset: 10 total_population: 0 }
+          pools { population_offset: 30 total_population: 0 }
+          pools { population_offset: 20 total_population: 0 }
+          random_seed: "TestRandomSeed"
         }
-        pools {
-          population_offset: 30
-          total_population: 0
-        }
-        pools {
-          population_offset: 20
-          total_population: 0
-        }
-        random_seed: "TestRandomSeed"
-      }
-  )pb", &config));
+      )pb",
+      &config));
 
-  EXPECT_THAT(
-      ModelNode::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(ModelNode::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 }  // namespace

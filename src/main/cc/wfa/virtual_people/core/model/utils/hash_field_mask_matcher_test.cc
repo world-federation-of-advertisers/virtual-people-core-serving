@@ -16,12 +16,12 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "common_cpp/testing/status_macros.h"
+#include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "src/test/cc/testutil/matchers.h"
-#include "src/test/cc/testutil/status_macros.h"
 
 namespace wfa_virtual_people {
 namespace {
@@ -40,18 +40,16 @@ FieldMask MakeFieldMask(absl::Span<const std::string> paths) {
 TEST(HashFieldMaskMatcherTest, EmptyEvents) {
   std::vector<const LabelerEvent*> events;
   FieldMask hash_field_mask = MakeFieldMask({"person_country_code"});
-  EXPECT_THAT(
-      HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(HashFieldMaskMatcherTest, NullEvent) {
   std::vector<const LabelerEvent*> events;
   events.emplace_back(nullptr);
   FieldMask hash_field_mask = MakeFieldMask({"person_country_code"});
-  EXPECT_THAT(
-      HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(HashFieldMaskMatcherTest, EmptyHashFieldMask) {
@@ -60,9 +58,8 @@ TEST(HashFieldMaskMatcherTest, EmptyHashFieldMask) {
   input_event.set_person_country_code("COUNTRY_1");
   events.emplace_back(&input_event);
   FieldMask hash_field_mask;
-  EXPECT_THAT(
-      HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(HashFieldMaskMatcherTest, EventsHaveSameHash) {
@@ -77,9 +74,8 @@ TEST(HashFieldMaskMatcherTest, EventsHaveSameHash) {
   events.emplace_back(&input_event_2);
 
   FieldMask hash_field_mask = MakeFieldMask({"person_country_code"});
-  EXPECT_THAT(
-      HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(HashFieldMaskMatcher::Build(events, hash_field_mask).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(HashFieldMaskMatcherTest, TestGetMatch) {
@@ -94,9 +90,8 @@ TEST(HashFieldMaskMatcherTest, TestGetMatch) {
   events.emplace_back(&input_event_2);
 
   FieldMask hash_field_mask = MakeFieldMask({"person_country_code"});
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<HashFieldMaskMatcher> matcher,
-      HashFieldMaskMatcher::Build(events, hash_field_mask));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<HashFieldMaskMatcher> matcher,
+                       HashFieldMaskMatcher::Build(events, hash_field_mask));
 
   // events[0] matches. Returns 0.
   LabelerEvent event_1;
@@ -137,11 +132,10 @@ TEST(HashFieldMaskMatcherTest, TestUnsetField) {
   input_event_2.set_person_region_code("REGION_2");
   events.emplace_back(&input_event_2);
 
-  FieldMask hash_field_mask = MakeFieldMask(
-      {"person_country_code", "person_region_code"});
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<HashFieldMaskMatcher> matcher,
-      HashFieldMaskMatcher::Build(events, hash_field_mask));
+  FieldMask hash_field_mask =
+      MakeFieldMask({"person_country_code", "person_region_code"});
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<HashFieldMaskMatcher> matcher,
+                       HashFieldMaskMatcher::Build(events, hash_field_mask));
 
   // events[0] matches. Returns 0.
   LabelerEvent event_1;

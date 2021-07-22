@@ -15,12 +15,12 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "common_cpp/testing/status_macros.h"
+#include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "src/test/cc/testutil/matchers.h"
-#include "src/test/cc/testutil/status_macros.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 
 namespace wfa_virtual_people {
@@ -36,124 +36,108 @@ constexpr int kSeedNumber = 10000;
 
 TEST(SparseUpdateMatrixImplTest, TestNoColumns) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        pass_through_non_matches: false
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
+        }
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(SparseUpdateMatrixImplTest, TestNoColumnAttrs) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns {
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            probabilities: 1
           }
-          probabilities: 1
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
         }
-        pass_through_non_matches: false
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(SparseUpdateMatrixImplTest, TestNoRows) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_1"
-          }
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns { column_attrs { person_country_code: "COUNTRY_1" } }
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
         }
-        pass_through_non_matches: false
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(SparseUpdateMatrixImplTest, TestNoRowInSecondColumn) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_1"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns {
+            column_attrs { person_country_code: "COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            probabilities: 1
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
-          }
-          probabilities: 1
+          columns { column_attrs { person_country_code: "COUNTRY_2" } }
+          pass_through_non_matches: false
+          random_seed: "TestSeed1"
         }
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_2"
-          }
-        }
-        pass_through_non_matches: false
-        random_seed: "TestSeed1"
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(SparseUpdateMatrixImplTest, TestProbabilitiesCountNotMatch) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_1"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns {
+            column_attrs { person_country_code: "COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            probabilities: 1
+            probabilities: 0
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
-          }
-          probabilities: 1
-          probabilities: 0
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
         }
-        pass_through_non_matches: false
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(SparseUpdateMatrixImplTest, TestInvalidProbability) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_1"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns {
+            column_attrs { person_country_code: "COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            probabilities: -1
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
-          }
-          probabilities: -1
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
         }
-        pass_through_non_matches: false
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(SparseUpdateMatrixImplTest, TestOutputDistribution) {
@@ -163,45 +147,32 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistribution) {
   // "UPDATED_COUNTRY_2"    0.2         0.4
   // "UPDATED_COUNTRY_3"    0           0.4
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_1"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns {
+            column_attrs { person_country_code: "COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_2" }
+            probabilities: 0.8
+            probabilities: 0.2
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
+          columns {
+            column_attrs { person_country_code: "COUNTRY_2" }
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_2" }
+            rows { person_country_code: "UPDATED_COUNTRY_3" }
+            probabilities: 0.2
+            probabilities: 0.4
+            probabilities: 0.4
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_2"
-          }
-          probabilities: 0.8
-          probabilities: 0.2
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
         }
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_2"
-          }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
-          }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_2"
-          }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_3"
-          }
-          probabilities: 0.2
-          probabilities: 0.4
-          probabilities: 0.4
-        }
-        pass_through_non_matches: false
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<AttributesUpdaterInterface> updater,
-      AttributesUpdaterInterface::Build(config));
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
 
   // When the input person_country_code is "COUNTRY_1", the output probability
   // distribution is
@@ -220,9 +191,10 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistribution) {
     value /= static_cast<double>(kSeedNumber);
   }
   // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(output_counts_1, UnorderedElementsAre(
-      Pair("UPDATED_COUNTRY_1", DoubleNear(0.8, 0.02)),
-      Pair("UPDATED_COUNTRY_2", DoubleNear(0.2, 0.02))));
+  EXPECT_THAT(
+      output_counts_1,
+      UnorderedElementsAre(Pair("UPDATED_COUNTRY_1", DoubleNear(0.8, 0.02)),
+                           Pair("UPDATED_COUNTRY_2", DoubleNear(0.2, 0.02))));
 
   // When the input person_country_code is "COUNTRY_2", the output probability
   // distribution is
@@ -242,10 +214,11 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistribution) {
     value /= static_cast<double>(kSeedNumber);
   }
   // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(output_counts_2, UnorderedElementsAre(
-      Pair("UPDATED_COUNTRY_1", DoubleNear(0.2, 0.02)),
-      Pair("UPDATED_COUNTRY_2", DoubleNear(0.4, 0.02)),
-      Pair("UPDATED_COUNTRY_3", DoubleNear(0.4, 0.02))));
+  EXPECT_THAT(
+      output_counts_2,
+      UnorderedElementsAre(Pair("UPDATED_COUNTRY_1", DoubleNear(0.2, 0.02)),
+                           Pair("UPDATED_COUNTRY_2", DoubleNear(0.4, 0.02)),
+                           Pair("UPDATED_COUNTRY_3", DoubleNear(0.4, 0.02))));
 }
 
 TEST(SparseUpdateMatrixImplTest, TestOutputDistributionNotNormalized) {
@@ -260,45 +233,32 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistributionNotNormalized) {
   // "UPDATED_COUNTRY_2"    0.2         0.4
   // "UPDATED_COUNTRY_3"    0           0.4
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_1"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns {
+            column_attrs { person_country_code: "COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_2" }
+            probabilities: 1.6
+            probabilities: 0.4
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
+          columns {
+            column_attrs { person_country_code: "COUNTRY_2" }
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_2" }
+            rows { person_country_code: "UPDATED_COUNTRY_3" }
+            probabilities: 0.4
+            probabilities: 0.8
+            probabilities: 0.8
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_2"
-          }
-          probabilities: 1.6
-          probabilities: 0.4
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
         }
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_2"
-          }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
-          }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_2"
-          }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_3"
-          }
-          probabilities: 0.4
-          probabilities: 0.8
-          probabilities: 0.8
-        }
-        pass_through_non_matches: false
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<AttributesUpdaterInterface> updater,
-      AttributesUpdaterInterface::Build(config));
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
 
   // When the input person_country_code is "COUNTRY_1", the output probability
   // distribution is
@@ -317,9 +277,10 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistributionNotNormalized) {
     value /= static_cast<double>(kSeedNumber);
   }
   // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(output_counts_1, UnorderedElementsAre(
-      Pair("UPDATED_COUNTRY_1", DoubleNear(0.8, 0.02)),
-      Pair("UPDATED_COUNTRY_2", DoubleNear(0.2, 0.02))));
+  EXPECT_THAT(
+      output_counts_1,
+      UnorderedElementsAre(Pair("UPDATED_COUNTRY_1", DoubleNear(0.8, 0.02)),
+                           Pair("UPDATED_COUNTRY_2", DoubleNear(0.2, 0.02))));
 
   // When the input person_country_code is "COUNTRY_2", the output probability
   // distribution is
@@ -339,10 +300,11 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistributionNotNormalized) {
     value /= static_cast<double>(kSeedNumber);
   }
   // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(output_counts_2, UnorderedElementsAre(
-      Pair("UPDATED_COUNTRY_1", DoubleNear(0.2, 0.02)),
-      Pair("UPDATED_COUNTRY_2", DoubleNear(0.4, 0.02)),
-      Pair("UPDATED_COUNTRY_3", DoubleNear(0.4, 0.02))));
+  EXPECT_THAT(
+      output_counts_2,
+      UnorderedElementsAre(Pair("UPDATED_COUNTRY_1", DoubleNear(0.2, 0.02)),
+                           Pair("UPDATED_COUNTRY_2", DoubleNear(0.4, 0.02)),
+                           Pair("UPDATED_COUNTRY_3", DoubleNear(0.4, 0.02))));
 }
 
 TEST(SparseUpdateMatrixImplTest, TestNoMatchingNotPass) {
@@ -350,31 +312,27 @@ TEST(SparseUpdateMatrixImplTest, TestNoMatchingNotPass) {
   //                     "COUNTRY_1"
   // "UPDATED_COUNTRY_1"     1
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_1"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns {
+            column_attrs { person_country_code: "COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            probabilities: 1
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
-          }
-          probabilities: 1
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
         }
-        pass_through_non_matches: false
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<AttributesUpdaterInterface> updater,
-      AttributesUpdaterInterface::Build(config));
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
 
   LabelerEvent event;
   event.set_person_country_code("COUNTRY_2");
   event.set_acting_fingerprint(0);
-  EXPECT_THAT(
-      updater->Update(event),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(updater->Update(event),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
   EXPECT_EQ(event.person_country_code(), "COUNTRY_2");
 }
 
@@ -383,24 +341,21 @@ TEST(SparseUpdateMatrixImplTest, TestNoMatchingPass) {
   //                     "COUNTRY_1"
   // "UPDATED_COUNTRY_1"     1
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_1"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns {
+            column_attrs { person_country_code: "COUNTRY_1" }
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            probabilities: 1
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
-          }
-          probabilities: 1
+          pass_through_non_matches: true
+          random_seed: "TestSeed"
         }
-        pass_through_non_matches: true
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<AttributesUpdaterInterface> updater,
-      AttributesUpdaterInterface::Build(config));
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
 
   // No match. Returns OK status as pass_through_non_matches is true.
   LabelerEvent event;
@@ -415,28 +370,25 @@ TEST(SparseUpdateMatrixImplTest, TestHashFieldMask) {
   //                     "COUNTRY_1"
   // "UPDATED_COUNTRY_1"     1
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          column_attrs {
-            person_country_code: "COUNTRY_1"
-            person_region_code: "REGION_1"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns {
+            column_attrs {
+              person_country_code: "COUNTRY_1"
+              person_region_code: "REGION_1"
+            }
+            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            probabilities: 1
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
-          }
-          probabilities: 1
+          hash_field_mask { paths: "person_country_code" }
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
         }
-        hash_field_mask {
-          paths: "person_country_code"
-        }
-        pass_through_non_matches: false
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<AttributesUpdaterInterface> updater,
-      AttributesUpdaterInterface::Build(config));
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
 
   // person_country_code matches. person_region_code is ignored as not in
   // hash_field_mask.
@@ -460,9 +412,8 @@ TEST(SparseUpdateMatrixImplTest, TestHashFieldMask) {
   event_3.set_person_country_code("COUNTRY_2");
   event_3.set_person_region_code("REGION_1");
   event_3.set_acting_fingerprint(0);
-  EXPECT_THAT(
-      updater->Update(event_3),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(updater->Update(event_3),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
   EXPECT_EQ(event_3.person_country_code(), "COUNTRY_2");
 }
 
@@ -471,29 +422,28 @@ TEST(UpdateMatrixImplTest, TestHashFieldMaskFieldNotSet) {
   //                     "COUNTRY_1"
   // "UPDATED_COUNTRY_1"     1
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      sparse_update_matrix {
-        columns {
-          column_attrs {
-            person_region_code: "REGION_1"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        sparse_update_matrix {
+          columns {
+            column_attrs { person_region_code: "REGION_1" }
+            rows {
+              person_country_code: "UPDATED_COUNTRY_1"
+              person_region_code: "UPDATED_REGION_1"
+            }
+            probabilities: 1
           }
-          rows {
-            person_country_code: "UPDATED_COUNTRY_1"
-            person_region_code: "UPDATED_REGION_1"
+          hash_field_mask {
+            paths: "person_country_code"
+            paths: "person_region_code"
           }
-          probabilities: 1
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
         }
-        hash_field_mask {
-          paths: "person_country_code"
-          paths: "person_region_code"
-        }
-        pass_through_non_matches: false
-        random_seed: "TestSeed"
-      }
-  )pb", &config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<AttributesUpdaterInterface> updater,
-      AttributesUpdaterInterface::Build(config));
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
 
   // person_country_code matches as not set. person_region_code matches.
   LabelerEvent event_1;
@@ -508,9 +458,8 @@ TEST(UpdateMatrixImplTest, TestHashFieldMaskFieldNotSet) {
   event_2.set_person_country_code("COUNTRY_1");
   event_2.set_person_region_code("REGION_1");
   event_2.set_acting_fingerprint(0);
-  EXPECT_THAT(
-      updater->Update(event_2),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(updater->Update(event_2),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
   EXPECT_EQ(event_2.person_country_code(), "COUNTRY_1");
   EXPECT_EQ(event_2.person_region_code(), "REGION_1");
 }

@@ -18,7 +18,6 @@ cc_library(
         "update_tree_impl.cc",
     ],
     hdrs = [
-        "stop_node_impl.h",
         "attributes_updater.h",
         "branch_node_impl.h",
         "conditional_assignment_impl.h",
@@ -26,6 +25,7 @@ cc_library(
         "model_node.h",
         "population_node_impl.h",
         "sparse_update_matrix_impl.h",
+        "stop_node_impl.h",
         "update_matrix_impl.h",
         "update_tree_impl.h",
     ],
@@ -45,10 +45,10 @@ cc_library(
         "@com_google_absl//absl/types:variant",
         "@com_google_farmhash//:farmhash",
         "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/main/cc/wfa/measurement/common:macros",
         "@virtual_people_common//src/main/cc/wfa/virtual_people/common/field_filter",
         "@virtual_people_common//src/main/cc/wfa/virtual_people/common/field_filter/utils:field_util",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/macros",
     ],
 )
 
@@ -58,11 +58,10 @@ cc_test(
     deps = [
         ":model_node",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@googletest//:gtest_main",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
     ],
 )
 
@@ -73,11 +72,10 @@ cc_test(
         ":model_node",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@googletest//:gtest_main",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
     ],
 )
 
@@ -87,13 +85,12 @@ cc_test(
     deps = [
         ":model_node",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@googletest//:gtest_main",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
     ],
 )
 
@@ -103,13 +100,12 @@ cc_test(
     deps = [
         ":model_node",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@googletest//:gtest_main",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
     ],
 )
 
@@ -119,13 +115,12 @@ cc_test(
     deps = [
         ":model_node",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@googletest//:gtest_main",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
     ],
 )
 
@@ -134,13 +129,12 @@ cc_test(
     srcs = ["conditional_merge_impl_test.cc"],
     deps = [
         ":model_node",
-        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@googletest//:gtest_main",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
     ],
 )
 
@@ -149,13 +143,12 @@ cc_test(
     srcs = ["conditional_assignment_impl_test.cc"],
     deps = [
         ":model_node",
-        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@cross_media_measurement//src/test/cc/testutil:matchers",
-        "@cross_media_measurement//src/test/cc/testutil:status_macros",
+        "@googletest//:gtest_main",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:demographic_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
     ],
 )

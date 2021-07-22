@@ -14,35 +14,43 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "common_cpp/testing/status_macros.h"
+#include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
+#include "google/protobuf/util/message_differencer.h"
 #include "gtest/gtest.h"
 #include "src/main/proto/wfa/virtual_people/common/demographic.pb.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "src/test/cc/testutil/matchers.h"
-#include "src/test/cc/testutil/status_macros.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 
 namespace wfa_virtual_people {
 namespace {
 
-using ::wfa::EqualsProto;
 using ::wfa::IsOk;
 using ::wfa::StatusIs;
 
+MATCHER_P(EqualsProto, expected, "") {
+  ::google::protobuf::util::MessageDifferencer differencer;
+  differencer.set_repeated_field_comparison(
+      google::protobuf::util::MessageDifferencer::AS_SET);
+  return differencer.Compare(arg, expected);
+}
+
 TEST(ConditionalAssignmentImplTest, TestNoCondition) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      conditional_assignment {
-        assignments {
-          source_field: "acting_demo.gender"
-          target_field: "corrected_demo.gender"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_assignment {
+          assignments {
+            source_field: "acting_demo.gender"
+            target_field: "corrected_demo.gender"
+          }
         }
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(ConditionalAssignmentImplTest, TestInvalidCondition) {
@@ -50,104 +58,89 @@ TEST(ConditionalAssignmentImplTest, TestInvalidCondition) {
   // field filter condition will fail, thus the buid of the conditional
   // assignment will fail.
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      conditional_assignment {
-        condition {
-          op: EQUAL
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_assignment {
+          condition { op: EQUAL }
+          assignments {
+            source_field: "acting_demo.gender"
+            target_field: "corrected_demo.gender"
+          }
         }
-        assignments {
-          source_field: "acting_demo.gender"
-          target_field: "corrected_demo.gender"
-        }
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(ConditionalAssignmentImplTest, TestEmptyAssignments) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      conditional_assignment {
-        condition {
-          op: HAS
-          name: "acting_demo.gender"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_assignment {
+          condition { op: HAS name: "acting_demo.gender" }
         }
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(ConditionalAssignmentImplTest, TestNoSourceField) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      conditional_assignment {
-        condition {
-          op: HAS
-          name: "acting_demo.gender"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_assignment {
+          condition { op: HAS name: "acting_demo.gender" }
+          assignments { target_field: "corrected_demo.gender" }
         }
-        assignments {
-          target_field: "corrected_demo.gender"
-        }
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(ConditionalAssignmentImplTest, TestNoTargetField) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      conditional_assignment {
-        condition {
-          op: HAS
-          name: "acting_demo.gender"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_assignment {
+          condition { op: HAS name: "acting_demo.gender" }
+          assignments { source_field: "acting_demo.gender" }
         }
-        assignments {
-          source_field: "acting_demo.gender"
-        }
-      }
-  )pb", &config));
-  EXPECT_THAT(
-      AttributesUpdaterInterface::Build(config).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(ConditionalAssignmentImplTest, TestSingleAssignment) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      conditional_assignment {
-        condition {
-          op: HAS
-          name: "acting_demo.gender"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_assignment {
+          condition { op: HAS name: "acting_demo.gender" }
+          assignments {
+            source_field: "acting_demo.gender"
+            target_field: "corrected_demo.gender"
+          }
         }
-        assignments {
-          source_field: "acting_demo.gender"
-          target_field: "corrected_demo.gender"
-        }
-      }
-  )pb", &config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<AttributesUpdaterInterface> updater,
-      AttributesUpdaterInterface::Build(config));
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
 
   // Matches the condition. Updates the event.
   LabelerEvent event_1;
   event_1.mutable_acting_demo()->set_gender(GENDER_FEMALE);
   EXPECT_THAT(updater->Update(event_1), IsOk());
   LabelerEvent expected_event_1;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      acting_demo {
-        gender: GENDER_FEMALE
-      }
-      corrected_demo {
-        gender: GENDER_FEMALE
-      }
-  )pb", &expected_event_1));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        acting_demo { gender: GENDER_FEMALE }
+        corrected_demo { gender: GENDER_FEMALE }
+      )pb",
+      &expected_event_1));
   EXPECT_THAT(event_1, EqualsProto(expected_event_1));
 
   // Does not match the condition. Does nothing
@@ -158,139 +151,120 @@ TEST(ConditionalAssignmentImplTest, TestSingleAssignment) {
 
 TEST(ConditionalAssignmentImplTest, TestMultipleAssignments) {
   BranchNode::AttributesUpdater config;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      conditional_assignment {
-        condition {
-          op:AND
-          sub_filters {
-            op: HAS
-            name: "acting_demo.gender"
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_assignment {
+          condition {
+            op: AND
+            sub_filters { op: HAS name: "acting_demo.gender" }
+            sub_filters { op: HAS name: "acting_demo.age.min_age" }
+            sub_filters { op: HAS name: "acting_demo.age.max_age" }
           }
-          sub_filters {
-            op: HAS
-            name: "acting_demo.age.min_age"
+          assignments {
+            source_field: "acting_demo.gender"
+            target_field: "corrected_demo.gender"
           }
-          sub_filters {
-            op: HAS
-            name: "acting_demo.age.max_age"
+          assignments {
+            source_field: "acting_demo.age.min_age"
+            target_field: "corrected_demo.age.min_age"
+          }
+          assignments {
+            source_field: "acting_demo.age.max_age"
+            target_field: "corrected_demo.age.max_age"
           }
         }
-        assignments {
-          source_field: "acting_demo.gender"
-          target_field: "corrected_demo.gender"
-        }
-        assignments {
-          source_field: "acting_demo.age.min_age"
-          target_field: "corrected_demo.age.min_age"
-        }
-        assignments {
-          source_field: "acting_demo.age.max_age"
-          target_field: "corrected_demo.age.max_age"
-        }
-      }
-  )pb", &config));
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<AttributesUpdaterInterface> updater,
-      AttributesUpdaterInterface::Build(config));
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
 
   // Matches the condition. Updates the event.
   LabelerEvent event_1;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      acting_demo {
-        gender: GENDER_FEMALE
-        age {
-          min_age: 25
-          max_age: 29
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        acting_demo {
+          gender: GENDER_FEMALE
+          age { min_age: 25 max_age: 29 }
         }
-      }
-  )pb", &event_1));
+      )pb",
+      &event_1));
   EXPECT_THAT(updater->Update(event_1), IsOk());
   LabelerEvent expected_event_1;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      acting_demo {
-        gender: GENDER_FEMALE
-        age {
-          min_age: 25
-          max_age: 29
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        acting_demo {
+          gender: GENDER_FEMALE
+          age { min_age: 25 max_age: 29 }
         }
-      }
-      corrected_demo {
-        gender: GENDER_FEMALE
-        age {
-          min_age: 25
-          max_age: 29
+        corrected_demo {
+          gender: GENDER_FEMALE
+          age { min_age: 25 max_age: 29 }
         }
-      }
-  )pb", &expected_event_1));
+      )pb",
+      &expected_event_1));
   EXPECT_THAT(event_1, EqualsProto(expected_event_1));
 
   // Does not match the condition as acting_demo.gender is not set. Does
   // nothing.
   LabelerEvent event_2;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      acting_demo {
-        age {
-          min_age: 25
-          max_age: 29
-        }
-      }
-  )pb", &event_2));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        acting_demo { age { min_age: 25 max_age: 29 } }
+      )pb",
+      &event_2));
   EXPECT_THAT(updater->Update(event_2), IsOk());
   LabelerEvent expected_event_2;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      acting_demo {
-        age {
-          min_age: 25
-          max_age: 29
-        }
-      }
-  )pb", &expected_event_2));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        acting_demo { age { min_age: 25 max_age: 29 } }
+      )pb",
+      &expected_event_2));
   EXPECT_THAT(event_2, EqualsProto(expected_event_2));
 
   // Does not match the condition as acting_demo.age.max_age is not set. Does
   // nothing.
   LabelerEvent event_3;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      acting_demo {
-        gender: GENDER_FEMALE
-        age {
-          min_age: 25
-        }
-      }
-  )pb", &event_3));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(R"pb(
+                                                      acting_demo {
+                                                        gender: GENDER_FEMALE
+                                                        age { min_age: 25 }
+                                                      }
+                                                    )pb",
+                                                    &event_3));
   EXPECT_THAT(updater->Update(event_3), IsOk());
   LabelerEvent expected_event_3;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      acting_demo {
-        gender: GENDER_FEMALE
-        age {
-          min_age: 25
-        }
-      }
-  )pb", &expected_event_3));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(R"pb(
+                                                      acting_demo {
+                                                        gender: GENDER_FEMALE
+                                                        age { min_age: 25 }
+                                                      }
+                                                    )pb",
+                                                    &expected_event_3));
   EXPECT_THAT(event_3, EqualsProto(expected_event_3));
 
   // Does not match the condition as acting_demo.age.min_age is not set. Does
   // nothing.
   LabelerEvent event_4;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      acting_demo {
-        gender: GENDER_FEMALE
-        age {
-          max_age: 29
-        }
-      }
-  )pb", &event_4));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(R"pb(
+                                                      acting_demo {
+                                                        gender: GENDER_FEMALE
+                                                        age { max_age: 29 }
+                                                      }
+                                                    )pb",
+                                                    &event_4));
   EXPECT_THAT(updater->Update(event_4), IsOk());
   LabelerEvent expected_event_4;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      acting_demo {
-        gender: GENDER_FEMALE
-        age {
-          max_age: 29
-        }
-      }
-  )pb", &expected_event_4));
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(R"pb(
+                                                      acting_demo {
+                                                        gender: GENDER_FEMALE
+                                                        age { max_age: 29 }
+                                                      }
+                                                    )pb",
+                                                    &expected_event_4));
   EXPECT_THAT(event_4, EqualsProto(expected_event_4));
 }
 

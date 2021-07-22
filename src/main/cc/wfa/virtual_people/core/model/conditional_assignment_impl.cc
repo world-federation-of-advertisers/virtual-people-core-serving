@@ -18,9 +18,9 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "common_cpp/macros/macros.h"
 #include "google/protobuf/descriptor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/common/field_filter/field_filter.h"
 #include "wfa/virtual_people/common/field_filter/utils/field_util.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
@@ -37,8 +37,7 @@ void Assign(
 }
 
 absl::StatusOr<std::function<void(
-    LabelerEvent&,
-    const std::vector<const google::protobuf::FieldDescriptor*>&,
+    LabelerEvent&, const std::vector<const google::protobuf::FieldDescriptor*>&,
     const std::vector<const google::protobuf::FieldDescriptor*>&)>>
 GetAssignmentFunction(
     const google::protobuf::FieldDescriptor::CppType cpp_type) {
@@ -66,12 +65,13 @@ GetAssignmentFunction(
 absl::StatusOr<std::unique_ptr<ConditionalAssignmentImpl>>
 ConditionalAssignmentImpl::Build(const ConditionalAssignment& config) {
   if (!config.has_condition()) {
-    return absl::InvalidArgumentError(absl::StrCat(
-      "Condition is not set in ConditionalAssignment: ", config.DebugString()));
+    return absl::InvalidArgumentError(
+        absl::StrCat("Condition is not set in ConditionalAssignment: ",
+                     config.DebugString()));
   }
   if (config.assignments_size() == 0) {
     return absl::InvalidArgumentError(absl::StrCat(
-      "No assignments in ConditionalAssignment: ", config.DebugString()));
+        "No assignments in ConditionalAssignment: ", config.DebugString()));
   }
 
   ASSIGN_OR_RETURN(
@@ -85,29 +85,29 @@ ConditionalAssignmentImpl::Build(const ConditionalAssignment& config) {
   std::vector<ConditionalAssignmentImpl::Assignment> assignments;
 
   for (const ConditionalAssignment::Assignment& assignment_config :
-           config.assignments()) {
+       config.assignments()) {
     if (!assignment_config.has_source_field()) {
-      return absl::InvalidArgumentError(absl::StrCat(
-        "All assignments must have source_field set in ConditionalAssignment: ",
-        config.DebugString()));
+      return absl::InvalidArgumentError(
+          absl::StrCat("All assignments must have source_field set in "
+                       "ConditionalAssignment: ",
+                       config.DebugString()));
     }
     if (!assignment_config.has_target_field()) {
-      return absl::InvalidArgumentError(absl::StrCat(
-        "All assignments must have target_field set in ConditionalAssignment: ",
-        config.DebugString()));
+      return absl::InvalidArgumentError(
+          absl::StrCat("All assignments must have target_field set in "
+                       "ConditionalAssignment: ",
+                       config.DebugString()));
     }
 
     ConditionalAssignmentImpl::Assignment& assignment =
         assignments.emplace_back();
 
-    ASSIGN_OR_RETURN(
-        assignment.source,
-        GetFieldFromProto(
-            LabelerEvent().GetDescriptor(), assignment_config.source_field()));
-    ASSIGN_OR_RETURN(
-        assignment.target,
-        GetFieldFromProto(
-            LabelerEvent().GetDescriptor(), assignment_config.target_field()));
+    ASSIGN_OR_RETURN(assignment.source,
+                     GetFieldFromProto(LabelerEvent().GetDescriptor(),
+                                       assignment_config.source_field()));
+    ASSIGN_OR_RETURN(assignment.target,
+                     GetFieldFromProto(LabelerEvent().GetDescriptor(),
+                                       assignment_config.target_field()));
     if (assignment.source.back()->cpp_type() !=
         assignment.target.back()->cpp_type()) {
       return absl::InvalidArgumentError(absl::StrCat(
@@ -121,14 +121,14 @@ ConditionalAssignmentImpl::Build(const ConditionalAssignment& config) {
         GetAssignmentFunction(assignment.source.back()->cpp_type()));
   }
 
-  return absl::make_unique<ConditionalAssignmentImpl>(
-      std::move(condition), std::move(assignments));
+  return absl::make_unique<ConditionalAssignmentImpl>(std::move(condition),
+                                                      std::move(assignments));
 }
 
 absl::Status ConditionalAssignmentImpl::Update(LabelerEvent& event) const {
   if (condition_->IsMatch(event)) {
     for (const ConditionalAssignmentImpl::Assignment& assignment :
-             assignments_) {
+         assignments_) {
       assignment.assign(event, assignment.source, assignment.target);
     }
   }

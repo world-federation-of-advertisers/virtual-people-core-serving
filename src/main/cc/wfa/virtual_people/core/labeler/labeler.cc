@@ -20,20 +20,19 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "common_cpp/macros/macros.h"
 #include "src/farmhash.h"
 #include "src/main/proto/wfa/virtual_people/common/event.pb.h"
 #include "src/main/proto/wfa/virtual_people/common/label.pb.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 
 namespace wfa_virtual_people {
 
 absl::StatusOr<std::unique_ptr<Labeler>> Labeler::Build(
     const CompiledNode& root) {
-  ASSIGN_OR_RETURN(
-      std::unique_ptr<ModelNode> root_node,
-      ModelNode::Build(root));
+  ASSIGN_OR_RETURN(std::unique_ptr<ModelNode> root_node,
+                   ModelNode::Build(root));
   return absl::make_unique<Labeler>(std::move(root_node));
 }
 
@@ -48,16 +47,14 @@ absl::StatusOr<std::unique_ptr<Labeler>> Labeler::Build(
           "No node is allowed after the root node.");
     }
     if (node_config.has_index()) {
-      ASSIGN_OR_RETURN(
-          std::unique_ptr<ModelNode> node,
-          ModelNode::Build(node_config, node_refs));
+      ASSIGN_OR_RETURN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(node_config, node_refs));
       if (!node_refs.insert({node_config.index(), std::move(node)}).second) {
         return absl::InvalidArgumentError(
             absl::StrCat("Duplicated indexes: ", node_config.index()));
       }
     } else {
-      ASSIGN_OR_RETURN(
-          root, ModelNode::Build(node_config, node_refs));
+      ASSIGN_OR_RETURN(root, ModelNode::Build(node_config, node_refs));
     }
   }
 
@@ -76,8 +73,7 @@ absl::StatusOr<std::unique_ptr<Labeler>> Labeler::Build(
   }
 
   if (!node_refs.empty()) {
-    return absl::InvalidArgumentError(
-        "Some nodes are not in the model tree.");
+    return absl::InvalidArgumentError("Some nodes are not in the model tree.");
   }
 
   return absl::make_unique<Labeler>(std::move(root));
@@ -118,8 +114,8 @@ void SetFingerprints(LabelerEvent& event) {
   }
 }
 
-absl::Status Labeler::Label(
-    const LabelerInput& input, LabelerOutput& output) const {
+absl::Status Labeler::Label(const LabelerInput& input,
+                            LabelerOutput& output) const {
   // Prepare labeler event.
   LabelerEvent event;
   *event.mutable_labeler_input() = input;
