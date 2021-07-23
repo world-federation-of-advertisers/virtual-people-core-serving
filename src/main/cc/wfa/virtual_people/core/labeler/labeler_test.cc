@@ -14,6 +14,9 @@
 
 #include "wfa/virtual_people/core/labeler/labeler.h"
 
+#include <memory>
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"

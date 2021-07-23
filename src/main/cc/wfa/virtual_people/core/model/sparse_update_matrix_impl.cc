@@ -14,6 +14,10 @@
 
 #include "wfa/virtual_people/core/model/sparse_update_matrix_impl.h"
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"

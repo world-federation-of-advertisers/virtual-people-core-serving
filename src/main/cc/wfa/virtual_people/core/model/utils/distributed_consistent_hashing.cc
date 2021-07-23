@@ -15,6 +15,10 @@
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 
 #include <cmath>
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -52,8 +56,7 @@ DistributedConsistentHashing::Build(
       std::move(distribution));
 }
 
-std::string GetFullSeed(
-    absl::string_view random_seed, const int32_t choice) {
+std::string GetFullSeed(absl::string_view random_seed, const int32_t choice) {
   return absl::StrFormat("consistent-hashing-%s-%d", random_seed, choice);
 }
 
@@ -62,11 +65,9 @@ inline double FloatHash(absl::string_view full_seed) {
          static_cast<double>(std::numeric_limits<uint64_t>::max());
 }
 
-double ComputeXi(
-    absl::string_view random_seed,
-    const int32_t choice, const double probability) {
-  return (-std::log(FloatHash(GetFullSeed(random_seed, choice))) /
-          probability);
+double ComputeXi(absl::string_view random_seed, const int32_t choice,
+                 const double probability) {
+  return (-std::log(FloatHash(GetFullSeed(random_seed, choice))) / probability);
 }
 
 // A C++ version of the Python function ConsistentHashing.hash in

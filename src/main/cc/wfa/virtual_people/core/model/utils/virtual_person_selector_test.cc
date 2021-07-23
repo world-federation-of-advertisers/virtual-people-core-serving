@@ -14,6 +14,8 @@
 
 #include "wfa/virtual_people/core/model/utils/virtual_person_selector.h"
 
+#include <memory>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "common_cpp/testing/status_macros.h"

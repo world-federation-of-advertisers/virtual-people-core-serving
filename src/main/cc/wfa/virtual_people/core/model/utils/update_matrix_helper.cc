@@ -14,6 +14,9 @@
 
 #include "wfa/virtual_people/core/model/utils/update_matrix_helper.h"
 
+#include <memory>
+#include <vector>
+
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -30,8 +33,7 @@ absl::StatusOr<MatrixIndexes> SelectFromMatrix(
     const FieldFiltersMatcher* filters_matcher,
     const std::vector<std::unique_ptr<DistributedConsistentHashing>>&
         row_hashings,
-    absl::string_view random_seed,
-    const LabelerEvent& event) {
+    absl::string_view random_seed, const LabelerEvent& event) {
   int column_index = kNoMatchingIndex;
   if (hash_matcher) {
     column_index = hash_matcher->GetMatch(event);
