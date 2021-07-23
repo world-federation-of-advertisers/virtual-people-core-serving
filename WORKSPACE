@@ -25,19 +25,13 @@ protobuf_deps()
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
-new_git_repository(
-    name = "com_google_farmhash",
-    build_file = "farmhash.BUILD",
-    commit = "0d859a811870d10f53a594927d0d0b97573ad06d",
-    remote = "https://github.com/google/farmhash",
-)
-
 git_repository(
     name = "virtual_people_common",
     commit = "36f58cfc29901a3110df585faba206964b96e4a1",
     remote = "https://github.com/world-federation-of-advertisers/virtual-people-common",
 )
 
+# TODO: delete this after virtual-people-common no longer requires it
 git_repository(
     name = "cross_media_measurement",
     commit = "a4863588aa84c965e6ec0d0b1d6e535b0d86d388",
