@@ -14,6 +14,11 @@
 
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/status/statusor.h"

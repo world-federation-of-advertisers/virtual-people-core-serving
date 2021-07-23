@@ -14,6 +14,9 @@
 
 #include "wfa/virtual_people/core/model/utils/update_matrix_helper.h"
 
+#include <memory>
+#include <vector>
+
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "common_cpp/testing/status_matchers.h"
