@@ -44,7 +44,7 @@ void CheckCorrectnessForOneKey(const uint64_t key, const int32_t max_buckets) {
 TEST(JumpConsistentHashTest, TestCorrectness) {
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_int_distribution<unsigned long long> distrib(
+  std::uniform_int_distribution<std::uint64_t> distrib(
       std::numeric_limits<std::uint64_t>::min(),
       std::numeric_limits<std::uint64_t>::max());
   for (int i = 0; i < kKeyNumber; i++) {
@@ -56,7 +56,7 @@ TEST(JumpConsistentHashTest, TestCorrectness) {
 TEST(JumpConsistentHashTest, TestIntMaxBuckets) {
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_int_distribution<unsigned long long> distrib(
+  std::uniform_int_distribution<std::uint64_t> distrib(
       std::numeric_limits<std::uint64_t>::min(),
       std::numeric_limits<std::uint64_t>::max());
   for (int i = 0; i < kKeyNumber; i++) {
