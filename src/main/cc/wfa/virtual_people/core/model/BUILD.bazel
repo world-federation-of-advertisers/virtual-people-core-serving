@@ -18,7 +18,6 @@ cc_library(
         "update_tree_impl.cc",
     ],
     hdrs = [
-        "stop_node_impl.h",
         "attributes_updater.h",
         "branch_node_impl.h",
         "conditional_assignment_impl.h",
@@ -26,6 +25,7 @@ cc_library(
         "model_node.h",
         "population_node_impl.h",
         "sparse_update_matrix_impl.h",
+        "stop_node_impl.h",
         "update_matrix_impl.h",
         "update_tree_impl.h",
     ],
