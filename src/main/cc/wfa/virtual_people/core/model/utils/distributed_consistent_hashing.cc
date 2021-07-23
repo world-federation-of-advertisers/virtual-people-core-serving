@@ -68,7 +68,7 @@ inline double FloatHash(absl::string_view full_seed) {
 
 double ComputeXi(absl::string_view random_seed, const int32_t choice,
                  const double probability) {
-  return (-std::log(FloatHash(GetFullSeed(random_seed, choice))) / probability);
+  return -std::log(FloatHash(GetFullSeed(random_seed, choice))) / probability;
 }
 
 // A C++ version of the Python function ConsistentHashing.hash in

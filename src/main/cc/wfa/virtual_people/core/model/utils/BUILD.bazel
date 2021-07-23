@@ -41,7 +41,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_farmhash//:farmhash",
+        "@farmhash",
     ],
 )
 
@@ -74,8 +74,8 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_farmhash//:farmhash",
         "@com_google_protobuf//:protobuf",
+        "@farmhash",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
