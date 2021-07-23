@@ -14,6 +14,9 @@
 
 #include "wfa/virtual_people/core/model/update_tree_impl.h"
 
+#include <memory>
+#include <utility>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"

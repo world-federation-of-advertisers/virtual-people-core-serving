@@ -14,6 +14,10 @@
 
 #include "wfa/virtual_people/core/model/conditional_merge_impl.h"
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"

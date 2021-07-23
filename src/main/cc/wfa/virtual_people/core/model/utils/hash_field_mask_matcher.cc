@@ -14,6 +14,9 @@
 
 #include "wfa/virtual_people/core/model/utils/hash_field_mask_matcher.h"
 
+#include <memory>
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -27,14 +30,12 @@
 namespace wfa_virtual_people {
 
 // Get the hash of @event, only including the fields in @hash_field_mask.
-uint64_t HashLabelerEvent(
-    const LabelerEvent& event,
-    const google::protobuf::FieldMask& hash_field_mask) {
+uint64_t HashLabelerEvent(const LabelerEvent& event,
+                          const google::protobuf::FieldMask& hash_field_mask) {
   LabelerEvent hash_field_event;
   google::protobuf::util::FieldMaskUtil::MergeMessageTo(
       event, hash_field_mask,
-      google::protobuf::util::FieldMaskUtil::MergeOptions(),
-      &hash_field_event);
+      google::protobuf::util::FieldMaskUtil::MergeOptions(), &hash_field_event);
   return util::Fingerprint64(hash_field_event.SerializePartialAsString());
 }
 
@@ -67,8 +68,8 @@ HashFieldMaskMatcher::Build(
     ++index;
   }
 
-  return absl::make_unique<HashFieldMaskMatcher>(
-      std::move(hashes), hash_field_mask);
+  return absl::make_unique<HashFieldMaskMatcher>(std::move(hashes),
+                                                 hash_field_mask);
 }
 
 int HashFieldMaskMatcher::GetMatch(const LabelerEvent& event) const {

@@ -14,7 +14,9 @@
 
 #include "wfa/virtual_people/core/model/population_node_impl.h"
 
+#include <memory>
 #include <string>
+#include <utility>
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"

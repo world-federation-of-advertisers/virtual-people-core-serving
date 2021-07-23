@@ -14,6 +14,10 @@
 
 #include "wfa/virtual_people/core/model/branch_node_impl.h"
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"

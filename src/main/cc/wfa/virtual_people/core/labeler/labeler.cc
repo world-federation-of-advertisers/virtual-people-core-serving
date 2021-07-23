@@ -14,6 +14,10 @@
 
 #include "wfa/virtual_people/core/labeler/labeler.h"
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"

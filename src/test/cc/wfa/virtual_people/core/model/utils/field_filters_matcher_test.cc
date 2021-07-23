@@ -14,6 +14,9 @@
 
 #include "wfa/virtual_people/core/model/utils/field_filters_matcher.h"
 
+#include <memory>
+#include <vector>
+
 #include "absl/status/statusor.h"
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"
