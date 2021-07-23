@@ -15,6 +15,8 @@
 #include "wfa/virtual_people/core/model/utils/hash_field_mask_matcher.h"
 
 #include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"

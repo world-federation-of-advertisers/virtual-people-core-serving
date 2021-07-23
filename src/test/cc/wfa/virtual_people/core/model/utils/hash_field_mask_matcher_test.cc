@@ -14,6 +14,11 @@
 
 #include "wfa/virtual_people/core/model/utils/hash_field_mask_matcher.h"
 
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "common_cpp/testing/status_macros.h"
