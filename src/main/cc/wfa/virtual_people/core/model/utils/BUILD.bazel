@@ -51,6 +51,7 @@ cc_test(
     srcs = ["consistent_hash_test.cc"],
     deps = [
         ":consistent_hash",
+        "@com_google_absl//absl/random",
         "@com_google_googletest//:gtest_main",
     ],
 )
