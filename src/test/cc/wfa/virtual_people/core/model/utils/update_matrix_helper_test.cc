@@ -28,12 +28,12 @@ namespace {
 using ::wfa::StatusIs;
 
 TEST(SelectFromMatrixTest, NullMatchers) {
-  EXPECT_THAT(
-      SelectFromMatrix(
-          nullptr, nullptr,
-          std::vector<std::unique_ptr<DistributedConsistentHashing>>(), "",
-          LabelerEvent()).status(),
-      StatusIs(absl::StatusCode::kInternal, ""));
+  EXPECT_THAT(SelectFromMatrix(
+                  nullptr, nullptr,
+                  std::vector<std::unique_ptr<DistributedConsistentHashing>>(),
+                  "", LabelerEvent())
+                  .status(),
+              StatusIs(absl::StatusCode::kInternal, ""));
 }
 
 }  // namespace

@@ -46,8 +46,7 @@ TEST(JumpConsistentHashTest, TestCorrectness) {
   std::mt19937 gen(rd());
   std::uniform_int_distribution<unsigned long long> distrib(
       std::numeric_limits<std::uint64_t>::min(),
-      std::numeric_limits<std::uint64_t>::max()
-  );
+      std::numeric_limits<std::uint64_t>::max());
   for (int i = 0; i < kKeyNumber; i++) {
     uint64_t key = static_cast<uint64_t>(distrib(gen));
     CheckCorrectnessForOneKey(key, kMaxBuckets);
@@ -59,8 +58,7 @@ TEST(JumpConsistentHashTest, TestIntMaxBuckets) {
   std::mt19937 gen(rd());
   std::uniform_int_distribution<unsigned long long> distrib(
       std::numeric_limits<std::uint64_t>::min(),
-      std::numeric_limits<std::uint64_t>::max()
-  );
+      std::numeric_limits<std::uint64_t>::max());
   for (int i = 0; i < kKeyNumber; i++) {
     uint64_t key = static_cast<uint64_t>(distrib(gen));
     int32_t output =
