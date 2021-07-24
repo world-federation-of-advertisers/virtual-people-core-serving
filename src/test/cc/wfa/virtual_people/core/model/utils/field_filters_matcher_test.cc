@@ -30,9 +30,8 @@ using ::wfa::StatusIs;
 
 TEST(FieldFiltersMatcherTest, EmptyConfig) {
   std::vector<const FieldFilterProto*> filter_configs;
-  EXPECT_THAT(
-      FieldFiltersMatcher::Build(filter_configs).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(FieldFiltersMatcher::Build(filter_configs).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(FieldFiltersMatcherTest, InvalidFieldFilterProto) {
@@ -41,40 +40,38 @@ TEST(FieldFiltersMatcherTest, InvalidFieldFilterProto) {
   FieldFilterProto filter_config;
   filter_config.set_op(FieldFilterProto::EQUAL);
   filter_configs.emplace_back(&filter_config);
-  EXPECT_THAT(
-      FieldFiltersMatcher::Build(filter_configs).status(),
-      StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(FieldFiltersMatcher::Build(filter_configs).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(FieldFiltersMatcherTest, TestGetFirstMatch) {
   std::vector<const FieldFilterProto*> filter_configs;
   // Match when person_country_code is "country_code_1".
   FieldFilterProto filter_config_1;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      name: "person_country_code"
-      op: EQUAL
-      value: "country_code_1"
-  )pb", &filter_config_1));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "person_country_code" op: EQUAL value: "country_code_1"
+      )pb",
+      &filter_config_1));
   filter_configs.emplace_back(&filter_config_1);
   // Match when person_country_code is "country_code_2".
   FieldFilterProto filter_config_2;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      name: "person_country_code"
-      op: EQUAL
-      value: "country_code_2"
-  )pb", &filter_config_2));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "person_country_code" op: EQUAL value: "country_code_2"
+      )pb",
+      &filter_config_2));
   filter_configs.emplace_back(&filter_config_2);
   // Match when person_country_code is "country_code_3".
   FieldFilterProto filter_config_3;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      name: "person_country_code"
-      op: EQUAL
-      value: "country_code_3"
-  )pb", &filter_config_3));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "person_country_code" op: EQUAL value: "country_code_3"
+      )pb",
+      &filter_config_3));
   filter_configs.emplace_back(&filter_config_3);
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<FieldFiltersMatcher> matcher,
-      FieldFiltersMatcher::Build(filter_configs));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<FieldFiltersMatcher> matcher,
+                       FieldFiltersMatcher::Build(filter_configs));
 
   // The 2nd filter matches. Returns 1.
   LabelerEvent event_1;
