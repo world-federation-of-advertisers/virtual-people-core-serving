@@ -15,6 +15,7 @@
 #include "wfa/virtual_people/core/model/utils/consistent_hash.h"
 
 #include <limits>
+#include <random>
 #include <vector>
 
 #include "absl/random/random.h"
