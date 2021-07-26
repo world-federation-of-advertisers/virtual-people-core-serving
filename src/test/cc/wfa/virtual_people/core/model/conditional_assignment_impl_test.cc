@@ -18,6 +18,7 @@
 #include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
+#include "google/protobuf/util/message_differencer.h"
 #include "gtest/gtest.h"
 #include "src/main/proto/wfa/virtual_people/common/demographic.pb.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
