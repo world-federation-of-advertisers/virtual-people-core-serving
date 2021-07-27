@@ -14,12 +14,15 @@
 
 #include "wfa/virtual_people/core/model/update_tree_impl.h"
 
+#include <memory>
+#include <utility>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "common_cpp/macros/macros.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 
@@ -28,9 +31,8 @@ namespace wfa_virtual_people {
 absl::StatusOr<std::unique_ptr<UpdateTreeImpl>> UpdateTreeImpl::Build(
     const UpdateTree& config,
     absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
-  ASSIGN_OR_RETURN(
-      std::unique_ptr<ModelNode> root,
-      ModelNode::Build(config.root(), node_refs));
+  ASSIGN_OR_RETURN(std::unique_ptr<ModelNode> root,
+                   ModelNode::Build(config.root(), node_refs));
 
   if (!root) {
     return absl::InternalError("ModelNode::Build should never return NULL.");

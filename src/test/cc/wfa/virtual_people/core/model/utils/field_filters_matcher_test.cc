@@ -14,14 +14,17 @@
 
 #include "wfa/virtual_people/core/model/utils/field_filters_matcher.h"
 
+#include <memory>
+#include <vector>
+
 #include "absl/status/statusor.h"
+#include "common_cpp/testing/status_macros.h"
+#include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
 #include "src/main/proto/wfa/virtual_people/common/field_filter.pb.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "src/test/cc/testutil/matchers.h"
-#include "src/test/cc/testutil/status_macros.h"
 
 namespace wfa_virtual_people {
 namespace {

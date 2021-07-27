@@ -14,15 +14,19 @@
 
 #include "wfa/virtual_people/core/model/sparse_update_matrix_impl.h"
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common_cpp/macros/macros.h"
 #include "google/protobuf/field_mask.pb.h"
 #include "google/protobuf/repeated_field.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/common/field_filter/field_filter.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/utils/constants.h"
@@ -48,8 +52,8 @@ absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> BuildFieldFiltersMatcher(
         columns) {
   std::vector<std::unique_ptr<FieldFilter>> filters;
   for (const SparseUpdateMatrix::Column& column : columns) {
-    ASSIGN_OR_RETURN(
-        filters.emplace_back(), FieldFilter::New(column.column_attrs()));
+    ASSIGN_OR_RETURN(filters.emplace_back(),
+                     FieldFilter::New(column.column_attrs()));
 
     if (!filters.back()) {
       return absl::InternalError("FieldFilter::New should never return NULL.");
@@ -78,20 +82,20 @@ SparseUpdateMatrixImpl::Build(const SparseUpdateMatrix& config) {
 
   for (const SparseUpdateMatrix::Column& column : config.columns()) {
     if (!column.has_column_attrs()) {
-      return absl::InvalidArgumentError(absl::StrCat(
-        "No column_attrs in the column in SparseUpdateMatrix: ",
-        column.DebugString()));
+      return absl::InvalidArgumentError(
+          absl::StrCat("No column_attrs in the column in SparseUpdateMatrix: ",
+                       column.DebugString()));
     }
     if (column.rows_size() == 0) {
-      return absl::InvalidArgumentError(absl::StrCat(
-        "No row exists in the column in SparseUpdateMatrix: ",
-        column.DebugString()));
+      return absl::InvalidArgumentError(
+          absl::StrCat("No row exists in the column in SparseUpdateMatrix: ",
+                       column.DebugString()));
     }
     if (column.rows_size() != column.probabilities_size()) {
       return absl::InvalidArgumentError(absl::StrCat(
-        "Rows and probabilities are not aligned in the column in "
-        "SparseUpdateMatrix: ",
-        column.DebugString()));
+          "Rows and probabilities are not aligned in the column in "
+          "SparseUpdateMatrix: ",
+          column.DebugString()));
     }
   }
 
@@ -106,8 +110,8 @@ SparseUpdateMatrixImpl::Build(const SparseUpdateMatrix& config) {
           "HashFieldMaskMatcher::Build should never return NULL.");
     }
   } else {
-    ASSIGN_OR_RETURN(
-        filters_matcher, BuildFieldFiltersMatcher(config.columns()));
+    ASSIGN_OR_RETURN(filters_matcher,
+                     BuildFieldFiltersMatcher(config.columns()));
     if (!filters_matcher) {
       return absl::InternalError(
           "FieldFiltersMatcher::Build should never return NULL.");
@@ -121,8 +125,7 @@ SparseUpdateMatrixImpl::Build(const SparseUpdateMatrix& config) {
   std::vector<std::vector<LabelerEvent>> rows;
   for (const SparseUpdateMatrix::Column& column : config.columns()) {
     row_hashings.emplace_back();
-    ASSIGN_OR_RETURN(
-        row_hashings.back(), BuildRowsHashing(column));
+    ASSIGN_OR_RETURN(row_hashings.back(), BuildRowsHashing(column));
 
     if (!row_hashings.back()) {
       return absl::InternalError(
@@ -134,8 +137,8 @@ SparseUpdateMatrixImpl::Build(const SparseUpdateMatrix& config) {
   }
 
   PassThroughNonMatches pass_through_non_matches =
-      config.pass_through_non_matches() ?
-      PassThroughNonMatches::kYes : PassThroughNonMatches::kNo;
+      config.pass_through_non_matches() ? PassThroughNonMatches::kYes
+                                        : PassThroughNonMatches::kNo;
 
   return absl::make_unique<SparseUpdateMatrixImpl>(
       std::move(hash_matcher), std::move(filters_matcher),
@@ -144,19 +147,17 @@ SparseUpdateMatrixImpl::Build(const SparseUpdateMatrix& config) {
 }
 
 absl::Status SparseUpdateMatrixImpl::Update(LabelerEvent& event) const {
-  ASSIGN_OR_RETURN(
-      MatrixIndexes indexes,
-      SelectFromMatrix(
-          hash_matcher_.get(), filters_matcher_.get(), row_hashings_,
-          random_seed_, event));
+  ASSIGN_OR_RETURN(MatrixIndexes indexes,
+                   SelectFromMatrix(hash_matcher_.get(), filters_matcher_.get(),
+                                    row_hashings_, random_seed_, event));
   int column_index = indexes.column_index;
   int row_index = indexes.row_index;
   if (column_index == kNoMatchingIndex) {
     if (pass_through_non_matches_ == PassThroughNonMatches::kYes) {
       return absl::OkStatus();
     } else {
-      return absl::InvalidArgumentError(absl::StrCat(
-          "No column matching for event: ", event.DebugString()));
+      return absl::InvalidArgumentError(
+          absl::StrCat("No column matching for event: ", event.DebugString()));
     }
   }
 

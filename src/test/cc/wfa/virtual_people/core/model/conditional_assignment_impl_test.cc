@@ -14,21 +14,28 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "common_cpp/testing/status_macros.h"
+#include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
+#include "google/protobuf/util/message_differencer.h"
 #include "gtest/gtest.h"
 #include "src/main/proto/wfa/virtual_people/common/demographic.pb.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "src/test/cc/testutil/matchers.h"
-#include "src/test/cc/testutil/status_macros.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 
 namespace wfa_virtual_people {
 namespace {
 
-using ::wfa::EqualsProto;
 using ::wfa::IsOk;
 using ::wfa::StatusIs;
+
+MATCHER_P(EqualsProto, expected, "") {
+  ::google::protobuf::util::MessageDifferencer differencer;
+  differencer.set_repeated_field_comparison(
+      google::protobuf::util::MessageDifferencer::AS_SET);
+  return differencer.Compare(arg, expected);
+}
 
 TEST(ConditionalAssignmentImplTest, TestNoCondition) {
   BranchNode::AttributesUpdater config;

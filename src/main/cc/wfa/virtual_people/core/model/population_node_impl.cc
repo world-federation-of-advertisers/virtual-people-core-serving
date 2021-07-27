@@ -14,16 +14,18 @@
 
 #include "wfa/virtual_people/core/model/population_node_impl.h"
 
+#include <memory>
 #include <string>
+#include <utility>
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common_cpp/macros/macros.h"
 #include "src/farmhash.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/virtual_person_selector.h"
 
@@ -38,18 +40,17 @@ absl::StatusOr<std::unique_ptr<PopulationNodeImpl>> PopulationNodeImpl::Build(
       std::unique_ptr<VirtualPersonSelector> virtual_person_selector,
       VirtualPersonSelector::Build(node_config.population_node().pools()));
   return absl::make_unique<PopulationNodeImpl>(
-      node_config,
-      std::move(virtual_person_selector),
+      node_config, std::move(virtual_person_selector),
       node_config.population_node().random_seed());
 }
 
 PopulationNodeImpl::PopulationNodeImpl(
     const CompiledNode& node_config,
     std::unique_ptr<VirtualPersonSelector> virtual_person_selector,
-    absl::string_view random_seed):
-    ModelNode(node_config),
-    virtual_person_selector_(std::move(virtual_person_selector)),
-    random_seed_(random_seed) {}
+    absl::string_view random_seed)
+    : ModelNode(node_config),
+      virtual_person_selector_(std::move(virtual_person_selector)),
+      random_seed_(random_seed) {}
 
 absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
   uint64_t seed = util::Fingerprint64(

@@ -14,15 +14,19 @@
 
 #include "wfa/virtual_people/core/model/update_matrix_impl.h"
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common_cpp/macros/macros.h"
 #include "google/protobuf/field_mask.pb.h"
 #include "google/protobuf/repeated_field.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/common/field_filter/field_filter.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/utils/constants.h"
@@ -57,17 +61,17 @@ absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> UpdateMatrixImpl::Build(
   int row_count = config.rows_size();
   int column_count = config.columns_size();
   if (row_count == 0) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "No row exists in UpdateMatrix: ", config.DebugString()));
+    return absl::InvalidArgumentError(
+        absl::StrCat("No row exists in UpdateMatrix: ", config.DebugString()));
   }
   if (column_count == 0) {
     return absl::InvalidArgumentError(absl::StrCat(
         "No column exists in UpdateMatrix: ", config.DebugString()));
   }
   if (row_count * column_count != config.probabilities_size()) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "Probabilities count must equal to row * column: ",
-        config.DebugString()));
+    return absl::InvalidArgumentError(
+        absl::StrCat("Probabilities count must equal to row * column: ",
+                     config.DebugString()));
   }
 
   std::unique_ptr<HashFieldMaskMatcher> hash_matcher = nullptr;
@@ -77,8 +81,8 @@ absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> UpdateMatrixImpl::Build(
         hash_matcher,
         BuildHashFieldMaskMatcher(config.columns(), config.hash_field_mask()));
   } else {
-    ASSIGN_OR_RETURN(
-        filters_matcher, BuildFieldFiltersMatcher(config.columns()));
+    ASSIGN_OR_RETURN(filters_matcher,
+                     BuildFieldFiltersMatcher(config.columns()));
   }
 
   // Converts the probabilities distribution of each column to
@@ -94,16 +98,15 @@ absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> UpdateMatrixImpl::Build(
           DistributionChoice({row_index, static_cast<double>(probability)}));
     }
     row_hashings.emplace_back();
-    ASSIGN_OR_RETURN(
-        row_hashings.back(),
-        DistributedConsistentHashing::Build(std::move(distribution)));
+    ASSIGN_OR_RETURN(row_hashings.back(), DistributedConsistentHashing::Build(
+                                              std::move(distribution)));
   }
 
   std::vector<LabelerEvent> rows = {config.rows().begin(), config.rows().end()};
 
   PassThroughNonMatches pass_through_non_matches =
-      config.pass_through_non_matches() ?
-      PassThroughNonMatches::kYes : PassThroughNonMatches::kNo;
+      config.pass_through_non_matches() ? PassThroughNonMatches::kYes
+                                        : PassThroughNonMatches::kNo;
 
   return absl::make_unique<UpdateMatrixImpl>(
       std::move(hash_matcher), std::move(filters_matcher),
@@ -112,18 +115,16 @@ absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> UpdateMatrixImpl::Build(
 }
 
 absl::Status UpdateMatrixImpl::Update(LabelerEvent& event) const {
-  ASSIGN_OR_RETURN(
-      MatrixIndexes indexes,
-      SelectFromMatrix(
-          hash_matcher_.get(), filters_matcher_.get(), row_hashings_,
-          random_seed_, event));
+  ASSIGN_OR_RETURN(MatrixIndexes indexes,
+                   SelectFromMatrix(hash_matcher_.get(), filters_matcher_.get(),
+                                    row_hashings_, random_seed_, event));
 
   if (indexes.column_index == kNoMatchingIndex) {
     if (pass_through_non_matches_ == PassThroughNonMatches::kYes) {
       return absl::OkStatus();
     } else {
-      return absl::InvalidArgumentError(absl::StrCat(
-          "No column matching for event: ", event.DebugString()));
+      return absl::InvalidArgumentError(
+          absl::StrCat("No column matching for event: ", event.DebugString()));
     }
   }
 

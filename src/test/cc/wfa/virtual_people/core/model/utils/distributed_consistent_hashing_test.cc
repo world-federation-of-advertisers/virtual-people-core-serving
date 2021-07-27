@@ -14,13 +14,18 @@
 
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
+#include "common_cpp/testing/status_macros.h"
+#include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "src/test/cc/testutil/matchers.h"
-#include "src/test/cc/testutil/status_macros.h"
 
 namespace wfa_virtual_people {
 namespace {

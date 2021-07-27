@@ -14,14 +14,18 @@
 
 #include "wfa/virtual_people/core/model/branch_node_impl.h"
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "common_cpp/macros/macros.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
-#include "wfa/measurement/common/macros.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/constants.h"
@@ -51,8 +55,8 @@ absl::Status AppendChildNode(
   if (branch.has_node()) {
     // Create the ModelNode object and store.
     child_nodes.emplace_back();
-    ASSIGN_OR_RETURN(
-        child_nodes.back(), ModelNode::Build(branch.node(), node_refs));
+    ASSIGN_OR_RETURN(child_nodes.back(),
+                     ModelNode::Build(branch.node(), node_refs));
     return absl::OkStatus();
   }
   return absl::InvalidArgumentError(
@@ -134,40 +138,35 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
   std::vector<std::unique_ptr<AttributesUpdaterInterface>> updaters;
   if (branch_node.has_updates()) {
     for (const BranchNode::AttributesUpdater& config :
-            branch_node.updates().updates()) {
+         branch_node.updates().updates()) {
       updaters.emplace_back();
-      ASSIGN_OR_RETURN(
-          updaters.back(), AttributesUpdaterInterface::Build(config));
+      ASSIGN_OR_RETURN(updaters.back(),
+                       AttributesUpdaterInterface::Build(config));
       if (!updaters.back()) {
-        return absl::InternalError(absl::StrCat(
-            "Failed to build AttributesUpdater with config: ",
-            config.DebugString()));
+        return absl::InternalError(
+            absl::StrCat("Failed to build AttributesUpdater with config: ",
+                         config.DebugString()));
       }
     }
   }
 
   return absl::make_unique<BranchNodeImpl>(
-      node_config,
-      std::move(child_nodes),
-      std::move(hashing),
-      branch_node.random_seed(),
-      std::move(matcher),
-      std::move(updaters));
+      node_config, std::move(child_nodes), std::move(hashing),
+      branch_node.random_seed(), std::move(matcher), std::move(updaters));
 }
 
 BranchNodeImpl::BranchNodeImpl(
     const CompiledNode& node_config,
     std::vector<std::unique_ptr<ModelNode>>&& child_nodes,
     std::unique_ptr<DistributedConsistentHashing> hashing,
-    absl::string_view random_seed,
-    std::unique_ptr<FieldFiltersMatcher> matcher,
-    std::vector<std::unique_ptr<AttributesUpdaterInterface>>&& updaters):
-    ModelNode(node_config),
-    child_nodes_(std::move(child_nodes)),
-    hashing_(std::move(hashing)),
-    random_seed_(random_seed),
-    matcher_(std::move(matcher)),
-    updaters_(std::move(updaters)) {}
+    absl::string_view random_seed, std::unique_ptr<FieldFiltersMatcher> matcher,
+    std::vector<std::unique_ptr<AttributesUpdaterInterface>>&& updaters)
+    : ModelNode(node_config),
+      child_nodes_(std::move(child_nodes)),
+      hashing_(std::move(hashing)),
+      random_seed_(random_seed),
+      matcher_(std::move(matcher)),
+      updaters_(std::move(updaters)) {}
 
 absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
   // Applies attributes updaters.
@@ -178,8 +177,8 @@ absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
   int selected_index = kNoMatchingIndex;
   if (hashing_) {
     // Select by chance.
-    selected_index = hashing_->Hash(
-        absl::StrCat(random_seed_, event.acting_fingerprint()));
+    selected_index =
+        hashing_->Hash(absl::StrCat(random_seed_, event.acting_fingerprint()));
   } else if (matcher_) {
     // Select by condition.
     selected_index = matcher_->GetFirstMatch(event);

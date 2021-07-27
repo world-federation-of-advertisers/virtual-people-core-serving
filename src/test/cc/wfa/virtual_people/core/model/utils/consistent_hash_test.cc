@@ -14,31 +14,60 @@
 
 #include "wfa/virtual_people/core/model/utils/consistent_hash.h"
 
+#include <limits>
 #include <random>
+#include <vector>
 
+#include "absl/random/random.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace wfa_virtual_people {
 namespace {
-
 using ::testing::AnyOf;
+using ::testing::Each;
+using ::testing::Ge;
 
 constexpr int kKeyNumber = 1000;
 constexpr int32_t kMaxBuckets = 1 << 16;
+
+MATCHER(IsConsistentJumpHashing, "") {
+  if (arg.empty()) return true;
+
+  if (arg[0] != 0) {
+    *result_listener << "first element is nonzero: " << arg[0];
+    return false;
+  }
+
+  for (int i = 1; i < arg.size(); ++i) {
+    if (arg[i] != arg[i - 1] && arg[i] != i) {
+      *result_listener << "element " << arg[i] << " at index " << i
+                       << " is neither " << arg[i - 1] << " nor " << i;
+      return false;
+    }
+  }
+
+  return true;
+}
 
 // When using the same key, for any number of buckets n > 1, one of the
 // following must be satisfied
 // * JumpConsistentHash(key, n) == JumpConsistentHash(key, n - 1)
 // * JumpConsistentHash(key, n) == n - 1
 void CheckCorrectnessForOneKey(const uint64_t key, const int32_t max_buckets) {
-  int32_t last_output = 0;
+  std::vector<int32_t> outputs;
+  outputs.reserve(max_buckets);
   for (int32_t num_buckets = 1; num_buckets <= max_buckets; ++num_buckets) {
-    int32_t output = JumpConsistentHash(key, num_buckets);
-    EXPECT_THAT(output, AnyOf(last_output, num_buckets - 1))
-        << "with key " << key << " and max_buckets " << max_buckets;
-    last_output = output;
+    outputs.push_back(JumpConsistentHash(key, num_buckets));
   }
+  ASSERT_THAT(outputs, IsConsistentJumpHashing())
+      << "with key " << key << " and max_buckets " << max_buckets;
+}
+
+uint64_t RandomKey() {
+  static absl::BitGen bitgen;
+  return absl::Uniform(bitgen, std::numeric_limits<std::uint64_t>::min(),
+                       std::numeric_limits<std::uint64_t>::max());
 }
 
 TEST(JumpConsistentHashTest, TestCorrectness) {
@@ -48,23 +77,18 @@ TEST(JumpConsistentHashTest, TestCorrectness) {
       std::numeric_limits<std::uint64_t>::min(),
       std::numeric_limits<std::uint64_t>::max());
   for (int i = 0; i < kKeyNumber; i++) {
-    uint64_t key = static_cast<uint64_t>(distrib(gen));
-    CheckCorrectnessForOneKey(key, kMaxBuckets);
+    CheckCorrectnessForOneKey(RandomKey(), kMaxBuckets);
   }
 }
 
 TEST(JumpConsistentHashTest, TestIntMaxBuckets) {
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<std::uint64_t> distrib(
-      std::numeric_limits<std::uint64_t>::min(),
-      std::numeric_limits<std::uint64_t>::max());
+  std::vector<int32_t> outputs;
+  outputs.reserve(kKeyNumber);
   for (int i = 0; i < kKeyNumber; i++) {
-    uint64_t key = static_cast<uint64_t>(distrib(gen));
-    int32_t output =
-        JumpConsistentHash(key, std::numeric_limits<std::int32_t>::max());
-    EXPECT_GE(output, 0);
+    outputs.push_back(JumpConsistentHash(
+        RandomKey(), std::numeric_limits<std::int32_t>::max()));
   }
+  EXPECT_THAT(outputs, Each(Ge(0)));
 }
 
 }  // namespace
