@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "absl/container/flat_hash_map.h"
+#include "common_cpp/testing/common_matchers.h"
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
@@ -27,6 +28,7 @@ namespace {
 using ::testing::DoubleNear;
 using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
+using ::wfa::EqualsProto;
 using ::wfa::IsOk;
 using ::wfa::StatusIs;
 
@@ -71,6 +73,96 @@ TEST(PopulationNodeImplTest, TestApply) {
           Pair(31, DoubleNear(0.1, 0.02)), Pair(32, DoubleNear(0.1, 0.02)),
           Pair(20, DoubleNear(0.1, 0.02)), Pair(21, DoubleNear(0.1, 0.02)),
           Pair(22, DoubleNear(0.1, 0.02)), Pair(23, DoubleNear(0.1, 0.02))));
+}
+
+TEST(PopulationNodeImplTest, TestApplyNoCorrectedDemo) {
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode"
+        index: 1
+        population_node {
+          pools { population_offset: 10 total_population: 1 }
+          random_seed: "TestRandomSeed"
+        }
+      )pb",
+      &config));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  LabelerEvent input;
+  input.set_acting_fingerprint(kFingerprintNumber);
+  EXPECT_THAT(node->Apply(input), IsOk());
+
+  LabelerEvent expected_event;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        virtual_person_activities {
+          virtual_person_id: 10
+        }
+        acting_fingerprint: 10000
+      )pb",
+      &expected_event));
+  EXPECT_THAT(input, EqualsProto(expected_event));
+}
+
+TEST(PopulationNodeImplTest, TestApplyWithCorrectedDemo) {
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode"
+        index: 1
+        population_node {
+          pools { population_offset: 10 total_population: 1 }
+          random_seed: "TestRandomSeed"
+        }
+      )pb",
+      &config));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  LabelerEvent input;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        corrected_demo {
+          gender: GENDER_FEMALE
+          age {
+            min_age: 25
+            max_age: 1000
+          }
+        }
+        acting_fingerprint: 10000
+      )pb",
+      &input));
+  EXPECT_THAT(node->Apply(input), IsOk());
+  LabelerEvent expected_event;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        virtual_person_activities {
+          virtual_person_id: 10
+          label {
+            demo {
+              gender: GENDER_FEMALE
+              age {
+                min_age: 25
+                max_age: 1000
+              }
+            }
+          }
+        }
+        corrected_demo {
+          gender: GENDER_FEMALE
+          age {
+            min_age: 25
+            max_age: 1000
+          }
+        }
+        acting_fingerprint: 10000
+      )pb",
+      &expected_event));
+  EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
 TEST(PopulationNodeImplTest, TestInvalidPools) {
