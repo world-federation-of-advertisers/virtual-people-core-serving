@@ -98,9 +98,7 @@ TEST(PopulationNodeImplTest, TestApplyNoCorrectedDemo) {
   LabelerEvent expected_event;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        virtual_person_activities {
-          virtual_person_id: 10
-        }
+        virtual_person_activities { virtual_person_id: 10 }
         acting_fingerprint: 10000
       )pb",
       &expected_event));
@@ -128,10 +126,7 @@ TEST(PopulationNodeImplTest, TestApplyWithCorrectedDemo) {
       R"pb(
         corrected_demo {
           gender: GENDER_FEMALE
-          age {
-            min_age: 25
-            max_age: 1000
-          }
+          age { min_age: 25 max_age: 1000 }
         }
         acting_fingerprint: 10000
       )pb",
@@ -145,19 +140,13 @@ TEST(PopulationNodeImplTest, TestApplyWithCorrectedDemo) {
           label {
             demo {
               gender: GENDER_FEMALE
-              age {
-                min_age: 25
-                max_age: 1000
-              }
+              age { min_age: 25 max_age: 1000 }
             }
           }
         }
         corrected_demo {
           gender: GENDER_FEMALE
-          age {
-            min_age: 25
-            max_age: 1000
-          }
+          age { min_age: 25 max_age: 1000 }
         }
         acting_fingerprint: 10000
       )pb",
