@@ -15,6 +15,8 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_
 
+#include <memory>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"

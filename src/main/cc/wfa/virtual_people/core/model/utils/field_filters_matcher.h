@@ -15,6 +15,10 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_FIELD_FILTERS_MATCHER_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_FIELD_FILTERS_MATCHER_H_
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/field_filter.pb.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"

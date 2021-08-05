@@ -15,6 +15,10 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_HASH_FIELD_MASK_MATCHER_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_HASH_FIELD_MASK_MATCHER_H_
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "google/protobuf/field_mask.pb.h"

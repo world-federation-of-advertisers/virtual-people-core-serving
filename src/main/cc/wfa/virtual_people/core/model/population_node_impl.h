@@ -15,6 +15,7 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_POPULATION_NODE_IMPL_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_POPULATION_NODE_IMPL_H_
 
+#include <memory>
 #include <string>
 
 #include "absl/container/flat_hash_map.h"

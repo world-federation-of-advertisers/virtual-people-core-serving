@@ -15,6 +15,11 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
 
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"

@@ -15,6 +15,9 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_UPDATE_MATRIX_HELPER_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_UPDATE_MATRIX_HELPER_H_
 
+#include <memory>
+#include <vector>
+
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"

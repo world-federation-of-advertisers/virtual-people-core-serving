@@ -18,6 +18,7 @@
 #include <google/protobuf/repeated_field.h>
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "absl/status/statusor.h"

@@ -17,6 +17,8 @@
 #include <google/protobuf/repeated_field.h>
 
 #include <cstdint>
+#include <memory>
+#include <utility>
 #include <vector>
 
 #include "absl/memory/memory.h"

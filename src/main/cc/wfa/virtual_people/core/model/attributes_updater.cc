@@ -14,6 +14,8 @@
 
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 
+#include <memory>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
