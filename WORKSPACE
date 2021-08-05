@@ -16,12 +16,10 @@ load("@wfa_common_cpp//build:common_cpp_deps.bzl", "common_cpp_deps")
 
 common_cpp_deps()
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
-git_repository(
+# Virtual-people-common
+http_archive(
     name = "virtual_people_common",
-    # TODO(@tcsnfkx): Fix this after https://github.com/world-federation-of-advertisers/virtual-people-common/pull/20 is merged.
-    branch = "tcsnfkx-common-cpp-migrate",
-    # commit = "36f58cfc29901a3110df585faba206964b96e4a1",
-    remote = "https://github.com/world-federation-of-advertisers/virtual-people-common",
+    sha256 = "fa100fb0acaeffc6192a0c26f0c4ee96ba269de2d004797330d71985777e4906",
+    strip_prefix = "virtual-people-common-77883e639ad22431bca5eeaffd08fbf5e320bb68",
+    url = "https://github.com/world-federation-of-advertisers/virtual-people-common/archive/77883e639ad22431bca5eeaffd08fbf5e320bb68.tar.gz",
 )
