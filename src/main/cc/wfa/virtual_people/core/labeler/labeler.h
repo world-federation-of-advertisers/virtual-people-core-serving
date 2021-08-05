@@ -86,7 +86,7 @@ class Labeler {
   static absl::StatusOr<std::unique_ptr<Labeler>> Build(
       const std::vector<CompiledNode>& nodes);
 
-  explicit Labeler(std::unique_ptr<ModelNode> root): root_(std::move(root)) {}
+  explicit Labeler(std::unique_ptr<ModelNode> root) : root_(std::move(root)) {}
 
   Labeler(const Labeler&) = delete;
   Labeler& operator=(const Labeler&) = delete;

@@ -44,21 +44,20 @@ class UpdateMatrixImpl : public AttributesUpdaterInterface {
   static absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> Build(
       const UpdateMatrix& config);
 
-  enum class PassThroughNonMatches {kNo, kYes};
+  enum class PassThroughNonMatches { kNo, kYes };
 
   explicit UpdateMatrixImpl(
       std::unique_ptr<HashFieldMaskMatcher> hash_matcher,
       std::unique_ptr<FieldFiltersMatcher> filters_matcher,
       std::vector<std::unique_ptr<DistributedConsistentHashing>>&& row_hashings,
-      absl::string_view random_seed,
-      std::vector<LabelerEvent>&& rows,
-      PassThroughNonMatches pass_through_non_matches):
-      hash_matcher_(std::move(hash_matcher)),
-      filters_matcher_(std::move(filters_matcher)),
-      row_hashings_(std::move(row_hashings)),
-      random_seed_(random_seed),
-      rows_(std::move(rows)),
-      pass_through_non_matches_(pass_through_non_matches) {}
+      absl::string_view random_seed, std::vector<LabelerEvent>&& rows,
+      PassThroughNonMatches pass_through_non_matches)
+      : hash_matcher_(std::move(hash_matcher)),
+        filters_matcher_(std::move(filters_matcher)),
+        row_hashings_(std::move(row_hashings)),
+        random_seed_(random_seed),
+        rows_(std::move(rows)),
+        pass_through_non_matches_(pass_through_non_matches) {}
 
   UpdateMatrixImpl(const UpdateMatrixImpl&) = delete;
   UpdateMatrixImpl& operator=(const UpdateMatrixImpl&) = delete;

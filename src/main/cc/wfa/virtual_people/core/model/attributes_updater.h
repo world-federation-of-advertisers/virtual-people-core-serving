@@ -45,8 +45,8 @@ class AttributesUpdaterInterface {
   virtual ~AttributesUpdaterInterface() = default;
 
   AttributesUpdaterInterface(const AttributesUpdaterInterface&) = delete;
-  AttributesUpdaterInterface& operator=(
-      const AttributesUpdaterInterface&) = delete;
+  AttributesUpdaterInterface& operator=(const AttributesUpdaterInterface&) =
+      delete;
 
   // Applies the attributes updater to the @event.
   //

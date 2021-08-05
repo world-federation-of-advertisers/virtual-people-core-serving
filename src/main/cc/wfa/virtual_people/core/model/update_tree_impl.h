@@ -36,8 +36,8 @@ class UpdateTreeImpl : public AttributesUpdaterInterface {
       const UpdateTree& config,
       absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs);
 
-  explicit UpdateTreeImpl(std::unique_ptr<ModelNode> root):
-        root_(std::move(root)) {}
+  explicit UpdateTreeImpl(std::unique_ptr<ModelNode> root)
+      : root_(std::move(root)) {}
 
   UpdateTreeImpl(const UpdateTreeImpl&) = delete;
   UpdateTreeImpl& operator=(const UpdateTreeImpl&) = delete;

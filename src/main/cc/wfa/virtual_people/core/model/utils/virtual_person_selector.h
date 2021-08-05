@@ -15,8 +15,9 @@
 #ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_
 #define WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_
 
-#include <cstdint>
 #include <google/protobuf/repeated_field.h>
+
+#include <cstdint>
 #include <vector>
 
 #include "absl/status/statusor.h"
@@ -87,6 +88,5 @@ class VirtualPersonSelector {
 };
 
 }  // namespace wfa_virtual_people
-
 
 #endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_

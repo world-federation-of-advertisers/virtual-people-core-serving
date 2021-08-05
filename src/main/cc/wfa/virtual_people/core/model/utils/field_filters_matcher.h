@@ -39,8 +39,8 @@ class FieldFiltersMatcher {
 
   // Never call the constructor directly.
   explicit FieldFiltersMatcher(
-      std::vector<std::unique_ptr<FieldFilter>>&& filters):
-      filters_(std::move(filters)) {}
+      std::vector<std::unique_ptr<FieldFilter>>&& filters)
+      : filters_(std::move(filters)) {}
 
   FieldFiltersMatcher(const FieldFiltersMatcher&) = delete;
   FieldFiltersMatcher& operator=(const FieldFiltersMatcher&) = delete;

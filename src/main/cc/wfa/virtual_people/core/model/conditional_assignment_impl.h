@@ -48,18 +48,18 @@ class ConditionalAssignmentImpl : public AttributesUpdaterInterface {
     std::function<void(
         LabelerEvent&,
         const std::vector<const google::protobuf::FieldDescriptor*>&,
-        const std::vector<const google::protobuf::FieldDescriptor*>&)> assign;
+        const std::vector<const google::protobuf::FieldDescriptor*>&)>
+        assign;
   };
 
-  explicit ConditionalAssignmentImpl(
-      std::unique_ptr<FieldFilter> condition,
-      std::vector<Assignment>&& assignments):
-      condition_(std::move(condition)),
-      assignments_(std::move(assignments)) {}
+  explicit ConditionalAssignmentImpl(std::unique_ptr<FieldFilter> condition,
+                                     std::vector<Assignment>&& assignments)
+      : condition_(std::move(condition)),
+        assignments_(std::move(assignments)) {}
 
   ConditionalAssignmentImpl(const ConditionalAssignmentImpl&) = delete;
-  ConditionalAssignmentImpl& operator=(
-      const ConditionalAssignmentImpl&) = delete;
+  ConditionalAssignmentImpl& operator=(const ConditionalAssignmentImpl&) =
+      delete;
 
   // If condition_ is matched, for each entry in assignments_, assigns the
   // value of source field to target field.

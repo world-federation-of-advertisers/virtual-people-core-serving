@@ -14,8 +14,9 @@
 
 #include "wfa/virtual_people/core/model/utils/virtual_person_selector.h"
 
-#include <cstdint>
 #include <google/protobuf/repeated_field.h>
+
+#include <cstdint>
 #include <vector>
 
 #include "absl/memory/memory.h"
@@ -78,14 +79,14 @@ VirtualPersonSelector::Build(
     return absl::InvalidArgumentError(
         "The total population of the pools is 0. The model is invalid.");
   }
-  return absl::make_unique<VirtualPersonSelector>(
-      total_population, std::move(compiled_pools));
+  return absl::make_unique<VirtualPersonSelector>(total_population,
+                                                  std::move(compiled_pools));
 }
 
 VirtualPersonSelector::VirtualPersonSelector(
     const uint64_t total_population,
-    std::vector<VirtualPersonIdPool>&& compiled_pools):
-    total_population_(total_population), pools_(std::move(compiled_pools)) {}
+    std::vector<VirtualPersonIdPool>&& compiled_pools)
+    : total_population_(total_population), pools_(std::move(compiled_pools)) {}
 
 int64_t VirtualPersonSelector::GetVirtualPersonId(
     const uint64_t random_seed) const {
@@ -103,9 +104,8 @@ int64_t VirtualPersonSelector::GetVirtualPersonId(
   // or equal to population_index.
   it = std::prev(it);
 
-  uint64_t virtual_people_id =
-      population_index - it->population_index_offset +
-      it->virtual_people_id_offset;
+  uint64_t virtual_people_id = population_index - it->population_index_offset +
+                               it->virtual_people_id_offset;
   return static_cast<int64_t>(virtual_people_id);
 }
 

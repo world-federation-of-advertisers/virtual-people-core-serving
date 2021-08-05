@@ -47,10 +47,8 @@ absl::StatusOr<MatrixIndexes> SelectFromMatrix(
     const FieldFiltersMatcher* filters_matcher,
     const std::vector<std::unique_ptr<DistributedConsistentHashing>>&
         row_hashings,
-    absl::string_view random_seed,
-    const LabelerEvent& event);
+    absl::string_view random_seed, const LabelerEvent& event);
 
 }  // namespace wfa_virtual_people
-
 
 #endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_UPDATE_MATRIX_HELPER_H_

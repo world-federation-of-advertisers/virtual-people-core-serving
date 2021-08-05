@@ -35,8 +35,8 @@ class StopNodeImpl : public ModelNode {
   }
 
   // Never call the constructor directly.
-  explicit StopNodeImpl(const CompiledNode& node_config):
-      ModelNode(node_config) {}
+  explicit StopNodeImpl(const CompiledNode& node_config)
+      : ModelNode(node_config) {}
   ~StopNodeImpl() override {}
 
   StopNodeImpl(const StopNodeImpl&) = delete;

@@ -40,9 +40,9 @@ class HashFieldMaskMatcher {
 
   // Never call the constructor directly.
   explicit HashFieldMaskMatcher(
-    absl::flat_hash_map<uint64_t, int>&& hashes,
-    const google::protobuf::FieldMask& hash_field_mask):
-    hashes_(std::move(hashes)), hash_field_mask_(hash_field_mask) {}
+      absl::flat_hash_map<uint64_t, int>&& hashes,
+      const google::protobuf::FieldMask& hash_field_mask)
+      : hashes_(std::move(hashes)), hash_field_mask_(hash_field_mask) {}
 
   HashFieldMaskMatcher(const HashFieldMaskMatcher&) = delete;
   HashFieldMaskMatcher& operator=(const HashFieldMaskMatcher&) = delete;

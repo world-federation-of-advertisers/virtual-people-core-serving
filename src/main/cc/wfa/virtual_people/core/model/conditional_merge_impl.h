@@ -38,15 +38,14 @@ class ConditionalMergeImpl : public AttributesUpdaterInterface {
   static absl::StatusOr<std::unique_ptr<ConditionalMergeImpl>> Build(
       const ConditionalMerge& config);
 
-  enum class PassThroughNonMatches {kNo, kYes};
+  enum class PassThroughNonMatches { kNo, kYes };
 
-  explicit ConditionalMergeImpl(
-      std::unique_ptr<FieldFiltersMatcher> matcher,
-      std::vector<LabelerEvent>&& updates,
-      PassThroughNonMatches pass_through_non_matches):
-      matcher_(std::move(matcher)),
-      updates_(std::move(updates)),
-      pass_through_non_matches_(pass_through_non_matches) {}
+  explicit ConditionalMergeImpl(std::unique_ptr<FieldFiltersMatcher> matcher,
+                                std::vector<LabelerEvent>&& updates,
+                                PassThroughNonMatches pass_through_non_matches)
+      : matcher_(std::move(matcher)),
+        updates_(std::move(updates)),
+        pass_through_non_matches_(pass_through_non_matches) {}
 
   ConditionalMergeImpl(const ConditionalMergeImpl&) = delete;
   ConditionalMergeImpl& operator=(const ConditionalMergeImpl&) = delete;

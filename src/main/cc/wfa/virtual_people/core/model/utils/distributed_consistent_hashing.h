@@ -49,12 +49,12 @@ class DistributedConsistentHashing {
 
   // Never call the constructor directly.
   explicit DistributedConsistentHashing(
-      std::vector<DistributionChoice>&& distribution):
-      distribution_(std::move(distribution)) {}
+      std::vector<DistributionChoice>&& distribution)
+      : distribution_(std::move(distribution)) {}
 
   DistributedConsistentHashing(const DistributedConsistentHashing&) = delete;
-  DistributedConsistentHashing& operator=(
-      const DistributedConsistentHashing&) = delete;
+  DistributedConsistentHashing& operator=(const DistributedConsistentHashing&) =
+      delete;
 
   // Returns the selected choice id.
   int32_t Hash(absl::string_view random_seed) const;

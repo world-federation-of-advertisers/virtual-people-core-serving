@@ -33,7 +33,7 @@ absl::StatusOr<std::unique_ptr<ModelNode>> ModelNode::Build(
 
 absl::StatusOr<std::unique_ptr<ModelNode>> ModelNode::Build(
     const CompiledNode& config) {
-  switch(config.type_case()) {
+  switch (config.type_case()) {
     case CompiledNode::TypeCase::kBranchNode: {
       absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
       return BranchNodeImpl::Build(config, node_refs);
@@ -47,9 +47,9 @@ absl::StatusOr<std::unique_ptr<ModelNode>> ModelNode::Build(
   }
 }
 
-ModelNode::ModelNode(const CompiledNode& node_config):
-    name_(node_config.name()),
-    from_model_builder_config_(
-        node_config.debug_info().directly_from_model_builder_config()) {}
+ModelNode::ModelNode(const CompiledNode& node_config)
+    : name_(node_config.name()),
+      from_model_builder_config_(
+          node_config.debug_info().directly_from_model_builder_config()) {}
 
 }  // namespace wfa_virtual_people
