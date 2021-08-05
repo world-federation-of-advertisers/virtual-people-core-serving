@@ -3,38 +3,25 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 # Common-cpp
 http_archive(
     name = "wfa_common_cpp",
-    sha256 = "e0e1f5eed832ef396109354a64c6c1306bf0fb5ea0b449ce6ee1e8edc6fe279d",
-    strip_prefix = "common-cpp-43c75acc3394e19bcfd2cfe8e8e2454365d26d60",
-    url = "https://github.com/world-federation-of-advertisers/common-cpp/archive/43c75acc3394e19bcfd2cfe8e8e2454365d26d60.tar.gz",
+    sha256 = "63f923b38a3519c57d18db19b799d2040817c636be520c8c82830f7a0d63af47",
+    strip_prefix = "common-cpp-215be9e75b6d9f362d419e21c9804bd0d8d68916",
+    url = "https://github.com/world-federation-of-advertisers/common-cpp/archive/215be9e75b6d9f362d419e21c9804bd0d8d68916.tar.gz",
 )
 
-load("@wfa_common_cpp//build:deps.bzl", "common_cpp_deps")
+load("@wfa_common_cpp//build:common_cpp_repositories.bzl", "common_cpp_repositories")
+
+common_cpp_repositories()
+
+load("@wfa_common_cpp//build:common_cpp_deps.bzl", "common_cpp_deps")
 
 common_cpp_deps()
 
-http_archive(
-    name = "com_google_protobuf",
-    sha256 = "355cf346e6988fd219ff7b18e6e68a742aaef09a400a0cf2860e7841468a12ac",
-    strip_prefix = "protobuf-3.15.7",
-    urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v3.15.7/protobuf-all-3.15.7.tar.gz"],
-)
-
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
-
-protobuf_deps()
-
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "virtual_people_common",
-    commit = "36f58cfc29901a3110df585faba206964b96e4a1",
+    # TODO(@tcsnfkx): Fix this after https://github.com/world-federation-of-advertisers/virtual-people-common/pull/20 is merged.
+    branch = "tcsnfkx-common-cpp-migrate",
+    # commit = "36f58cfc29901a3110df585faba206964b96e4a1",
     remote = "https://github.com/world-federation-of-advertisers/virtual-people-common",
-)
-
-# TODO: delete this after virtual-people-common no longer requires it
-git_repository(
-    name = "cross_media_measurement",
-    commit = "a4863588aa84c965e6ec0d0b1d6e535b0d86d388",
-    remote = "https://github.com/world-federation-of-advertisers/cross-media-measurement",
-    repo_mapping = {"@googletest": "@googletest"},
 )
