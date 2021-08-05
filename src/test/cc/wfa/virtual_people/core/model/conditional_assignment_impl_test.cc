@@ -28,9 +28,9 @@
 namespace wfa_virtual_people {
 namespace {
 
+using ::wfa::EqualsProto;
 using ::wfa::IsOk;
 using ::wfa::StatusIs;
-using ::wfa::EqualsProto;
 
 TEST(ConditionalAssignmentImplTest, TestNoCondition) {
   BranchNode::AttributesUpdater config;
