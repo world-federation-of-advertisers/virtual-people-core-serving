@@ -14,8 +14,6 @@
 
 #include "wfa/virtual_people/core/model/utils/virtual_person_selector.h"
 
-#include <google/protobuf/repeated_field.h>
-
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -23,6 +21,7 @@
 
 #include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
+#include "google/protobuf/repeated_field.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/utils/consistent_hash.h"
 
