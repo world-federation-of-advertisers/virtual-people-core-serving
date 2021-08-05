@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_ASSIGNMENT_IMPL_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_ASSIGNMENT_IMPL_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_ASSIGNMENT_IMPL_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_ASSIGNMENT_IMPL_H_
+
+#include <memory>
+#include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -48,18 +52,18 @@ class ConditionalAssignmentImpl : public AttributesUpdaterInterface {
     std::function<void(
         LabelerEvent&,
         const std::vector<const google::protobuf::FieldDescriptor*>&,
-        const std::vector<const google::protobuf::FieldDescriptor*>&)> assign;
+        const std::vector<const google::protobuf::FieldDescriptor*>&)>
+        assign;
   };
 
-  explicit ConditionalAssignmentImpl(
-      std::unique_ptr<FieldFilter> condition,
-      std::vector<Assignment>&& assignments):
-      condition_(std::move(condition)),
-      assignments_(std::move(assignments)) {}
+  explicit ConditionalAssignmentImpl(std::unique_ptr<FieldFilter> condition,
+                                     std::vector<Assignment>&& assignments)
+      : condition_(std::move(condition)),
+        assignments_(std::move(assignments)) {}
 
   ConditionalAssignmentImpl(const ConditionalAssignmentImpl&) = delete;
-  ConditionalAssignmentImpl& operator=(
-      const ConditionalAssignmentImpl&) = delete;
+  ConditionalAssignmentImpl& operator=(const ConditionalAssignmentImpl&) =
+      delete;
 
   // If condition_ is matched, for each entry in assignments_, assigns the
   // value of source field to target field.
@@ -75,4 +79,4 @@ class ConditionalAssignmentImpl : public AttributesUpdaterInterface {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_ASSIGNMENT_IMPL_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_ASSIGNMENT_IMPL_H_

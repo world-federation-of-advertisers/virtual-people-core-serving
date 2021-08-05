@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_LABELER_LABELER_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_LABELER_LABELER_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_LABELER_LABELER_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_LABELER_LABELER_H_
+
+#include <memory>
+#include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -86,7 +90,7 @@ class Labeler {
   static absl::StatusOr<std::unique_ptr<Labeler>> Build(
       const std::vector<CompiledNode>& nodes);
 
-  explicit Labeler(std::unique_ptr<ModelNode> root): root_(std::move(root)) {}
+  explicit Labeler(std::unique_ptr<ModelNode> root) : root_(std::move(root)) {}
 
   Labeler(const Labeler&) = delete;
   Labeler& operator=(const Labeler&) = delete;
@@ -101,4 +105,4 @@ class Labeler {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_LABELER_LABELER_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_LABELER_LABELER_H_

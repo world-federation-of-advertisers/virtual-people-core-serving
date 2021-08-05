@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_
+
+#include <memory>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
@@ -45,8 +47,8 @@ class AttributesUpdaterInterface {
   virtual ~AttributesUpdaterInterface() = default;
 
   AttributesUpdaterInterface(const AttributesUpdaterInterface&) = delete;
-  AttributesUpdaterInterface& operator=(
-      const AttributesUpdaterInterface&) = delete;
+  AttributesUpdaterInterface& operator=(const AttributesUpdaterInterface&) =
+      delete;
 
   // Applies the attributes updater to the @event.
   //
@@ -62,4 +64,4 @@ class AttributesUpdaterInterface {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_ATTRIBUTES_UPDATER_H_

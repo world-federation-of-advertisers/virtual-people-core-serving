@@ -14,6 +14,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "common_cpp/testing/common_matchers.h"
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
@@ -27,15 +28,9 @@
 namespace wfa_virtual_people {
 namespace {
 
+using ::wfa::EqualsProto;
 using ::wfa::IsOk;
 using ::wfa::StatusIs;
-
-MATCHER_P(EqualsProto, expected, "") {
-  ::google::protobuf::util::MessageDifferencer differencer;
-  differencer.set_repeated_field_comparison(
-      google::protobuf::util::MessageDifferencer::AS_SET);
-  return differencer.Compare(arg, expected);
-}
 
 TEST(ConditionalAssignmentImplTest, TestNoCondition) {
   BranchNode::AttributesUpdater config;

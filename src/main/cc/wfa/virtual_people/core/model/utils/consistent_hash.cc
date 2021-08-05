@@ -24,11 +24,11 @@ namespace wfa_virtual_people {
 int32_t JumpConsistentHash(uint64_t key, int32_t num_buckets) {
   int32_t b = -1;
   // Use int64_t for j to handle int32_t overflow.
-  for (int64_t j = 0; j < num_buckets; ) {
+  for (int64_t j = 0; j < num_buckets;) {
     b = j;
     key = key * 2862933555777941757ULL + 1;
-    j = (j + 1) * (static_cast<double>(1LL << 31) /
-                   static_cast<double>((key >> 33) + 1));
+    j = (j + 1) *
+        (static_cast<double>(1LL << 31) / static_cast<double>((key >> 33) + 1));
   }
   return b;
 }

@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_TREE_IMPL_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_TREE_IMPL_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_TREE_IMPL_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_TREE_IMPL_H_
+
+#include <memory>
+#include <utility>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
@@ -36,8 +39,8 @@ class UpdateTreeImpl : public AttributesUpdaterInterface {
       const UpdateTree& config,
       absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs);
 
-  explicit UpdateTreeImpl(std::unique_ptr<ModelNode> root):
-        root_(std::move(root)) {}
+  explicit UpdateTreeImpl(std::unique_ptr<ModelNode> root)
+      : root_(std::move(root)) {}
 
   UpdateTreeImpl(const UpdateTreeImpl&) = delete;
   UpdateTreeImpl& operator=(const UpdateTreeImpl&) = delete;
@@ -52,4 +55,4 @@ class UpdateTreeImpl : public AttributesUpdaterInterface {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_TREE_IMPL_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_TREE_IMPL_H_

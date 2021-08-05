@@ -14,16 +14,18 @@
 
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 
+#include <memory>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/conditional_assignment_impl.h"
 #include "wfa/virtual_people/core/model/conditional_merge_impl.h"
+#include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/sparse_update_matrix_impl.h"
 #include "wfa/virtual_people/core/model/update_matrix_impl.h"
 #include "wfa/virtual_people/core/model/update_tree_impl.h"
-#include "wfa/virtual_people/core/model/model_node.h"
 
 namespace wfa_virtual_people {
 
@@ -39,8 +41,7 @@ AttributesUpdaterInterface::Build(
 }
 
 absl::StatusOr<std::unique_ptr<AttributesUpdaterInterface>>
-AttributesUpdaterInterface::Build(
-    const BranchNode::AttributesUpdater& config) {
+AttributesUpdaterInterface::Build(const BranchNode::AttributesUpdater& config) {
   switch (config.update_case()) {
     case BranchNode::AttributesUpdater::UpdateCase::kUpdateMatrix:
       return UpdateMatrixImpl::Build(config.update_matrix());

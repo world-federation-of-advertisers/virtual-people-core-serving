@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_MERGE_IMPL_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_MERGE_IMPL_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_MERGE_IMPL_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_MERGE_IMPL_H_
+
+#include <memory>
+#include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -38,15 +42,14 @@ class ConditionalMergeImpl : public AttributesUpdaterInterface {
   static absl::StatusOr<std::unique_ptr<ConditionalMergeImpl>> Build(
       const ConditionalMerge& config);
 
-  enum class PassThroughNonMatches {kNo, kYes};
+  enum class PassThroughNonMatches { kNo, kYes };
 
-  explicit ConditionalMergeImpl(
-      std::unique_ptr<FieldFiltersMatcher> matcher,
-      std::vector<LabelerEvent>&& updates,
-      PassThroughNonMatches pass_through_non_matches):
-      matcher_(std::move(matcher)),
-      updates_(std::move(updates)),
-      pass_through_non_matches_(pass_through_non_matches) {}
+  explicit ConditionalMergeImpl(std::unique_ptr<FieldFiltersMatcher> matcher,
+                                std::vector<LabelerEvent>&& updates,
+                                PassThroughNonMatches pass_through_non_matches)
+      : matcher_(std::move(matcher)),
+        updates_(std::move(updates)),
+        pass_through_non_matches_(pass_through_non_matches) {}
 
   ConditionalMergeImpl(const ConditionalMergeImpl&) = delete;
   ConditionalMergeImpl& operator=(const ConditionalMergeImpl&) = delete;
@@ -71,4 +74,4 @@ class ConditionalMergeImpl : public AttributesUpdaterInterface {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_MERGE_IMPL_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_CONDITIONAL_MERGE_IMPL_H_

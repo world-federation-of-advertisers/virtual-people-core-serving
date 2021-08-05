@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
+
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -79,7 +84,7 @@ class SparseUpdateMatrixImpl : public AttributesUpdaterInterface {
   static absl::StatusOr<std::unique_ptr<SparseUpdateMatrixImpl>> Build(
       const SparseUpdateMatrix& config);
 
-  enum class PassThroughNonMatches {kNo, kYes};
+  enum class PassThroughNonMatches { kNo, kYes };
 
   explicit SparseUpdateMatrixImpl(
       std::unique_ptr<HashFieldMaskMatcher> hash_matcher,
@@ -87,13 +92,13 @@ class SparseUpdateMatrixImpl : public AttributesUpdaterInterface {
       std::vector<std::unique_ptr<DistributedConsistentHashing>>&& row_hashings,
       absl::string_view random_seed,
       std::vector<std::vector<LabelerEvent>>&& rows,
-      PassThroughNonMatches pass_through_non_matches):
-      hash_matcher_(std::move(hash_matcher)),
-      filters_matcher_(std::move(filters_matcher)),
-      row_hashings_(std::move(row_hashings)),
-      random_seed_(random_seed),
-      rows_(std::move(rows)),
-      pass_through_non_matches_(pass_through_non_matches) {}
+      PassThroughNonMatches pass_through_non_matches)
+      : hash_matcher_(std::move(hash_matcher)),
+        filters_matcher_(std::move(filters_matcher)),
+        row_hashings_(std::move(row_hashings)),
+        random_seed_(random_seed),
+        rows_(std::move(rows)),
+        pass_through_non_matches_(pass_through_non_matches) {}
 
   SparseUpdateMatrixImpl(const SparseUpdateMatrixImpl&) = delete;
   SparseUpdateMatrixImpl& operator=(const SparseUpdateMatrixImpl&) = delete;
@@ -131,4 +136,4 @@ class SparseUpdateMatrixImpl : public AttributesUpdaterInterface {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_

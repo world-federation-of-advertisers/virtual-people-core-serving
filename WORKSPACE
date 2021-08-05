@@ -3,38 +3,23 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 # Common-cpp
 http_archive(
     name = "wfa_common_cpp",
-    sha256 = "e0e1f5eed832ef396109354a64c6c1306bf0fb5ea0b449ce6ee1e8edc6fe279d",
-    strip_prefix = "common-cpp-43c75acc3394e19bcfd2cfe8e8e2454365d26d60",
-    url = "https://github.com/world-federation-of-advertisers/common-cpp/archive/43c75acc3394e19bcfd2cfe8e8e2454365d26d60.tar.gz",
+    sha256 = "aac2fa570a63c974094e09a5c92585a4e992b429c658057d187f46381be3ce50",
+    strip_prefix = "common-cpp-0.1.0",
+    url = "https://github.com/world-federation-of-advertisers/common-cpp/archive/refs/tags/v0.1.0.tar.gz",
 )
 
-load("@wfa_common_cpp//build:deps.bzl", "common_cpp_deps")
+load("@wfa_common_cpp//build:common_cpp_repositories.bzl", "common_cpp_repositories")
+
+common_cpp_repositories()
+
+load("@wfa_common_cpp//build:common_cpp_deps.bzl", "common_cpp_deps")
 
 common_cpp_deps()
 
+# Virtual-people-common
 http_archive(
-    name = "com_google_protobuf",
-    sha256 = "355cf346e6988fd219ff7b18e6e68a742aaef09a400a0cf2860e7841468a12ac",
-    strip_prefix = "protobuf-3.15.7",
-    urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v3.15.7/protobuf-all-3.15.7.tar.gz"],
-)
-
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
-
-protobuf_deps()
-
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
-
-git_repository(
     name = "virtual_people_common",
-    commit = "36f58cfc29901a3110df585faba206964b96e4a1",
-    remote = "https://github.com/world-federation-of-advertisers/virtual-people-common",
-)
-
-# TODO: delete this after virtual-people-common no longer requires it
-git_repository(
-    name = "cross_media_measurement",
-    commit = "a4863588aa84c965e6ec0d0b1d6e535b0d86d388",
-    remote = "https://github.com/world-federation-of-advertisers/cross-media-measurement",
-    repo_mapping = {"@googletest": "@googletest"},
+    sha256 = "fa100fb0acaeffc6192a0c26f0c4ee96ba269de2d004797330d71985777e4906",
+    strip_prefix = "virtual-people-common-77883e639ad22431bca5eeaffd08fbf5e320bb68",
+    url = "https://github.com/world-federation-of-advertisers/virtual-people-common/archive/77883e639ad22431bca5eeaffd08fbf5e320bb68.tar.gz",
 )

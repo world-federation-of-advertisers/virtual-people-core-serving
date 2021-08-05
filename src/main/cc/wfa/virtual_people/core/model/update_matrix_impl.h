@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_MATRIX_IMPL_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_MATRIX_IMPL_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_MATRIX_IMPL_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_MATRIX_IMPL_H_
+
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -44,21 +49,20 @@ class UpdateMatrixImpl : public AttributesUpdaterInterface {
   static absl::StatusOr<std::unique_ptr<UpdateMatrixImpl>> Build(
       const UpdateMatrix& config);
 
-  enum class PassThroughNonMatches {kNo, kYes};
+  enum class PassThroughNonMatches { kNo, kYes };
 
   explicit UpdateMatrixImpl(
       std::unique_ptr<HashFieldMaskMatcher> hash_matcher,
       std::unique_ptr<FieldFiltersMatcher> filters_matcher,
       std::vector<std::unique_ptr<DistributedConsistentHashing>>&& row_hashings,
-      absl::string_view random_seed,
-      std::vector<LabelerEvent>&& rows,
-      PassThroughNonMatches pass_through_non_matches):
-      hash_matcher_(std::move(hash_matcher)),
-      filters_matcher_(std::move(filters_matcher)),
-      row_hashings_(std::move(row_hashings)),
-      random_seed_(random_seed),
-      rows_(std::move(rows)),
-      pass_through_non_matches_(pass_through_non_matches) {}
+      absl::string_view random_seed, std::vector<LabelerEvent>&& rows,
+      PassThroughNonMatches pass_through_non_matches)
+      : hash_matcher_(std::move(hash_matcher)),
+        filters_matcher_(std::move(filters_matcher)),
+        row_hashings_(std::move(row_hashings)),
+        random_seed_(random_seed),
+        rows_(std::move(rows)),
+        pass_through_non_matches_(pass_through_non_matches) {}
 
   UpdateMatrixImpl(const UpdateMatrixImpl&) = delete;
   UpdateMatrixImpl& operator=(const UpdateMatrixImpl&) = delete;
@@ -95,4 +99,4 @@ class UpdateMatrixImpl : public AttributesUpdaterInterface {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_MATRIX_IMPL_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UPDATE_MATRIX_IMPL_H_

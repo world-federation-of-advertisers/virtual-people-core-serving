@@ -99,6 +99,7 @@ cc_test(
         "@googletest//:gtest_main",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:demographic_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/testing:common_matchers",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
     ],
 )
