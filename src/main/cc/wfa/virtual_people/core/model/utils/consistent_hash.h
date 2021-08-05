@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_CONSISTENT_HASH_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_CONSISTENT_HASH_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_CONSISTENT_HASH_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_CONSISTENT_HASH_H_
 
 #include <cstdint>
 
@@ -29,4 +29,4 @@ int32_t JumpConsistentHash(uint64_t key, int32_t num_buckets);
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_CONSISTENT_HASH_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_CONSISTENT_HASH_H_

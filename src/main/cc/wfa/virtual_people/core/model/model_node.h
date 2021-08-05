@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_MODEL_NODE_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_MODEL_NODE_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_MODEL_NODE_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_MODEL_NODE_H_
 
 #include <string>
 
@@ -63,4 +63,4 @@ class ModelNode {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_MODEL_NODE_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_MODEL_NODE_H_

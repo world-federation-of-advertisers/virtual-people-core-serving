@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -131,4 +131,4 @@ class SparseUpdateMatrixImpl : public AttributesUpdaterInterface {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_SPARSE_UPDATE_MATRIX_IMPL_H_

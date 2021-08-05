@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_
-#define WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_
+#ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_
+#define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_
 
 #include <google/protobuf/repeated_field.h>
 
@@ -89,4 +89,4 @@ class VirtualPersonSelector {
 
 }  // namespace wfa_virtual_people
 
-#endif  // WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_
+#endif  // SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_
