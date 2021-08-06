@@ -19,6 +19,7 @@
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
+#include "src/main/proto/wfa/virtual_people/common/label.pb.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 
