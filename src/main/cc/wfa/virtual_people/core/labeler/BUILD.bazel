@@ -20,6 +20,8 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@farmhash",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:event_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
