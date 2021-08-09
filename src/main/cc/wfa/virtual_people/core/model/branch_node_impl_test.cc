@@ -598,75 +598,6 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
   // population node always assigns virtual person id 10.
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
-      name: "TestBranchNode"
-      index: 1
-      branch_node {
-        branches {
-          node {
-            population_node {
-              pools {
-                population_offset: 10
-                total_population: 1
-              }
-              random_seed: "TestPopulationNodeSeed1"
-            }
-          }
-          condition {
-            name: "person_country_code"
-            op: EQUAL
-            value: "COUNTRY_3"
-          }
-        }
-        updates {
-          updates {
-            update_matrix {
-              columns {
-                person_country_code: "COUNTRY_1"
-              }
-              rows {
-                person_country_code: "COUNTRY_2"
-              }
-              probabilities: 1
-            }
-          }
-          updates {
-            update_matrix {
-              columns {
-                person_country_code: "COUNTRY_2"
-              }
-              rows {
-                person_country_code: "COUNTRY_3"
-              }
-              probabilities: 1
-            }
-          }
-        }
-      }
-  )pb", &config));
-ASSERT_OK_AND_ASSIGN(
-        std::unique_ptr<ModelNode> node, ModelNode::Build(config));
-
-// Test for COUNTRY_1
-LabelerEvent input;
-input.set_person_country_code("COUNTRY_1");
-input.set_acting_fingerprint(1);
-EXPECT_THAT(node->Apply(input), IsOk());
-EXPECT_EQ(input.person_country_code(), "COUNTRY_3");
-EXPECT_EQ(input.virtual_person_activities(0).virtual_person_id(), 10);
-}
-
-
-TEST(BranchNodeImplTest, TestPopulationNode) {
-// The branch node has 2 attributes updater and 1 branches.
-// The 1st update matrix always chances person_country_code from COUNTRY_1 to
-// COUNTRY_2.
-// The 2nd update matrix always chances person_country_code from COUNTRY_2 to
-// COUNTRY_3.
-//
-// One branch is selected if person_country_code is "COUNTRY_3", which is a
-// population node always assigns virtual person id 10.
-CompiledNode config;
-ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
 name: "root"
 branch_node {
   branches {
@@ -770,6 +701,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 11000150000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -826,6 +768,17 @@ branch_node {
                                           pools {
                                             population_offset: 12000111915
                                             total_population: 38085
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 12000150000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -890,6 +843,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 13000200000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -921,7 +885,7 @@ branch_node {
                                       node{
                                         population_node {
                                           pools {
-                                            population_offset: 11000000000
+                                            population_offset: 14000000000
                                             total_population: 40637
                                           }
                                         }
@@ -946,6 +910,17 @@ branch_node {
                                           pools {
                                             population_offset: 14000149219
                                             total_population: 50781
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 14000200000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -1010,6 +985,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 15000100000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -1066,6 +1052,17 @@ branch_node {
                                           pools {
                                             population_offset: 16000074610
                                             total_population: 25390
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 16000100000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -1142,6 +1139,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 11000150000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -1198,6 +1206,17 @@ branch_node {
                                           pools {
                                             population_offset: 12000111915
                                             total_population: 38085
+                                          }
+                                        }
+                                      }
+                                    }
+                                   branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 12000150000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -1262,6 +1281,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 13000200000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -1293,7 +1323,7 @@ branch_node {
                                       node{
                                         population_node {
                                           pools {
-                                            population_offset: 11000000000
+                                            population_offset: 14000000000
                                             total_population: 40637
                                           }
                                         }
@@ -1318,6 +1348,17 @@ branch_node {
                                           pools {
                                             population_offset: 14000149219
                                             total_population: 50781
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 14000200000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -1382,6 +1423,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 15000100000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -1438,6 +1490,17 @@ branch_node {
                                           pools {
                                             population_offset: 16000074610
                                             total_population: 25390
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 16000100000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -1526,6 +1589,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 1000010000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -1582,6 +1656,17 @@ branch_node {
                                           pools {
                                             population_offset: 2000014922
                                             total_population: 5078
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 2000020000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -1646,6 +1731,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 3000030000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -1702,6 +1798,17 @@ branch_node {
                                           pools {
                                             population_offset: 4000029844
                                             total_population: 10156
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 4000040000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -1766,6 +1873,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 5000050000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -1801,7 +1919,6 @@ branch_node {
                                             total_population: 12191
                                           }
                                         }
-
                                       }
                                     }
                                     branches {
@@ -1822,6 +1939,17 @@ branch_node {
                                           pools {
                                             population_offset: 6000044766
                                             total_population: 15234
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000095
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 6000060000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -1898,6 +2026,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 1000010000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -1954,6 +2093,17 @@ branch_node {
                                           pools {
                                             population_offset: 2000014922
                                             total_population: 5078
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 2000020000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -2018,6 +2168,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 3000030000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -2074,6 +2235,17 @@ branch_node {
                                           pools {
                                             population_offset: 4000029844
                                             total_population: 10156
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 4000040000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -2138,6 +2310,17 @@ branch_node {
                                         }
                                       }
                                     }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 5000050000
+                                            total_population: 1
+                                          }
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -2194,6 +2377,17 @@ branch_node {
                                           pools {
                                             population_offset: 6000044766
                                             total_population: 15234
+                                          }
+                                        }
+                                      }
+                                    }
+                                    branches {
+                                      chance: 0.05000038759
+                                      node {
+                                        population_node {
+                                          pools {
+                                            population_offset: 6000060000
+                                            total_population: 1
                                           }
                                         }
                                       }
@@ -2755,74 +2949,74 @@ branch_node {
               }
               probabilities: 0.5
               probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.55
-              probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.05
-              probabilities: 0.05
-              probabilities: 0.1
-              probabilities: 0.6
-              probabilities: 0.1
-              probabilities: 0.1
               probabilities: 0.05
               probabilities: 0.0
-              probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.65
-              probabilities: 0.1
-              probabilities: 0.05
-              probabilities: 0.05
-              probabilities: 0.05
-              probabilities: 0.05
-              probabilities: 0.1
-              probabilities: 0.7
               probabilities: 0.05
               probabilities: 0.0
-              probabilities: 0.0
-              probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.05
-              probabilities: 0.75
               probabilities: 0.5
               probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.1
-              probabilities: 0.1
+              probabilities: 0.05
+              probabilities: 0.0
+              probabilities: 0.05
+              probabilities: 0.0
               probabilities: 0.1
               probabilities: 0.55
               probabilities: 0.1
               probabilities: 0.1
-              probabilities: 0.1
               probabilities: 0.05
-              probabilities: 0.05
+              probabilities: 0.0
               probabilities: 0.1
-              probabilities: 0.6
+              probabilities: 0.55
               probabilities: 0.1
               probabilities: 0.1
               probabilities: 0.05
               probabilities: 0.0
+              probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.6
+              probabilities: 0.1
+              probabilities: 0.05
+              probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.6
+              probabilities: 0.1
+              probabilities: 0.05
+              probabilities: 0.1
+              probabilities: 0.1
               probabilities: 0.1
               probabilities: 0.1
               probabilities: 0.65
               probabilities: 0.1
-              probabilities: 0.05
-              probabilities: 0.05
-              probabilities: 0.05
-              probabilities: 0.05
+              probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.65
+              probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.1
               probabilities: 0.1
               probabilities: 0.7
               probabilities: 0.05
-              probabilities: 0.0
-              probabilities: 0.0
               probabilities: 0.1
               probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.1
+              probabilities: 0.7
+              probabilities: 0.05
+              probabilities: 0.1
+              probabilities: 0.05
+              probabilities: 0.05
+              probabilities: 0.05
+              probabilities: 0.05
+              probabilities: 0.75
+              probabilities: 0.1
+              probabilities: 0.05
+              probabilities: 0.05
+              probabilities: 0.05
               probabilities: 0.05
               probabilities: 0.75
               pass_through_non_matches: True
@@ -2953,6 +3147,37 @@ branch_node {
                         }
                       }
                     }
+                    branches {
+                      chance: 0.10000036719
+                      node {
+                        population_node {
+                          pools {
+                            population_offset: 11000007500
+                            total_population: 1
+                          }
+                          pools {
+                            population_offset: 12000007500
+                            total_population: 1
+                          }
+                          pools {
+                            population_offset: 13000010000
+                            total_population: 1
+                          }
+                          pools {
+                            population_offset: 14000010000
+                            total_population: 1
+                          }
+                          pools {
+                            population_offset: 15000005000
+                            total_population: 1
+                          }
+                          pools {
+                            population_offset: 16000005000
+                            total_population: 1
+                          }
+                        }
+                      }
+                    }
                   }
                }
             }
@@ -3058,6 +3283,37 @@ branch_node {
                         }
                       }
                     }
+                    branches {
+                      chance: 0.10000036719
+                      node {
+                        population_node {
+                          pools {
+                            population_offset: 1000000500
+                            total_population: 1
+                          }
+                          pools {
+                            population_offset: 2000001000
+                            total_population: 1
+                          }
+                          pools {
+                            population_offset: 3000001500
+                            total_population: 1
+                          }
+                          pools {
+                            population_offset: 4000002000
+                            total_population: 1
+                          }
+                          pools {
+                            population_offset: 5000002500
+                            total_population: 1
+                          }
+                          pools {
+                            population_offset: 6000003000
+                            total_population: 1
+                          }
+                        }
+                      }
+                    }
                   }
                }
             }
@@ -3082,35 +3338,38 @@ ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(R"pb(
  labeler_input {
       user_agent: "phone"
       geo {
-        country_id: 2
+        country_id: 1
       }
       profile_info {
         phone_user_info {
           user_id: "123456"
           home_geo {
-            country_id: 2
+            country_id: 1
           }
           demo {
             demo_bucket {
               gender: 2
               age {
-                min_age: 35
-                max_age: 99
+                min_age: 18
+                max_age: 24
               }
             }
           }
         }
       }
     }
-    person_country_code: "US"
+    person_country_code: "GB"
     acting_fingerprint: 1
   )pb", &example));
 
-for (int cookies = 0; cookies <= 500000; cookies += 20000){
+int demo_impressions[6] = {0,0,0,0,0,0};
+std::set<long> demo_reach[6];
+
+for (int cookies = 0; cookies <= 100000; cookies += 10000){
     std::ofstream myfile;
 //    myfile.open ("/Users/mahitoshpatel/go/src/code.byted.org/ad/virtual-people-core-serving/src/main/cc/wfa/virtual_people/core/model/example0.txt");
     std::set<long> mySet;
-    for (int fingerprint = 0; fingerprint < cookies; ++fingerprint) {
+    for (int fingerprint = 0; fingerprint <= cookies; ++fingerprint) {
         LabelerEvent input(example);
         input.set_acting_fingerprint(fingerprint);
         auto res = node->Apply(input);
