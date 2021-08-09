@@ -15,13 +15,12 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_UTILS_VIRTUAL_PERSON_SELECTOR_H_
 
-#include <google/protobuf/repeated_field.h>
-
 #include <cstdint>
 #include <memory>
 #include <vector>
 
 #include "absl/status/statusor.h"
+#include "google/protobuf/repeated_field.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 
 namespace wfa_virtual_people {

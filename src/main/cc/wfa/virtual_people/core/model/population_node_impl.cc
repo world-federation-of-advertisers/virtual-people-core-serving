@@ -25,6 +25,8 @@
 #include "absl/strings/string_view.h"
 #include "common_cpp/macros/macros.h"
 #include "src/farmhash.h"
+#include "src/main/proto/wfa/virtual_people/common/demographic.pb.h"
+#include "src/main/proto/wfa/virtual_people/common/label.pb.h"
 #include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/virtual_person_selector.h"
@@ -60,17 +62,20 @@ absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
   int64_t virtual_person_id =
       virtual_person_selector_->GetVirtualPersonId(seed);
 
-  // Writes virtual person id to the @event.
-  // At most one virtual_person_activities can exist in @event here, as
-  // population node is always a leaf of the model tree.
-  // If a virtual_person_activities was added by a previous node, the virtual
-  // person id is written to it. Otherwise, create a new
-  // virtual_person_activities and write the virtual person id.
-  if (event.virtual_person_activities_size() == 0) {
-    event.add_virtual_person_activities();
+  // Creates a new virtual_person_activities in @event and write the virtual
+  // person id and label.
+  // No virtual_person_activity should be added by previous nodes.
+  if (event.virtual_person_activities_size() > 0) {
+    return absl::InvalidArgumentError(
+        "virtual_person_activities should only be created in leaf nodes.");
   }
-  event.mutable_virtual_person_activities(0)->set_virtual_person_id(
-      virtual_person_id);
+  VirtualPersonActivity* virtual_person_activity =
+      event.add_virtual_person_activities();
+  virtual_person_activity->set_virtual_person_id(virtual_person_id);
+  if (event.has_corrected_demo()) {
+    *virtual_person_activity->mutable_label()->mutable_demo() =
+        event.corrected_demo();
+  }
   return absl::OkStatus();
 }
 
