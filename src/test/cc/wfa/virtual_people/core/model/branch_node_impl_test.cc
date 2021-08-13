@@ -154,6 +154,59 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
                                               Pair(20, DoubleNear(0.6, 0.02))));
 }
 
+TEST(BranchNodeImplTest, TestBranchWithNodeIndexByChanceNotNormalized) {
+  // The branch node has 2 branches.
+  // One branch is selected with 40% chance, which is a population node always
+  // assigns virtual person id 10.
+  // The other branch is selected with 60% chance, which is a population node
+  // always assigns virtual person id 20.
+  CompiledNode branch_node_config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        index: 1
+        branch_node {
+          branches { node_index: 2 chance: 0.8 }
+          branches { node_index: 3 chance: 0.12 }
+          random_seed: "TestBranchNodeSeed"
+        }
+      )pb",
+      &branch_node_config));
+
+  CompiledNode population_node_config_1;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode1"
+        index: 2
+        population_node {
+          pools { population_offset: 10 total_population: 1 }
+          random_seed: "TestPopulationNodeSeed1"
+        }
+      )pb",
+      &population_node_config_1));
+
+  CompiledNode population_node_config_2;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode2"
+        index: 3
+        population_node {
+          pools { population_offset: 20 total_population: 1 }
+          random_seed: "TestPopulationNodeSeed2"
+        }
+      )pb",
+      &population_node_config_2));
+
+  // Set up map from indexes to child nodes.
+  absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
+  ASSERT_OK_AND_ASSIGN(node_refs[2],
+                       ModelNode::Build(population_node_config_1));
+  ASSERT_OK_AND_ASSIGN(node_refs[3],
+                       ModelNode::Build(population_node_config_2));
+  EXPECT_THAT(ModelNode::Build(branch_node_config, node_refs).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
 TEST(BranchNodeImplTest, TestApplyBranchWithNodeByCondition) {
   // The branch node has 2 branches.
   // One branch is selected if person_country_code is "country_code_1", which is

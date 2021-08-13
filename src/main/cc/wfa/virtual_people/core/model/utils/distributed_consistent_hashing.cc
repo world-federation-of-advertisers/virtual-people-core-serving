@@ -30,6 +30,8 @@
 
 namespace wfa_virtual_people {
 
+inline constexpr double kNormalizeError = 0.01;
+
 absl::StatusOr<std::unique_ptr<DistributedConsistentHashing>>
 DistributedConsistentHashing::Build(
     std::vector<DistributionChoice>&& distribution) {
@@ -46,8 +48,9 @@ DistributedConsistentHashing::Build(
     probabilities_sum += choice.probability;
   }
 
-  if (probabilities_sum <= 0) {
-    return absl::InvalidArgumentError("Probabilities sum is not positive.");
+  if (probabilities_sum < 1 - kNormalizeError ||
+      probabilities_sum > 1 + kNormalizeError) {
+    return absl::InvalidArgumentError("Probabilities do not sum to 1.");
   }
   // Normalizes the probabilities.
   for (DistributionChoice& choice : distribution) {
