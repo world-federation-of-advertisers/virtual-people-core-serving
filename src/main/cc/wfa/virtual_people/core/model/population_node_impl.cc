@@ -53,8 +53,7 @@ absl::StatusOr<std::unique_ptr<PopulationNodeImpl>> PopulationNodeImpl::Build(
   }
   if (IsEmptyPopulationPool(node_config.population_node().pools())) {
     return absl::make_unique<PopulationNodeImpl>(
-        node_config, nullptr,
-        node_config.population_node().random_seed());
+        node_config, nullptr, node_config.population_node().random_seed());
   }
   ASSIGN_OR_RETURN(
       std::unique_ptr<VirtualPersonSelector> virtual_person_selector,
