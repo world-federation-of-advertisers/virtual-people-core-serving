@@ -30,7 +30,7 @@
 
 namespace wfa_virtual_people {
 
-constexpr double kNormalizeError = 0.01;
+constexpr double kNormalizeError = 0.0000001;
 
 absl::StatusOr<std::unique_ptr<DistributedConsistentHashing>>
 DistributedConsistentHashing::Build(
