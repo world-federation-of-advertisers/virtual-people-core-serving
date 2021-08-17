@@ -155,11 +155,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
 }
 
 TEST(BranchNodeImplTest, TestBranchWithNodeIndexByChanceNotNormalized) {
-  // The branch node has 2 branches.
-  // One branch is selected with 40% chance, which is a population node always
-  // assigns virtual person id 10.
-  // The other branch is selected with 60% chance, which is a population node
-  // always assigns virtual person id 20.
+  // The branch node has 2 branches, but the chances are not normalized.
   CompiledNode branch_node_config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
