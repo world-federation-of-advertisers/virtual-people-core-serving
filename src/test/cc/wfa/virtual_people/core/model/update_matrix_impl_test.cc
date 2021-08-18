@@ -181,6 +181,32 @@ TEST(UpdateMatrixImplTest, TestOutputDistribution) {
                            Pair("UPDATED_COUNTRY_2", DoubleNear(0.8, 0.02))));
 }
 
+TEST(UpdateMatrixImplTest, TestNotNormalized) {
+  // Matrix:
+  //                     "COUNTRY_1" "COUNTRY_2"
+  // "UPDATED_COUNTRY_1"    1.6         0.2
+  // "UPDATED_COUNTRY_2"    0.4         0.8
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        update_matrix {
+          columns { person_country_code: "COUNTRY_1" }
+          columns { person_country_code: "COUNTRY_2" }
+          rows { person_country_code: "UPDATED_COUNTRY_1" }
+          rows { person_country_code: "UPDATED_COUNTRY_2" }
+          probabilities: 1.6
+          probabilities: 0.2
+          probabilities: 0.4
+          probabilities: 0.8
+          pass_through_non_matches: false
+          random_seed: "TestSeed"
+        }
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
 TEST(UpdateMatrixImplTest, TestNoMatchingNotPass) {
   // Matrix:
   //                     "COUNTRY_1" "COUNTRY_2"

@@ -222,15 +222,10 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistribution) {
 }
 
 TEST(SparseUpdateMatrixImplTest, TestOutputDistributionNotNormalized) {
-  // Initial matrix:
+  // Matrix:
   //                     "COUNTRY_1" "COUNTRY_2"
-  // "UPDATED_COUNTRY_1"    1.6         0.4
-  // "UPDATED_COUNTRY_2"    0.4         0.8
-  // "UPDATED_COUNTRY_3"    0           0.8
-  // Normalized matrix:
-  //                     "COUNTRY_1" "COUNTRY_2"
-  // "UPDATED_COUNTRY_1"    0.8         0.2
-  // "UPDATED_COUNTRY_2"    0.2         0.4
+  // "UPDATED_COUNTRY_1"    1.6         0.2
+  // "UPDATED_COUNTRY_2"    0.4         0.4
   // "UPDATED_COUNTRY_3"    0           0.4
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -248,63 +243,17 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistributionNotNormalized) {
             rows { person_country_code: "UPDATED_COUNTRY_1" }
             rows { person_country_code: "UPDATED_COUNTRY_2" }
             rows { person_country_code: "UPDATED_COUNTRY_3" }
+            probabilities: 0.2
             probabilities: 0.4
-            probabilities: 0.8
-            probabilities: 0.8
+            probabilities: 0.4
           }
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
       )pb",
       &config));
-  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
-                       AttributesUpdaterInterface::Build(config));
-
-  // When the input person_country_code is "COUNTRY_1", the output probability
-  // distribution is
-  // person_country_code   probability
-  // "UPDATED_COUNTRY_1"   0.8
-  // "UPDATED_COUNTRY_2"   0.2
-  absl::flat_hash_map<std::string, double> output_counts_1;
-  for (int seed = 0; seed < kSeedNumber; ++seed) {
-    LabelerEvent event;
-    event.set_person_country_code("COUNTRY_1");
-    event.set_acting_fingerprint(seed);
-    EXPECT_THAT(updater->Update(event), IsOk());
-    ++output_counts_1[event.person_country_code()];
-  }
-  for (auto& [key, value] : output_counts_1) {
-    value /= static_cast<double>(kSeedNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(
-      output_counts_1,
-      UnorderedElementsAre(Pair("UPDATED_COUNTRY_1", DoubleNear(0.8, 0.02)),
-                           Pair("UPDATED_COUNTRY_2", DoubleNear(0.2, 0.02))));
-
-  // When the input person_country_code is "COUNTRY_2", the output probability
-  // distribution is
-  // person_country_code   probability
-  // "UPDATED_COUNTRY_1"   0.2
-  // "UPDATED_COUNTRY_2"   0.4
-  // "UPDATED_COUNTRY_3"   0.4
-  absl::flat_hash_map<std::string, double> output_counts_2;
-  for (int seed = 0; seed < kSeedNumber; ++seed) {
-    LabelerEvent event;
-    event.set_person_country_code("COUNTRY_2");
-    event.set_acting_fingerprint(seed);
-    EXPECT_THAT(updater->Update(event), IsOk());
-    ++output_counts_2[event.person_country_code()];
-  }
-  for (auto& [key, value] : output_counts_2) {
-    value /= static_cast<double>(kSeedNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(
-      output_counts_2,
-      UnorderedElementsAre(Pair("UPDATED_COUNTRY_1", DoubleNear(0.2, 0.02)),
-                           Pair("UPDATED_COUNTRY_2", DoubleNear(0.4, 0.02)),
-                           Pair("UPDATED_COUNTRY_3", DoubleNear(0.4, 0.02))));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(SparseUpdateMatrixImplTest, TestNoMatchingNotPass) {

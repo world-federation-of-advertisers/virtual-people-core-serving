@@ -88,33 +88,19 @@ TEST(DistributedConsistentHashingTest, TestOutputDistribution) {
                                    Pair(3, DoubleNear(0.2, 0.02))));
 }
 
-TEST(DistributedConsistentHashingTest, TestNormalize) {
+TEST(DistributedConsistentHashingTest, TestNotNormalized) {
   // Distribution:
-  // choice_id probability_before_normalized normalized_probability
-  // 0         0.8                           0.4
-  // 1         0.4                           0.2
-  // 2         0.4                           0.2
-  // 3         0.4                           0.2
+  // choice_id probability_before_normalized
+  // 0         0.8
+  // 1         0.4
+  // 2         0.4
+  // 3         0.4
   std::vector<DistributionChoice> distribution(
       {DistributionChoice({0, 0.8}), DistributionChoice({1, 0.4}),
        DistributionChoice({2, 0.4}), DistributionChoice({3, 0.4})});
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<DistributedConsistentHashing> hashing,
-      DistributedConsistentHashing::Build(std::move(distribution)));
-  absl::flat_hash_map<int32_t, double> output_counts;
-  for (int seed = 0; seed < kSeedNumber; ++seed) {
-    int32_t output = hashing->Hash(std::to_string(seed));
-    ++output_counts[output];
-  }
-  for (auto& [key, value] : output_counts) {
-    value /= static_cast<double>(kSeedNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(output_counts,
-              UnorderedElementsAre(Pair(0, DoubleNear(0.4, 0.02)),
-                                   Pair(1, DoubleNear(0.2, 0.02)),
-                                   Pair(2, DoubleNear(0.2, 0.02)),
-                                   Pair(3, DoubleNear(0.2, 0.02))));
+  EXPECT_THAT(
+      DistributedConsistentHashing::Build(std::move(distribution)).status(),
+      StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(DistributedConsistentHashingTest, TestZeroProbability) {
@@ -124,22 +110,6 @@ TEST(DistributedConsistentHashingTest, TestZeroProbability) {
   // 1         1
   std::vector<DistributionChoice> distribution(
       {DistributionChoice({0, 0}), DistributionChoice({1, 1})});
-  ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<DistributedConsistentHashing> hashing,
-      DistributedConsistentHashing::Build(std::move(distribution)));
-  for (int seed = 0; seed < kSeedNumber; ++seed) {
-    EXPECT_EQ(hashing->Hash(std::to_string(seed)), 1);
-  }
-}
-
-TEST(DistributedConsistentHashingTest, TestZeroAfterNormalization) {
-  // Distribution:
-  // choice_id probability_before_normalized       normalized_probability
-  // 0         std::numeric_limits<double>::min()  0
-  // 1         std::numeric_limits<double>::max()  1
-  std::vector<DistributionChoice> distribution(
-      {DistributionChoice({0, std::numeric_limits<double>::min()}),
-       DistributionChoice({1, std::numeric_limits<double>::max()})});
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
