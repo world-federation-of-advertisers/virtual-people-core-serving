@@ -33,7 +33,7 @@
 
 namespace wfa_virtual_people {
 
-// Check if the @pools represents an empty population pool.
+// Check if the @pools represent an empty population pool.
 bool IsEmptyPopulationPool(
     const RepeatedPtrField<PopulationNode::VirtualPersonPool>& pools) {
   if (pools.size() != 1) {

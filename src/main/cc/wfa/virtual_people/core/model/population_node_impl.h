@@ -37,7 +37,7 @@ class PopulationNodeImpl : public ModelNode {
   //
   // Returns error status if any of the following happens:
   // * @node_config.population_node is not set.
-  // * The total population of the pools is 0 and the pools does not reporesent
+  // * The total population of the pools is 0 and the pools do not represent
   //   an empty population pool. An empty population pool contains only 1
   //   VirtualPersonPool, and its population_offset and total_population are 0.
   static absl::StatusOr<std::unique_ptr<PopulationNodeImpl>> Build(
@@ -58,7 +58,7 @@ class PopulationNodeImpl : public ModelNode {
   absl::Status Apply(LabelerEvent& event) const override;
 
  private:
-  // Used to get a virtual person id. Be nullptr when the pools represents an
+  // Used to get a virtual person id. Is nullptr when the pools represent an
   // empty population pool.
   std::unique_ptr<VirtualPersonSelector> virtual_person_selector_;
   const std::string random_seed_;

@@ -184,7 +184,8 @@ TEST(PopulationNodeImplTest, TestApplyExistingVirtualPerson) {
 }
 
 TEST(PopulationNodeImplTest, TestEmptyPopulationPool) {
-  // The node is invalid as the total pools size is 0.
+  // The node represents an empty population pool, which will not assign a
+  // virtual person id.
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
