@@ -183,6 +183,56 @@ TEST(PopulationNodeImplTest, TestApplyExistingVirtualPerson) {
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
+TEST(PopulationNodeImplTest, TestEmptyPopulationPool) {
+  // The node represents an empty population pool, which will not assign a
+  // virtual person id.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode"
+        index: 1
+        population_node {
+          pools { population_offset: 0 total_population: 0 }
+          random_seed: "TestRandomSeed"
+        }
+      )pb",
+      &config));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  LabelerEvent input;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        corrected_demo {
+          gender: GENDER_FEMALE
+          age { min_age: 25 max_age: 1000 }
+        }
+        acting_fingerprint: 10000
+      )pb",
+      &input));
+  EXPECT_THAT(node->Apply(input), IsOk());
+  LabelerEvent expected_event;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        virtual_person_activities {
+          label {
+            demo {
+              gender: GENDER_FEMALE
+              age { min_age: 25 max_age: 1000 }
+            }
+          }
+        }
+        corrected_demo {
+          gender: GENDER_FEMALE
+          age { min_age: 25 max_age: 1000 }
+        }
+        acting_fingerprint: 10000
+      )pb",
+      &expected_event));
+  EXPECT_THAT(input, EqualsProto(expected_event));
+}
+
 TEST(PopulationNodeImplTest, TestInvalidPools) {
   // The node is invalid as the total pools size is 0.
   CompiledNode config;

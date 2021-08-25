@@ -33,10 +33,27 @@
 
 namespace wfa_virtual_people {
 
+// Check if the @pools represent an empty population pool.
+bool IsEmptyPopulationPool(
+    const RepeatedPtrField<PopulationNode::VirtualPersonPool>& pools) {
+  if (pools.size() != 1) {
+    return false;
+  }
+  if (pools.Get(0).population_offset() == 0 &&
+      pools.Get(0).total_population() == 0) {
+    return true;
+  }
+  return false;
+}
+
 absl::StatusOr<std::unique_ptr<PopulationNodeImpl>> PopulationNodeImpl::Build(
     const CompiledNode& node_config) {
   if (!node_config.has_population_node()) {
     return absl::InvalidArgumentError("This is not a population node.");
+  }
+  if (IsEmptyPopulationPool(node_config.population_node().pools())) {
+    return absl::make_unique<PopulationNodeImpl>(
+        node_config, nullptr, node_config.population_node().random_seed());
   }
   ASSIGN_OR_RETURN(
       std::unique_ptr<VirtualPersonSelector> virtual_person_selector,
@@ -55,13 +72,6 @@ PopulationNodeImpl::PopulationNodeImpl(
       random_seed_(random_seed) {}
 
 absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
-  uint64_t seed = util::Fingerprint64(
-      absl::StrCat(random_seed_, event.acting_fingerprint()));
-
-  // Gets virtual person id from the pools.
-  int64_t virtual_person_id =
-      virtual_person_selector_->GetVirtualPersonId(seed);
-
   // Creates a new virtual_person_activities in @event and write the virtual
   // person id and label.
   // No virtual_person_activity should be added by previous nodes.
@@ -71,7 +81,18 @@ absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
   }
   VirtualPersonActivity* virtual_person_activity =
       event.add_virtual_person_activities();
-  virtual_person_activity->set_virtual_person_id(virtual_person_id);
+
+  // Only populate virtual_person_id when the pools is not an empty population
+  // pool.
+  if (virtual_person_selector_) {
+    uint64_t seed = util::Fingerprint64(
+        absl::StrCat(random_seed_, event.acting_fingerprint()));
+    // Gets virtual person id from the pools.
+    int64_t virtual_person_id =
+        virtual_person_selector_->GetVirtualPersonId(seed);
+    virtual_person_activity->set_virtual_person_id(virtual_person_id);
+  }
+
   if (event.has_corrected_demo()) {
     *virtual_person_activity->mutable_label()->mutable_demo() =
         event.corrected_demo();
