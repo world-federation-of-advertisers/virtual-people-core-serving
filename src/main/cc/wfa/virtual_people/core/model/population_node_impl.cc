@@ -25,9 +25,9 @@
 #include "absl/strings/string_view.h"
 #include "common_cpp/macros/macros.h"
 #include "src/farmhash.h"
-#include "src/main/proto/wfa/virtual_people/common/demographic.pb.h"
-#include "src/main/proto/wfa/virtual_people/common/label.pb.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/demographic.pb.h"
+#include "wfa/virtual_people/common/label.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/virtual_person_selector.h"
 

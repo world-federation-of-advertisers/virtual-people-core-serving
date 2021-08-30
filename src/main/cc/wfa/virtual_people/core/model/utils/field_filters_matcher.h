@@ -20,9 +20,9 @@
 #include <vector>
 
 #include "absl/status/statusor.h"
-#include "src/main/proto/wfa/virtual_people/common/field_filter.pb.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/field_filter.pb.h"
 #include "wfa/virtual_people/common/field_filter/field_filter.h"
+#include "wfa/virtual_people/common/model.pb.h"
 
 namespace wfa_virtual_people {
 

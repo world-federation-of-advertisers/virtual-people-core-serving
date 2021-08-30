@@ -19,7 +19,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/conditional_assignment_impl.h"
 #include "wfa/virtual_people/core/model/conditional_merge_impl.h"
 #include "wfa/virtual_people/core/model/model_node.h"

@@ -21,7 +21,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/utils/field_filters_matcher.h"
 

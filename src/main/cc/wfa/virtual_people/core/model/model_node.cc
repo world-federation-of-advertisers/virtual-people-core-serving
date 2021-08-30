@@ -17,7 +17,7 @@
 #include <memory>
 
 #include "absl/status/statusor.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/branch_node_impl.h"
 #include "wfa/virtual_people/core/model/population_node_impl.h"
 #include "wfa/virtual_people/core/model/stop_node_impl.h"

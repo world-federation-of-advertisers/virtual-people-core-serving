@@ -22,8 +22,8 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "common_cpp/macros/macros.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/common/field_filter/field_filter.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/utils/constants.h"
 #include "wfa/virtual_people/core/model/utils/field_filters_matcher.h"
 

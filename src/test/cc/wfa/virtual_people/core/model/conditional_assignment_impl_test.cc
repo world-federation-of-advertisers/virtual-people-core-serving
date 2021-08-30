@@ -20,8 +20,8 @@
 #include "gmock/gmock.h"
 #include "google/protobuf/text_format.h"
 #include "gtest/gtest.h"
-#include "src/main/proto/wfa/virtual_people/common/demographic.pb.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/demographic.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 
 namespace wfa_virtual_people {
@@ -260,6 +260,39 @@ TEST(ConditionalAssignmentImplTest, TestMultipleAssignments) {
                                                     )pb",
                                                     &expected_event_4));
   EXPECT_THAT(event_4, EqualsProto(expected_event_4));
+}
+
+TEST(ConditionalAssignmentImplTest, SkipAssignmentsForUnsetField) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_assignment {
+          condition { op: TRUE }
+          assignments {
+            source_field: "acting_demo.gender"
+            target_field: "corrected_demo.gender"
+          }
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  // Skip the conditional assignment as the source field is not set.
+  LabelerEvent event;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        corrected_demo { gender: GENDER_FEMALE }
+      )pb",
+      &event));
+  EXPECT_THAT(updater->Update(event), IsOk());
+  LabelerEvent expected_event;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        corrected_demo { gender: GENDER_FEMALE }
+      )pb",
+      &expected_event));
+  EXPECT_THAT(event, EqualsProto(expected_event));
 }
 
 }  // namespace

@@ -22,7 +22,7 @@
 #include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
 #include "google/protobuf/repeated_field.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/utils/consistent_hash.h"
 
 namespace wfa_virtual_people {

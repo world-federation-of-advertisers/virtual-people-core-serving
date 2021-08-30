@@ -25,9 +25,9 @@
 #include "absl/strings/str_cat.h"
 #include "common_cpp/macros/macros.h"
 #include "google/protobuf/descriptor.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/common/field_filter/field_filter.h"
 #include "wfa/virtual_people/common/field_filter/utils/field_util.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 
 namespace wfa_virtual_people {
@@ -37,8 +37,12 @@ void Assign(
     LabelerEvent& event,
     const std::vector<const google::protobuf::FieldDescriptor*>& source,
     const std::vector<const google::protobuf::FieldDescriptor*>& target) {
-  ValueType value = GetValueFromProto<ValueType>(event, source);
-  SetValueToProto<ValueType>(event, target, value);
+  ProtoFieldValue<ValueType> field_value =
+      GetValueFromProto<ValueType>(event, source);
+  if (!field_value.is_set) {
+    return;
+  }
+  SetValueToProto<ValueType>(event, target, field_value.value);
 }
 
 absl::StatusOr<std::function<void(

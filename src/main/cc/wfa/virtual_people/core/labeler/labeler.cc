@@ -26,9 +26,9 @@
 #include "absl/strings/str_cat.h"
 #include "common_cpp/macros/macros.h"
 #include "src/farmhash.h"
-#include "src/main/proto/wfa/virtual_people/common/event.pb.h"
-#include "src/main/proto/wfa/virtual_people/common/label.pb.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/event.pb.h"
+#include "wfa/virtual_people/common/label.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 
 namespace wfa_virtual_people {
