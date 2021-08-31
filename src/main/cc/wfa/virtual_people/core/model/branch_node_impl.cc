@@ -25,7 +25,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common_cpp/macros/macros.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/constants.h"

@@ -22,7 +22,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/virtual_person_selector.h"
 

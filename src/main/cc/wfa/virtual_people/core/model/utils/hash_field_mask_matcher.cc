@@ -26,7 +26,7 @@
 #include "google/protobuf/field_mask.pb.h"
 #include "google/protobuf/util/field_mask_util.h"
 #include "src/farmhash.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/utils/constants.h"
 
 namespace wfa_virtual_people {

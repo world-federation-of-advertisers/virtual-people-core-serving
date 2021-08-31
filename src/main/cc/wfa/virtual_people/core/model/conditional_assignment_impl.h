@@ -22,8 +22,8 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "google/protobuf/descriptor.h"
-#include "src/main/proto/wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/common/field_filter/field_filter.h"
+#include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 
 namespace wfa_virtual_people {
