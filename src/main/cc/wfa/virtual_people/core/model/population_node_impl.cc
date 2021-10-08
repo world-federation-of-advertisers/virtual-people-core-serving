@@ -29,6 +29,7 @@
 #include "wfa/virtual_people/common/label.pb.h"
 #include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
+#include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 #include "wfa/virtual_people/core/model/utils/virtual_person_selector.h"
 
 namespace wfa_virtual_people {
@@ -44,6 +45,33 @@ bool IsEmptyPopulationPool(
     return true;
   }
   return false;
+}
+
+// Collapse the @quantum_label to a single label based on the probabilities, and
+// output to @output_label.
+absl::Status CollapseQuantumLabel(const QuantumLabel& quantum_label,
+                                  PersonLabelAttributes& output_label,
+                                  absl::string_view seed_suffix) {
+  if (quantum_label.labels_size() == 0) {
+    return absl::InvalidArgumentError("Empty quantum label.");
+  }
+  if (quantum_label.labels_size() != quantum_label.probabilities_size()) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "The sizes of labels and probabilities are different in quantum label ",
+        quantum_label.DebugString()));
+  }
+  std::vector<DistributionChoice> distribution;
+  for (int i = 0; i < quantum_label.probabilities_size(); ++i) {
+    distribution.emplace_back(
+        DistributionChoice({i, quantum_label.probabilities(i)}));
+  }
+  ASSIGN_OR_RETURN(
+      std::unique_ptr<DistributedConsistentHashing> hashing,
+      DistributedConsistentHashing::Build(std::move(distribution)));
+  int32_t index = hashing->Hash(absl::StrCat(
+      "quantum-label-collapse-", quantum_label.seed(), seed_suffix));
+  output_label.MergeFrom(quantum_label.labels(index));
+  return absl::OkStatus();
 }
 
 absl::StatusOr<std::unique_ptr<PopulationNodeImpl>> PopulationNodeImpl::Build(
@@ -93,9 +121,25 @@ absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
     virtual_person_activity->set_virtual_person_id(virtual_person_id);
   }
 
-  if (event.has_corrected_demo()) {
-    *virtual_person_activity->mutable_label()->mutable_demo() =
-        event.corrected_demo();
+  // Write to virtual_person_activity.label from classic label.
+  if (event.has_label()) {
+    virtual_person_activity->mutable_label()->MergeFrom(event.label());
+  }
+  // Write to virtual_person_activity.label from quantum labels.
+  if (event.has_quantum_labels()) {
+    std::string seed_suffix;
+    if (virtual_person_activity->has_virtual_person_id()) {
+      seed_suffix =
+          std::to_string(virtual_person_activity->virtual_person_id());
+    } else {
+      seed_suffix = std::to_string(event.acting_fingerprint());
+    }
+    for (const QuantumLabel& quantum_label :
+         event.quantum_labels().quantum_labels()) {
+      RETURN_IF_ERROR(CollapseQuantumLabel(
+          quantum_label, *virtual_person_activity->mutable_label(),
+          seed_suffix));
+    }
   }
   return absl::OkStatus();
 }
