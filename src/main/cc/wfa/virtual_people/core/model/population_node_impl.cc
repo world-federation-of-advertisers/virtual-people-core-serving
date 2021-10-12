@@ -50,8 +50,8 @@ bool IsEmptyPopulationPool(
 // Collapse the @quantum_label to a single label based on the probabilities, and
 // output to @output_label.
 absl::Status CollapseQuantumLabel(const QuantumLabel& quantum_label,
-                                  PersonLabelAttributes& output_label,
-                                  absl::string_view seed_suffix) {
+                                  absl::string_view seed_suffix,
+                                  PersonLabelAttributes& output_label) {
   if (quantum_label.labels_size() == 0) {
     return absl::InvalidArgumentError("Empty quantum label.");
   }
@@ -61,6 +61,7 @@ absl::Status CollapseQuantumLabel(const QuantumLabel& quantum_label,
         quantum_label.DebugString()));
   }
   std::vector<DistributionChoice> distribution;
+  distribution.reserve(quantum_label.probabilities_size());
   for (int i = 0; i < quantum_label.probabilities_size(); ++i) {
     distribution.emplace_back(
         DistributionChoice({i, quantum_label.probabilities(i)}));
@@ -136,9 +137,9 @@ absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
     }
     for (const QuantumLabel& quantum_label :
          event.quantum_labels().quantum_labels()) {
-      RETURN_IF_ERROR(CollapseQuantumLabel(
-          quantum_label, *virtual_person_activity->mutable_label(),
-          seed_suffix));
+      RETURN_IF_ERROR(
+          CollapseQuantumLabel(quantum_label, seed_suffix,
+                               *virtual_person_activity->mutable_label()));
     }
   }
   return absl::OkStatus();

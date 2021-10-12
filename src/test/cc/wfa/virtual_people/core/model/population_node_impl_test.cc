@@ -35,7 +35,7 @@ using ::wfa::StatusIs;
 
 constexpr int kFingerprintNumber = 10000;
 
-TEST(PopulationNodeImplTest, TestApply) {
+TEST(PopulationNodeImplTest, Apply) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -76,7 +76,7 @@ TEST(PopulationNodeImplTest, TestApply) {
           Pair(22, DoubleNear(0.1, 0.02)), Pair(23, DoubleNear(0.1, 0.02))));
 }
 
-TEST(PopulationNodeImplTest, TestApplyNoLabel) {
+TEST(PopulationNodeImplTest, ApplyNoLabel) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -106,7 +106,7 @@ TEST(PopulationNodeImplTest, TestApplyNoLabel) {
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
-TEST(PopulationNodeImplTest, TestApplyWithLabel) {
+TEST(PopulationNodeImplTest, ApplyWithLabel) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -159,7 +159,7 @@ TEST(PopulationNodeImplTest, TestApplyWithLabel) {
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
-TEST(PopulationNodeImplTest, TestApplyWithSingleQuantumLabel) {
+TEST(PopulationNodeImplTest, ApplyWithSingleQuantumLabel) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -238,7 +238,7 @@ TEST(PopulationNodeImplTest, TestApplyWithSingleQuantumLabel) {
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
-TEST(PopulationNodeImplTest, TestApplyWithMultipleQuantumLabels) {
+TEST(PopulationNodeImplTest, ApplyWithMultipleQuantumLabels) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -311,7 +311,7 @@ TEST(PopulationNodeImplTest, TestApplyWithMultipleQuantumLabels) {
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
-TEST(PopulationNodeImplTest, TestApplyWithQuantumLabelAndClassicLabel) {
+TEST(PopulationNodeImplTest, ApplyWithQuantumLabelAndClassicLabel) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -372,7 +372,7 @@ TEST(PopulationNodeImplTest, TestApplyWithQuantumLabelAndClassicLabel) {
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
-TEST(PopulationNodeImplTest, TestApplyExistingVirtualPerson) {
+TEST(PopulationNodeImplTest, ApplyExistingVirtualPerson) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -400,7 +400,7 @@ TEST(PopulationNodeImplTest, TestApplyExistingVirtualPerson) {
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
-TEST(PopulationNodeImplTest, TestEmptyPopulationPool) {
+TEST(PopulationNodeImplTest, EmptyPopulationPool) {
   // The node represents an empty population pool, which will not assign a
   // virtual person id.
   CompiledNode config;
@@ -454,7 +454,7 @@ TEST(PopulationNodeImplTest, TestEmptyPopulationPool) {
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
-TEST(PopulationNodeImplTest, TestInvalidPools) {
+TEST(PopulationNodeImplTest, InvalidPools) {
   // The node is invalid as the total pools size is 0.
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
