@@ -311,6 +311,74 @@ TEST(PopulationNodeImplTest, ApplyWithMultipleQuantumLabels) {
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
+TEST(PopulationNodeImplTest, ApplyWithMultipleQuantumLabelsOverride) {
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode"
+        index: 1
+        population_node {
+          pools { population_offset: 10 total_population: 1 }
+          random_seed: "TestRandomSeed"
+        }
+      )pb",
+      &config));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  LabelerEvent input;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        quantum_labels {
+          quantum_labels {
+            labels { demo { gender: GENDER_FEMALE } }
+            labels { demo { gender: GENDER_MALE } }
+            probabilities: 1.0
+            probabilities: 0.0
+            seed: "CollapseSeed"
+          }
+          quantum_labels {
+            labels { demo { gender: GENDER_FEMALE } }
+            labels { demo { gender: GENDER_MALE } }
+            probabilities: 0.0
+            probabilities: 1.0
+            seed: "CollapseSeed"
+          }
+        }
+        acting_fingerprint: 10000
+      )pb",
+      &input));
+  EXPECT_THAT(node->Apply(input), IsOk());
+  LabelerEvent expected_event;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        virtual_person_activities {
+          virtual_person_id: 10
+          label { demo { gender: GENDER_MALE } }
+        }
+        quantum_labels {
+          quantum_labels {
+            labels { demo { gender: GENDER_FEMALE } }
+            labels { demo { gender: GENDER_MALE } }
+            probabilities: 1.0
+            probabilities: 0.0
+            seed: "CollapseSeed"
+          }
+          quantum_labels {
+            labels { demo { gender: GENDER_FEMALE } }
+            labels { demo { gender: GENDER_MALE } }
+            probabilities: 0.0
+            probabilities: 1.0
+            seed: "CollapseSeed"
+          }
+        }
+        acting_fingerprint: 10000
+      )pb",
+      &expected_event));
+  EXPECT_THAT(input, EqualsProto(expected_event));
+}
+
 TEST(PopulationNodeImplTest, ApplyWithQuantumLabelAndClassicLabel) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -366,6 +434,62 @@ TEST(PopulationNodeImplTest, ApplyWithQuantumLabelAndClassicLabel) {
           }
         }
         label { demo { age { min_age: 25 max_age: 1000 } } }
+        acting_fingerprint: 10000
+      )pb",
+      &expected_event));
+  EXPECT_THAT(input, EqualsProto(expected_event));
+}
+
+TEST(PopulationNodeImplTest, ApplyWithQuantumLabelAndClassicLabelOverride) {
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode"
+        index: 1
+        population_node {
+          pools { population_offset: 10 total_population: 1 }
+          random_seed: "TestRandomSeed"
+        }
+      )pb",
+      &config));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  LabelerEvent input;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        quantum_labels {
+          quantum_labels {
+            labels { demo { gender: GENDER_FEMALE } }
+            labels { demo { gender: GENDER_MALE } }
+            probabilities: 1.0
+            probabilities: 0.0
+            seed: "CollapseSeed"
+          }
+        }
+        label { demo { gender: GENDER_MALE } }
+        acting_fingerprint: 10000
+      )pb",
+      &input));
+  EXPECT_THAT(node->Apply(input), IsOk());
+  LabelerEvent expected_event;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        virtual_person_activities {
+          virtual_person_id: 10
+          label { demo { gender: GENDER_MALE } }
+        }
+        quantum_labels {
+          quantum_labels {
+            labels { demo { gender: GENDER_FEMALE } }
+            labels { demo { gender: GENDER_MALE } }
+            probabilities: 1.0
+            probabilities: 0.0
+            seed: "CollapseSeed"
+          }
+        }
+        label { demo { gender: GENDER_MALE } }
         acting_fingerprint: 10000
       )pb",
       &expected_event));

@@ -123,10 +123,6 @@ absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
     virtual_person_activity->set_virtual_person_id(virtual_person_id);
   }
 
-  // Write to virtual_person_activity.label from classic label.
-  if (event.has_label()) {
-    virtual_person_activity->mutable_label()->MergeFrom(event.label());
-  }
   // Write to virtual_person_activity.label from quantum labels.
   if (event.has_quantum_labels()) {
     std::string seed_suffix;
@@ -142,6 +138,10 @@ absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
           CollapseQuantumLabel(quantum_label, seed_suffix,
                                *virtual_person_activity->mutable_label()));
     }
+  }
+  // Write to virtual_person_activity.label from classic label.
+  if (event.has_label()) {
+    virtual_person_activity->mutable_label()->MergeFrom(event.label());
   }
   return absl::OkStatus();
 }
