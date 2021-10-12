@@ -49,7 +49,7 @@ bool IsEmptyPopulationPool(
 }
 
 // Collapse the @quantum_label to a single label based on the probabilities, and
-// output to @output_label.
+// merge to @output_label.
 absl::Status CollapseQuantumLabel(const QuantumLabel& quantum_label,
                                   absl::string_view seed_suffix,
                                   PersonLabelAttributes& output_label) {
