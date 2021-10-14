@@ -327,6 +327,7 @@ TEST(PopulationNodeImplTest, ApplyWithMultipleQuantumLabelsOverride) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
+  // The collapsed quantum label can override existing collapsed quantum labels.
   LabelerEvent input;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -456,6 +457,7 @@ TEST(PopulationNodeImplTest, ApplyWithQuantumLabelAndClassicLabelOverride) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
+  // The classic label can override existing collapsed quantum labels.
   LabelerEvent input;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
