@@ -1,4 +1,4 @@
-// Copyright 2021 The Cross-Media Measurement Authors
+// Copyright 2022 The Cross-Media Measurement Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wfa/virtual_people/core/labeler/labeler.h"
-
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
 #include "common_cpp/protobuf_util/textproto_io.h"
@@ -25,6 +23,7 @@
 #include "wfa/virtual_people/common/event.pb.h"
 #include "wfa/virtual_people/common/label.pb.h"
 #include "wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/core/labeler/labeler.h"
 
 namespace wfa_virtual_people {
 namespace {
@@ -39,6 +38,8 @@ const char kTestDataDir[] =
 void ApplyAndValidate(absl::string_view model_path,
                       absl::string_view input_path,
                       absl::string_view output_path) {
+  SCOPED_TRACE(absl::StrCat("ApplyAndValidate(", model_path, ", ", input_path,
+                            ", ", output_path));
   CompiledNode root;
   EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_path), root),
               IsOk());
@@ -53,10 +54,9 @@ void ApplyAndValidate(absl::string_view model_path,
   output.clear_serialized_debug_trace();
 
   LabelerOutput expected_output;
-  EXPECT_THAT(
-      ReadTextProtoFile(absl::StrCat(kTestDataDir, output_path),
-                        expected_output),
-      IsOk());
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, output_path),
+                                expected_output),
+              IsOk());
 
   EXPECT_THAT(output, EqualsProto(expected_output));
 }
