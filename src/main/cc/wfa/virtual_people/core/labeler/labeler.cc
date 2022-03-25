@@ -116,6 +116,12 @@ void SetFingerprints(LabelerEvent& event) {
     SetUserInfoFingerprint(
         *profile_info->mutable_proprietary_id_space_1_user_info());
   }
+  if (profile_info->has_logged_in_id_user_info()) {
+    SetUserInfoFingerprint(*profile_info->mutable_logged_in_id_user_info());
+  }
+  if (profile_info->has_logged_out_id_user_info()) {
+    SetUserInfoFingerprint(*profile_info->mutable_logged_out_id_user_info());
+  }
 }
 
 absl::Status Labeler::Label(const LabelerInput& input,
