@@ -19,7 +19,7 @@ common_cpp_deps()
 # Virtual-people-common
 http_archive(
     name = "virtual_people_common",
-    sha256 = "7fcc40826493f824b5ec083822a9e430ddfbf8f235171149ae9a1c6896984d88",
-    strip_prefix = "virtual-people-common-562566aa13fb67116f034890fb3b589eeae0aa89",
-    url = "https://github.com/world-federation-of-advertisers/virtual-people-common/archive/562566aa13fb67116f034890fb3b589eeae0aa89.tar.gz",
+    sha256 = "12e42a3d449771090292fbac321532b794b495607493b870a52101c7d356c7bd",
+    strip_prefix = "virtual-people-common-8dd8d59f0cc9ee5e4c446031790973a6cb51970e",
+    url = "https://github.com/world-federation-of-advertisers/virtual-people-common/archive/8dd8d59f0cc9ee5e4c446031790973a6cb51970e.tar.gz",
 )
