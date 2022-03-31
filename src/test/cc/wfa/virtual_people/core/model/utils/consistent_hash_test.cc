@@ -24,7 +24,6 @@
 
 namespace wfa_virtual_people {
 namespace {
-using ::testing::AnyOf;
 using ::testing::Each;
 using ::testing::Ge;
 
