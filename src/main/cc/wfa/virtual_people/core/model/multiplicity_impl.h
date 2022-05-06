@@ -15,7 +15,9 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_MULTIPLICITY_IMPL_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_MODEL_MULTIPLICITY_IMPL_H_
 
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"

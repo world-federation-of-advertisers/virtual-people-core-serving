@@ -14,6 +14,11 @@
 
 #include "wfa/virtual_people/core/model/multiplicity_impl.h"
 
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/types/variant.h"
