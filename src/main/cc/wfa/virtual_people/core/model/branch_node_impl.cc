@@ -25,6 +25,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "common_cpp/macros/macros.h"
+#include "wfa/virtual_people/common/field_filter/utils/field_util.h"
 #include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
@@ -87,6 +88,37 @@ absl::StatusOr<std::unique_ptr<FieldFiltersMatcher>> BuildMatcher(
   return FieldFiltersMatcher::Build(filter_configs);
 }
 
+// Builds attributes updaters.
+absl::StatusOr<std::vector<std::unique_ptr<AttributesUpdaterInterface>>>
+BuildUpdaters(const BranchNode::AttributesUpdaters& attr_updaters) {
+  std::vector<std::unique_ptr<AttributesUpdaterInterface>> updaters;
+  for (const BranchNode::AttributesUpdater& config : attr_updaters.updates()) {
+    updaters.emplace_back();
+    ASSIGN_OR_RETURN(updaters.back(),
+                     AttributesUpdaterInterface::Build(config));
+    if (!updaters.back()) {
+      return absl::InternalError(
+          absl::StrCat("Failed to build AttributesUpdater with config: ",
+                       config.DebugString()));
+    }
+  }
+  return updaters;
+}
+
+// Clones @source_event and appends to @clones. The clone uses @fingerprint as
+// acting_fingerprint and sets @person_index in @person_index_field.
+absl::Status CloneAndAppendEvent(
+    const LabelerEvent& source_event, uint64_t fingerprint, int person_index,
+    const std::vector<const google::protobuf::FieldDescriptor*>&
+        person_index_field,
+    std::vector<LabelerEvent>& clones) {
+  clones.emplace_back(LabelerEvent(source_event));
+  clones.back().set_acting_fingerprint(fingerprint);
+  SetValueToProto(clones.back(), person_index_field, person_index);
+
+  return absl::OkStatus();
+}
+
 absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
     const CompiledNode& node_config,
     absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>>& node_refs) {
@@ -134,25 +166,32 @@ absl::StatusOr<std::unique_ptr<BranchNodeImpl>> BranchNodeImpl::Build(
           "BranchNode must have one of chance and condition.");
   }
 
-  // Builds attributes updaters.
   std::vector<std::unique_ptr<AttributesUpdaterInterface>> updaters;
-  if (branch_node.has_updates()) {
-    for (const BranchNode::AttributesUpdater& config :
-         branch_node.updates().updates()) {
-      updaters.emplace_back();
-      ASSIGN_OR_RETURN(updaters.back(),
-                       AttributesUpdaterInterface::Build(config));
-      if (!updaters.back()) {
-        return absl::InternalError(
-            absl::StrCat("Failed to build AttributesUpdater with config: ",
-                         config.DebugString()));
-      }
+  std::unique_ptr<MultiplicityImpl> multiplicity = nullptr;
+  switch (branch_node.action_case()) {
+    case BranchNode::kUpdates: {
+      ASSIGN_OR_RETURN(updaters, BuildUpdaters(branch_node.updates()));
+      break;
     }
+    case BranchNode::kMultiplicity: {
+      ASSIGN_OR_RETURN(multiplicity,
+                       MultiplicityImpl::Build(branch_node.multiplicity()));
+      if (!multiplicity) {
+        return absl::InternalError(
+            absl::StrCat("MultiplicityImpl::Build should never return NULL.",
+                         branch_node.multiplicity().DebugString()));
+      }
+      break;
+    }
+    default:
+      // There is no action.
+      break;
   }
 
   return absl::make_unique<BranchNodeImpl>(
       node_config, std::move(child_nodes), std::move(hashing),
-      branch_node.random_seed(), std::move(matcher), std::move(updaters));
+      branch_node.random_seed(), std::move(matcher), std::move(updaters),
+      std::move(multiplicity));
 }
 
 BranchNodeImpl::BranchNodeImpl(
@@ -160,20 +199,35 @@ BranchNodeImpl::BranchNodeImpl(
     std::vector<std::unique_ptr<ModelNode>>&& child_nodes,
     std::unique_ptr<DistributedConsistentHashing> hashing,
     absl::string_view random_seed, std::unique_ptr<FieldFiltersMatcher> matcher,
-    std::vector<std::unique_ptr<AttributesUpdaterInterface>>&& updaters)
+    std::vector<std::unique_ptr<AttributesUpdaterInterface>>&& updaters,
+    std::unique_ptr<MultiplicityImpl> multiplicity)
     : ModelNode(node_config),
       child_nodes_(std::move(child_nodes)),
       hashing_(std::move(hashing)),
       random_seed_(random_seed),
       matcher_(std::move(matcher)),
-      updaters_(std::move(updaters)) {}
+      updaters_(std::move(updaters)),
+      multiplicity_(std::move(multiplicity)) {}
 
 absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
+  if (multiplicity_ && !updaters_.empty()) {
+    return absl::InternalError(
+        "BranchNode cannot have both updaters and multiplicity.");
+  }
+
+  if (multiplicity_) {
+    return ApplyMultiplicity(event);
+  }
+
   // Applies attributes updaters.
   for (auto& updater : updaters_) {
     RETURN_IF_ERROR(updater->Update(event));
   }
 
+  return ApplyChild(event);
+}
+
+absl::Status BranchNodeImpl::ApplyChild(LabelerEvent& event) const {
   int selected_index = kNoMatchingIndex;
   if (hashing_) {
     // Select by chance.
@@ -196,6 +250,49 @@ absl::Status BranchNodeImpl::Apply(LabelerEvent& event) const {
   }
 
   return child_nodes_[selected_index]->Apply(event);
+}
+
+absl::Status BranchNodeImpl::ApplyMultiplicity(LabelerEvent& event) const {
+  if (!multiplicity_) {
+    return absl::InternalError(
+        "ApplyMultiplicity is called with null multiplicity.");
+  }
+
+  ASSIGN_OR_RETURN(int clone_count,
+                   multiplicity_->ComputeEventMultiplicity(event));
+  if (clone_count == 1) {
+    // Don't need to copy. Still need to set index.
+    int person_index = 0;
+    SetValueToProto(event, multiplicity_->PersonIndexFieldDescriptor(),
+                    person_index);
+    return ApplyChild(event);
+  }
+
+  // Clone events.
+  std::vector<LabelerEvent> clones;
+  const std::vector<const google::protobuf::FieldDescriptor*>&
+      person_index_field = multiplicity_->PersonIndexFieldDescriptor();
+  uint64_t original_fingerprint = event.acting_fingerprint();
+  for (int i = 0; i < clone_count; ++i) {
+    uint64_t clone_fingerprint =
+        multiplicity_->GetFingerprintForIndex(original_fingerprint, i);
+    RETURN_IF_ERROR(CloneAndAppendEvent(event, clone_fingerprint, i,
+                                        person_index_field, clones));
+  }
+
+  // Apply child to each clone.
+  for (LabelerEvent& clone : clones) {
+    RETURN_IF_ERROR(ApplyChild(clone));
+  }
+
+  // Merge labels.
+  for (const LabelerEvent& clone : clones) {
+    for (const auto& person : clone.virtual_person_activities()) {
+      *(event.add_virtual_person_activities()) = person;
+    }
+  }
+
+  return absl::OkStatus();
 }
 
 }  // namespace wfa_virtual_people

@@ -27,6 +27,7 @@
 #include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
+#include "wfa/virtual_people/core/model/multiplicity_impl.h"
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 #include "wfa/virtual_people/core/model/utils/field_filters_matcher.h"
 
@@ -35,10 +36,6 @@ namespace wfa_virtual_people {
 // The implementation of the CompiledNode with branch_node set.
 //
 // The field branch_node in @node_config must be set.
-//
-// Currently selecting child node by chance or condition is supported.
-// TODO(@tcsnfkx): Implement attributes updater.
-// TODO(@tcsnfkx): Implement multiplicity.
 class BranchNodeImpl : public ModelNode {
  public:
   // Always use ModelNode::Build to get a ModelNode object.
@@ -71,19 +68,31 @@ class BranchNodeImpl : public ModelNode {
       std::unique_ptr<DistributedConsistentHashing> hashing,
       absl::string_view random_seed,
       std::unique_ptr<FieldFiltersMatcher> matcher,
-      std::vector<std::unique_ptr<AttributesUpdaterInterface>>&& updaters);
+      std::vector<std::unique_ptr<AttributesUpdaterInterface>>&& updaters,
+      std::unique_ptr<MultiplicityImpl> multiplicity);
   ~BranchNodeImpl() override {}
 
   BranchNodeImpl(const BranchNodeImpl&) = delete;
   BranchNodeImpl& operator=(const BranchNodeImpl&) = delete;
 
-  // Steps:
-  // 1. Updates @event using @updaters_.
-  // 2. Uses @hashing_ or @matcher_ to select one of @child_nodes_, and apply
-  // the selected node to @event.
+  // Based on action(oneof updates/multiplicty) at this node:
+  // - If no action, just apply child node.
+  // - If updates is set, update attributes, then apply child node.
+  // - If multiplicity is set, clone event, apply child node to each clone,
+  //   then merge labeling outputs.
   absl::Status Apply(LabelerEvent& event) const override;
 
  private:
+  // Uses @hashing_ or @matcher_ to select one of @child_nodes_, and apply
+  // the selected node to @event.
+  absl::Status ApplyChild(LabelerEvent& event) const;
+
+  // Steps:
+  // 1. Compute multiplicity for @event, clone the event accordingly.
+  // 2. Apply child node to each clone.
+  // 3. Merge the labeling outputs.
+  absl::Status ApplyMultiplicity(LabelerEvent& event) const;
+
   // Include the child nodes in all the branches, in the same order as the
   // branches in @node_config.
   std::vector<std::unique_ptr<ModelNode>> child_nodes_;
@@ -102,6 +111,10 @@ class BranchNodeImpl : public ModelNode {
   // When calling Apply, entries of @updaters_ is applied to the event in order.
   // Each entry of @updaters_ updates the value of some fields in the event.
   std::vector<std::unique_ptr<AttributesUpdaterInterface>> updaters_;
+
+  // If multiplicity is set in @node_config, multiplicity_ is set.
+  // When calling Apply, call ApplyMultiplicity.
+  std::unique_ptr<MultiplicityImpl> multiplicity_;
 };
 
 }  // namespace wfa_virtual_people

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "wfa/virtual_people/core/model/branch_node_impl.h"
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 #include "common_cpp/testing/status_macros.h"
@@ -21,7 +23,9 @@
 #include "gtest/gtest.h"
 #include "wfa/virtual_people/common/label.pb.h"
 #include "wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
+#include "wfa/virtual_people/core/model/multiplicity_impl.h"
 
 namespace wfa_virtual_people {
 namespace {
@@ -455,6 +459,53 @@ TEST(BranchNodeImplTest, TestResolveChildReferencesIndexNotFound) {
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
+TEST(BranchNodeImplTest, TestBothUpdatesAndMultiplicity) {
+  // Failure case: have both updaters and multiplicity.
+  // This won't happen from Build() because they are oneof.
+  std::vector<std::unique_ptr<AttributesUpdaterInterface>> updaters;
+  BranchNode::AttributesUpdater updater_config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        update_matrix {
+          columns { person_country_code: "RAW_COUNTRY_1" }
+          rows { person_country_code: "country_code_1" }
+          probabilities: 1.0
+        }
+      )pb",
+      &updater_config));
+  ASSERT_OK_AND_ASSIGN(updaters.emplace_back(),
+                       AttributesUpdaterInterface::Build(updater_config));
+
+  std::unique_ptr<MultiplicityImpl> multiplicity;
+  Multiplicity multiplicity_config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        expected_multiplicity: 1.2
+        max_value: 2
+        cap_at_max: true
+        person_index_field: "multiplicity_person_index"
+        random_seed: "test multiplicity"
+      )pb",
+      &multiplicity_config));
+  ASSERT_OK_AND_ASSIGN(multiplicity,
+                       MultiplicityImpl::Build(multiplicity_config));
+
+  CompiledNode node_config;
+  ASSERT_TRUE(
+      google::protobuf::TextFormat::ParseFromString(R"pb(
+                                                      name: "TestBranchNode"
+                                                    )pb",
+                                                    &node_config));
+
+  std::unique_ptr<BranchNodeImpl> node = absl::make_unique<BranchNodeImpl>(
+      node_config, std::vector<std::unique_ptr<ModelNode>>(), nullptr,
+      "random_seed", nullptr, std::move(updaters), std::move(multiplicity));
+  LabelerEvent event;
+  EXPECT_THAT(node->Apply(event),
+              StatusIs(absl::StatusCode::kInternal,
+                       "cannot have both updaters and multiplicity"));
+}
+
 TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
   // The branch node has 1 attributes updater and 2 branches.
   // The update matrix is
@@ -632,6 +683,704 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
     EXPECT_EQ(input.person_country_code(), "COUNTRY_3");
     EXPECT_EQ(input.virtual_person_activities(0).virtual_person_id(), 10);
   }
+}
+
+TEST(BranchNodeImplTest, TestInvalidMultiplicityField) {
+  // multiplicity is not properly configured.
+  // See multiplicity_impl_test for more test coverage on multiplicity.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        branch_node {
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 10 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed1"
+              }
+            }
+            chance: 1.0
+          }
+          random_seed: "TestBranchNodeSeed"
+          multiplicity {}
+        }
+      )pb",
+      &config));
+  EXPECT_THAT(ModelNode::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       "must set multiplicity_ref"));
+}
+
+TEST(BranchNodeImplTest, TestExplicitMultiplicityAndCapAtMaxTrue) {
+  // The branch node has 1 branch, which is a population node always
+  // assigns virtual person id 10.
+  // Use explicit multiplicity = 3.
+  // When cap_at_max = true, should cap to max_value = 1.2.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        index: 1
+        branch_node {
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 10 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed1"
+              }
+            }
+            chance: 1.0
+          }
+          random_seed: "TestBranchNodeSeed"
+          multiplicity {
+            expected_multiplicity: 3
+            max_value: 1.2
+            cap_at_max: true
+            person_index_field: "multiplicity_person_index"
+            random_seed: "test multiplicity"
+          }
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  // All virtual_person_id = 10.
+  int64_t person_total = 0;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    EXPECT_THAT(node->Apply(input), IsOk());
+    EXPECT_THAT(input.virtual_person_activities().size(), AnyOf(1, 2));
+    person_total += input.virtual_person_activities().size();
+    for (auto& person : input.virtual_person_activities()) {
+      EXPECT_EQ(person.virtual_person_id(), 10);
+    }
+  }
+
+  // Average viewers ~1.2.
+  EXPECT_THAT(person_total * 1.0 / kFingerprintNumber, DoubleNear(1.2, 0.01));
+}
+
+TEST(BranchNodeImplTest, TestExplicitMultiplicityAndCapAtMaxFalse) {
+  // The branch node has 1 branch, which is a population node always
+  // assigns virtual person id 10.
+  // Use explicit multiplicity = 3.
+  // When cap_at_max = false, should return error.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        index: 1
+        branch_node {
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 10 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed1"
+              }
+            }
+            chance: 1.0
+          }
+          random_seed: "TestBranchNodeSeed"
+          multiplicity {
+            expected_multiplicity: 3
+            max_value: 1.2
+            cap_at_max: false
+            person_index_field: "multiplicity_person_index"
+            random_seed: "test multiplicity"
+          }
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(0);
+    EXPECT_THAT(node->Apply(input),
+                StatusIs(absl::StatusCode::kOutOfRange,
+                         "exceeds the specified max value"));
+  }
+}
+
+TEST(BranchNodeImplTest, TestMultiplicityFieldAndCapAtMaxTrue) {
+  // The branch node has 1 branch, which is a population node always
+  // assigns virtual person id 10.
+  // Read multiplicity from field.
+  // When cap_at_max = true, should cap to max_value = 1.2.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        index: 1
+        branch_node {
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 10 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed1"
+              }
+            }
+            chance: 1.0
+          }
+          random_seed: "TestBranchNodeSeed"
+          multiplicity {
+            expected_multiplicity_field: "expected_multiplicity"
+            max_value: 1.2
+            cap_at_max: true
+            person_index_field: "multiplicity_person_index"
+            random_seed: "test multiplicity"
+          }
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  // multiplicity field is not set, return error
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    EXPECT_THAT(node->Apply(input), StatusIs(absl::StatusCode::kInvalidArgument,
+                                             "multiplicity field is not set"));
+  }
+
+  // multiplicity > max_value, cap at max_value
+  // All virtual_person_id = 10.
+  int64_t person_total = 0;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    input.set_expected_multiplicity(2);
+    EXPECT_THAT(node->Apply(input), IsOk());
+    EXPECT_THAT(input.virtual_person_activities().size(), AnyOf(1, 2));
+    person_total += input.virtual_person_activities().size();
+    for (auto& person : input.virtual_person_activities()) {
+      EXPECT_EQ(person.virtual_person_id(), 10);
+    }
+  }
+  // Average viewers ~1.2.
+  EXPECT_THAT(person_total * 1.0 / kFingerprintNumber, DoubleNear(1.2, 0.01));
+
+  // multiplicity < max_value
+  // All virtual_person_id = 10.
+  person_total = 0;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    input.set_expected_multiplicity(1.1);
+    EXPECT_THAT(node->Apply(input), IsOk());
+    EXPECT_THAT(input.virtual_person_activities().size(), AnyOf(1, 2));
+    person_total += input.virtual_person_activities().size();
+    for (auto& person : input.virtual_person_activities()) {
+      EXPECT_EQ(person.virtual_person_id(), 10);
+    }
+  }
+  // Average viewers ~1.1.
+  EXPECT_THAT(person_total * 1.0 / kFingerprintNumber, DoubleNear(1.1, 0.01));
+}
+
+TEST(BranchNodeImplTest, TestMultiplicityFieldAndCapAtMaxFalse) {
+  // The branch node has 1 branch, which is a population node always
+  // assigns virtual person id 10.
+  // Read multiplicity from field.
+  // When cap_at_max = false, should return error if > max_value.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        index: 1
+        branch_node {
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 10 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed1"
+              }
+            }
+            chance: 1.0
+          }
+          random_seed: "TestBranchNodeSeed"
+          multiplicity {
+            expected_multiplicity_field: "expected_multiplicity"
+            max_value: 1.2
+            cap_at_max: false
+            person_index_field: "multiplicity_person_index"
+            random_seed: "test multiplicity"
+          }
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  // multiplicity field is not set, return error
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    EXPECT_THAT(node->Apply(input), StatusIs(absl::StatusCode::kInvalidArgument,
+                                             "multiplicity field is not set"));
+  }
+
+  // multiplicity > max_value, return error
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    input.set_expected_multiplicity(1.5);
+    EXPECT_THAT(node->Apply(input),
+                StatusIs(absl::StatusCode::kOutOfRange,
+                         "exceeds the specified max value"));
+  }
+
+  // multiplicity < max_value
+  // All virtual_person_id = 10.
+  int64_t person_total = 0;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    input.set_expected_multiplicity(1.1);
+    EXPECT_THAT(node->Apply(input), IsOk());
+    EXPECT_THAT(input.virtual_person_activities().size(), AnyOf(1, 2));
+    person_total += input.virtual_person_activities().size();
+    for (auto& person : input.virtual_person_activities()) {
+      EXPECT_EQ(person.virtual_person_id(), 10);
+    }
+  }
+  // Average viewers ~1.1.
+  EXPECT_THAT(person_total * 1.0 / kFingerprintNumber, DoubleNear(1.1, 0.01));
+}
+
+TEST(BranchNodeImplTest, TestExplicitMultiplicity) {
+  // The branch node has 2 branches.
+  // One branch is selected with 20% chance, which is a population node always
+  // assigns virtual person id 10.
+  // The other branch is selected with 80% chance, which is a population node
+  // always assigns virtual person id 20.
+  // Multiplicity is explicit value = 1.3.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        index: 1
+        branch_node {
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 10 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed1"
+              }
+            }
+            chance: 0.2
+          }
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 20 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed2"
+              }
+            }
+            chance: 0.8
+          }
+          random_seed: "TestBranchNodeSeed"
+          multiplicity {
+            expected_multiplicity: 1.3
+            max_value: 2
+            cap_at_max: true
+            person_index_field: "multiplicity_person_index"
+            random_seed: "test multiplicity"
+          }
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  absl::flat_hash_map<int64_t, double> id_counts_index_0;
+  absl::flat_hash_map<int64_t, double> id_counts_index_1;
+  int64_t same_pool = 0;
+  int64_t different_pool = 0;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    EXPECT_THAT(node->Apply(input), IsOk());
+    EXPECT_THAT(input.virtual_person_activities().size(), AnyOf(1, 2));
+    ++id_counts_index_0[input.virtual_person_activities(0).virtual_person_id()];
+    if (input.virtual_person_activities().size() == 2) {
+      ++id_counts_index_1[input.virtual_person_activities(1)
+                              .virtual_person_id()];
+      if (input.virtual_person_activities(0).virtual_person_id() ==
+          input.virtual_person_activities(1).virtual_person_id()) {
+        ++same_pool;
+      } else {
+        ++different_pool;
+      }
+    }
+  }
+  for (auto& [key, value] : id_counts_index_0) {
+    value /= static_cast<double>(kFingerprintNumber);
+  }
+  for (auto& [key, value] : id_counts_index_1) {
+    value /= static_cast<double>(kFingerprintNumber);
+  }
+
+  // Expect ~70% events have 1 virtual person, ~30% events have 2.
+  // The clones are labeled independently, so they have the same probability
+  // to go to each pool.
+  // Absolute error more than 1% is very unlikely.
+  EXPECT_THAT(id_counts_index_0,
+              UnorderedElementsAre(Pair(10, DoubleNear(0.2, 0.01)),
+                                   Pair(20, DoubleNear(0.8, 0.01))));
+  EXPECT_THAT(id_counts_index_1,
+              UnorderedElementsAre(Pair(10, DoubleNear(0.06, 0.01)),
+                                   Pair(20, DoubleNear(0.24, 0.01))));
+  // Same pool chance: 0.2 * 0.2 + 0.8 * 0.8 = 0.68.
+  // Different pool chance: 0.2 * 0.8 * 2 = 0.32.
+  EXPECT_THAT(same_pool * 1.0 / (same_pool + different_pool),
+              DoubleNear(0.68, 0.01));
+}
+
+TEST(BranchNodeImplTest, TestMultiplicityLessThanOne) {
+  // The branch node has 2 branches.
+  // One branch is selected with 20% chance, which is a population node always
+  // assigns virtual person id 10.
+  // The other branch is selected with 80% chance, which is a population node
+  // always assigns virtual person id 20.
+  // Multiplicity is explicit value = 0.3. Each event will have 0 or 1 virtual
+  // person.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        index: 1
+        branch_node {
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 10 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed1"
+              }
+            }
+            chance: 0.2
+          }
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 20 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed2"
+              }
+            }
+            chance: 0.8
+          }
+          random_seed: "TestBranchNodeSeed"
+          multiplicity {
+            expected_multiplicity: 0.3
+            max_value: 2
+            cap_at_max: true
+            person_index_field: "multiplicity_person_index"
+            random_seed: "test multiplicity"
+          }
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  absl::flat_hash_map<int64_t, double> id_counts;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    EXPECT_THAT(node->Apply(input), IsOk());
+    EXPECT_THAT(input.virtual_person_activities().size(), AnyOf(0, 1));
+    if (input.virtual_person_activities().size() == 1) {
+      ++id_counts[input.virtual_person_activities(0).virtual_person_id()];
+    }
+  }
+  for (auto& [key, value] : id_counts) {
+    value /= static_cast<double>(kFingerprintNumber);
+  }
+
+  // Expect ~70% events have 0 virtual person, ~30% events have 1.
+  EXPECT_THAT(id_counts,
+              UnorderedElementsAre(Pair(10, DoubleNear(0.06, 0.01)),
+                                   Pair(20, DoubleNear(0.24, 0.01))));
+}
+
+TEST(BranchNodeImplTest, TestMultiplicityFromField) {
+  // The branch node has 2 branches.
+  // One branch is selected with 20% chance, which is a population node always
+  // assigns virtual person id 10.
+  // The other branch is selected with 80% chance, which is a population node
+  // always assigns virtual person id 20.
+  // Multiplicity is read from a field.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        index: 1
+        branch_node {
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 10 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed1"
+              }
+            }
+            chance: 0.2
+          }
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 20 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed2"
+              }
+            }
+            chance: 0.8
+          }
+          random_seed: "TestBranchNodeSeed"
+          multiplicity {
+            expected_multiplicity_field: "expected_multiplicity"
+            max_value: 2
+            cap_at_max: true
+            person_index_field: "multiplicity_person_index"
+            random_seed: "test multiplicity"
+          }
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  absl::flat_hash_map<int64_t, double> id_counts_index_0;
+  absl::flat_hash_map<int64_t, double> id_counts_index_1;
+  int64_t same_pool = 0;
+  int64_t different_pool = 0;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+
+    // Set multiplicity for this event.
+    input.set_expected_multiplicity(1.3);
+
+    EXPECT_THAT(node->Apply(input), IsOk());
+    EXPECT_THAT(input.virtual_person_activities().size(), AnyOf(1, 2));
+    ++id_counts_index_0[input.virtual_person_activities(0).virtual_person_id()];
+    if (input.virtual_person_activities().size() == 2) {
+      ++id_counts_index_1[input.virtual_person_activities(1)
+                              .virtual_person_id()];
+      if (input.virtual_person_activities(0).virtual_person_id() ==
+          input.virtual_person_activities(1).virtual_person_id()) {
+        ++same_pool;
+      } else {
+        ++different_pool;
+      }
+    }
+  }
+  for (auto& [key, value] : id_counts_index_0) {
+    value /= static_cast<double>(kFingerprintNumber);
+  }
+  for (auto& [key, value] : id_counts_index_1) {
+    value /= static_cast<double>(kFingerprintNumber);
+  }
+
+  // Expect ~70% events have 1 virtual person, ~30% events have 2.
+  // The clones are labeled independently, so they have the same probability
+  // to go to each pool.
+  // Absolute error more than 1% is very unlikely.
+  EXPECT_THAT(id_counts_index_0,
+              UnorderedElementsAre(Pair(10, DoubleNear(0.2, 0.01)),
+                                   Pair(20, DoubleNear(0.8, 0.01))));
+  EXPECT_THAT(id_counts_index_1,
+              UnorderedElementsAre(Pair(10, DoubleNear(0.06, 0.01)),
+                                   Pair(20, DoubleNear(0.24, 0.01))));
+  // Same pool chance: 0.2 * 0.2 + 0.8 * 0.8 = 0.68.
+  // Different pool chance: 0.2 * 0.8 * 2 = 0.32.
+  EXPECT_THAT(same_pool * 1.0 / (same_pool + different_pool),
+              DoubleNear(0.68, 0.01));
+}
+
+TEST(BranchNodeImplTest, TestUsePersonIndex) {
+  // The branch node has 2 branches.
+  // The first one is a population node always assigns virtual person id 10.
+  // The second one is a population node always assigns virtual person id 20.
+  // Select the first one if person_index = 0, else select the second one.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        index: 1
+        branch_node {
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 10 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed1"
+              }
+            }
+            condition { name: "multiplicity_person_index" op: EQUAL value: "0" }
+          }
+          branches {
+            node {
+              population_node {
+                pools { population_offset: 20 total_population: 1 }
+                random_seed: "TestPopulationNodeSeed2"
+              }
+            }
+            condition { op: TRUE }
+          }
+          multiplicity {
+            expected_multiplicity_field: "expected_multiplicity"
+            max_value: 2
+            cap_at_max: true
+            person_index_field: "multiplicity_person_index"
+            random_seed: "test multiplicity"
+          }
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  // person_index = 0 get id 10
+  // person_index = 1 get id 20
+  absl::flat_hash_map<int64_t, double> id_counts;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+
+    // Set multiplicity for this event.
+    input.set_expected_multiplicity(1.3);
+
+    EXPECT_THAT(node->Apply(input), IsOk());
+    EXPECT_THAT(input.virtual_person_activities().size(), AnyOf(1, 2));
+    EXPECT_EQ(input.virtual_person_activities(0).virtual_person_id(), 10);
+    if (input.virtual_person_activities().size() == 2) {
+      EXPECT_EQ(input.virtual_person_activities(1).virtual_person_id(), 20);
+    }
+
+    for (auto& person : input.virtual_person_activities()) {
+      ++id_counts[person.virtual_person_id()];
+    }
+  }
+
+  // All events have person_index 0.
+  // ~30% events have person_index 1.
+  EXPECT_EQ(id_counts[10], kFingerprintNumber);
+  EXPECT_THAT(id_counts[20] * 1.0 / kFingerprintNumber, DoubleNear(0.3, 0.01));
+}
+
+TEST(BranchNodeImplTest, TestNestedMultiplicity) {
+  // There are two levels of multiplicity, attached to the corresponding branch
+  // nodes.
+  //
+  // Note that in this case they should use different
+  // expected_multiplicity_field(if read from field) and person_index_field.
+  // To avoid conflict, we use expected_multiplicity in this test.
+  // But using another person_index_field requires a proto change, and we will
+  // only do that when there is an actual use case. So this test uses the same
+  // person_index_field because it doesn't depend on person_index.
+  //
+  // The first level is a branch node with one child, and multiplicity = 1.2.
+  // The second level is a branch node with two children, and
+  // multiplicity = 1.6.
+  // The first child is a population node always assigns virtual person id 10.
+  // The second child is a population node always assigns virtual person id 20.
+  // Select the first one with chance 0.2, the second one with chance 0.8.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "BranchLevel1"
+        branch_node {
+          multiplicity {
+            expected_multiplicity: 1.2
+            max_value: 2
+            cap_at_max: true
+            person_index_field: "multiplicity_person_index"
+            random_seed: "test multiplicity 1"
+          }
+          branches {
+            condition { op: TRUE }
+            node {
+              name: "BranchLevel2"
+              branch_node {
+                multiplicity {
+                  expected_multiplicity: 1.6
+                  max_value: 2
+                  cap_at_max: true
+                  person_index_field: "multiplicity_person_index"
+                  random_seed: "test multiplicity 2"
+                }
+                branches {
+                  node {
+                    population_node {
+                      pools { population_offset: 10 total_population: 1 }
+                      random_seed: "TestPopulationNodeSeed1"
+                    }
+                  }
+                  chance: 0.2
+                }
+                branches {
+                  node {
+                    population_node {
+                      pools { population_offset: 20 total_population: 1 }
+                      random_seed: "TestPopulationNodeSeed2"
+                    }
+                  }
+                  chance: 0.8
+                }
+                random_seed: "TestBranchNodeSeed"
+              }
+            }
+          }
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  absl::flat_hash_map<int64_t, double> id_counts;
+  absl::flat_hash_map<int64_t, double> virtual_person_size_counts;
+  for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
+    LabelerEvent input;
+    input.set_acting_fingerprint(fingerprint);
+    EXPECT_THAT(node->Apply(input), IsOk());
+    EXPECT_THAT(input.virtual_person_activities().size(), AnyOf(1, 2, 3, 4));
+    ++virtual_person_size_counts[input.virtual_person_activities().size()];
+    for (auto& person : input.virtual_person_activities()) {
+      ++id_counts[person.virtual_person_id()];
+    }
+  }
+
+  for (auto& [key, value] : id_counts) {
+    value /= static_cast<double>(kFingerprintNumber);
+  }
+  for (auto& [key, value] : virtual_person_size_counts) {
+    value /= static_cast<double>(kFingerprintNumber);
+  }
+
+  // Total multiplicity = 1.2 * 1.6 = 1.92, 20% with id 10, 80% with id 20.
+  // There can be 1-4 virtual persons for each event.
+  // Level 1: 80% chance 1 clone, 20% chance 2 clones
+  // Level 2: 40% chance 1 clones, 60% chance 2 clones
+  // Probability for 1-4 virtual persons:
+  // 1 VP: first level 1 clone, second level 1 clone: 0.8 * 0.4 = 0.32
+  // 2 VP: first level 1 clone, second level 2 clones;
+  //       or first level 2 clones, second level 1 clone:
+  //    0.8 * 0.6 + 0.2 * 0.4 * 0.4 = 0.512
+  // 3 VP: first level 2 clones, second level 1 clone + 2 clones(or 2 + 1):
+  //    0.2 * 0.4 * 0.6 + 0.2 * 0.6 * 0.4 = 0.096
+  // 4 VP: first level 2 clones, second level 2 clones + 2 clones:
+  //    0.2 * 0.6 * 0.6 = 0.072
+  EXPECT_THAT(id_counts,
+              UnorderedElementsAre(Pair(10, DoubleNear(0.384, 0.01)),
+                                   Pair(20, DoubleNear(1.536, 0.01))));
+  EXPECT_THAT(virtual_person_size_counts,
+              UnorderedElementsAre(Pair(1, DoubleNear(0.32, 0.01)),
+                                   Pair(2, DoubleNear(0.512, 0.01)),
+                                   Pair(3, DoubleNear(0.096, 0.01)),
+                                   Pair(4, DoubleNear(0.072, 0.01))));
 }
 
 }  // namespace
