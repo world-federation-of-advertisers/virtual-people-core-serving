@@ -218,47 +218,47 @@ TEST(ConditionalAssignmentImplTest, TestMultipleAssignments) {
   // Does not match the condition as acting_demo.age.max_age is not set. Does
   // nothing.
   LabelerEvent event_3;
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(R"pb(
-                                                      acting_demo {
-                                                        gender: GENDER_FEMALE
-                                                        age { min_age: 25 }
-                                                      }
-                                                    )pb",
-                                                    &event_3));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        acting_demo {
+          gender: GENDER_FEMALE
+          age { min_age: 25 }
+        }
+      )pb",
+      &event_3));
   EXPECT_THAT(updater->Update(event_3), IsOk());
   LabelerEvent expected_event_3;
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(R"pb(
-                                                      acting_demo {
-                                                        gender: GENDER_FEMALE
-                                                        age { min_age: 25 }
-                                                      }
-                                                    )pb",
-                                                    &expected_event_3));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        acting_demo {
+          gender: GENDER_FEMALE
+          age { min_age: 25 }
+        }
+      )pb",
+      &expected_event_3));
   EXPECT_THAT(event_3, EqualsProto(expected_event_3));
 
   // Does not match the condition as acting_demo.age.min_age is not set. Does
   // nothing.
   LabelerEvent event_4;
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(R"pb(
-                                                      acting_demo {
-                                                        gender: GENDER_FEMALE
-                                                        age { max_age: 29 }
-                                                      }
-                                                    )pb",
-                                                    &event_4));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        acting_demo {
+          gender: GENDER_FEMALE
+          age { max_age: 29 }
+        }
+      )pb",
+      &event_4));
   EXPECT_THAT(updater->Update(event_4), IsOk());
   LabelerEvent expected_event_4;
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(R"pb(
-                                                      acting_demo {
-                                                        gender: GENDER_FEMALE
-                                                        age { max_age: 29 }
-                                                      }
-                                                    )pb",
-                                                    &expected_event_4));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        acting_demo {
+          gender: GENDER_FEMALE
+          age { max_age: 29 }
+        }
+      )pb",
+      &expected_event_4));
   EXPECT_THAT(event_4, EqualsProto(expected_event_4));
 }
 

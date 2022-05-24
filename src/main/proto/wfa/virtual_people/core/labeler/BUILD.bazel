@@ -1,0 +1,68 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_java//java:defs.bzl", "java_proto_library")
+load("@wfa_common_jvm//build:kt_jvm_proto_library.bzl", "kt_jvm_proto_library")
+load("@rules_cc//cc:defs.bzl", "cc_proto_library")
+
+package(default_visibility = [
+    "//visibility:public",
+])
+
+proto_library(
+    name = "input_labeler_proto",
+    srcs = ["input_labeler.proto"],
+    strip_import_prefix = "/src/main/proto",
+    deps = [
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:event_proto",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:label_proto",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "input_labeler_cc_proto",
+    deps = [":input_labeler_proto"],
+)
+
+java_proto_library(
+    name = "input_labeler_java_proto",
+    deps = [":input_labeler_proto"],
+)
+
+kt_jvm_proto_library(
+    name = "input_labeler_kt_jvm_proto",
+    srcs = [":input_labeler_proto"],
+    deps = [":input_labeler_java_proto"],
+)
+
+java_proto_library(
+    name = "label_java_proto",
+    deps = ["@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:label_proto"],
+)
+
+kt_jvm_proto_library(
+    name = "label_kt_jvm_proto",
+    srcs = ["@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:label_proto"],
+    deps = [":label_java_proto"],
+)
+
+java_proto_library(
+    name = "event_java_proto",
+    deps = ["@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:event_proto"],
+)
+
+kt_jvm_proto_library(
+    name = "event_kt_jvm_proto",
+    srcs = ["@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:event_proto"],
+    deps = [":event_java_proto"],
+)
+
+java_proto_library(
+    name = "model_java_proto",
+    deps = ["@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_proto"],
+)
+
+kt_jvm_proto_library(
+    name = "model_kt_jvm_proto",
+    srcs = ["@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_proto"],
+    deps = [":model_java_proto"],
+)

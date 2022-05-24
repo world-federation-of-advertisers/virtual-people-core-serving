@@ -365,13 +365,13 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
 
 TEST(BranchNodeImplTest, TestNoBranch) {
   CompiledNode config;
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(R"pb(
-                                                      name: "TestBranchNode"
-                                                      index: 1
-                                                      branch_node {}
-                                                    )pb",
-                                                    &config));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode"
+        index: 1
+        branch_node {}
+      )pb",
+      &config));
   EXPECT_THAT(ModelNode::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }

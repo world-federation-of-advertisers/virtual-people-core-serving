@@ -1,0 +1,16 @@
+load("@wfa_rules_swig//java:defs.bzl", "java_wrap_cc")
+
+package(default_visibility = [
+    "//src/main/kotlin/org/wfanet/virtual_people:__subpackages__",
+    "//src/test/kotlin/org/wfanet/virtual_people:__subpackages__",
+])
+
+java_wrap_cc(
+    name = "labeler",
+    src = "labeler.swig",
+    module = "LabelerSwig",
+    package = "org.wfanet.virtualpeople",
+    deps = [
+        "//src/main/cc/wfa/virtual_people/core/labeler:labeler_wrapper",
+    ],
+)
