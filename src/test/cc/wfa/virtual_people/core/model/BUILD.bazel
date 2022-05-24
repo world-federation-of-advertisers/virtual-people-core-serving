@@ -10,10 +10,10 @@ cc_test(
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:common_matchers",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
 
@@ -26,9 +26,9 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
 
@@ -42,8 +42,8 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
 
@@ -57,8 +57,8 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
 
@@ -72,8 +72,8 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
 
@@ -86,8 +86,8 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
 
@@ -100,10 +100,10 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:demographic_cc_proto",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:common_matchers",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:demographic_cc_proto",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
 
@@ -116,8 +116,8 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:common_matchers",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )

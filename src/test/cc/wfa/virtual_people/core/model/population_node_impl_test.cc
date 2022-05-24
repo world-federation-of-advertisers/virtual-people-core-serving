@@ -42,13 +42,12 @@ TEST(PopulationNodeImplTest, Apply) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 10 total_population: 3 }
-          pools { population_offset: 30 total_population: 3 }
-          pools { population_offset: 20 total_population: 4 }
+          pools {population_offset: 10 total_population: 3}
+          pools {population_offset: 30 total_population: 3}
+          pools {population_offset: 20 total_population: 4}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
@@ -83,11 +82,10 @@ TEST(PopulationNodeImplTest, ApplyNoLabel) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
@@ -99,10 +97,9 @@ TEST(PopulationNodeImplTest, ApplyNoLabel) {
   LabelerEvent expected_event;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        virtual_person_activities { virtual_person_id: 10 }
+        virtual_person_activities {virtual_person_id: 10}
         acting_fingerprint: 10000
-      )pb",
-      &expected_event));
+      )pb", &expected_event));
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
@@ -113,11 +110,10 @@ TEST(PopulationNodeImplTest, ApplyWithLabel) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
@@ -125,37 +121,20 @@ TEST(PopulationNodeImplTest, ApplyWithLabel) {
   LabelerEvent input;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        label {
-          demo {
-            gender: GENDER_FEMALE
-            age { min_age: 25 max_age: 1000 }
-          }
-        }
+        label {demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}
         acting_fingerprint: 10000
-      )pb",
-      &input));
+      )pb", &input));
   EXPECT_THAT(node->Apply(input), IsOk());
   LabelerEvent expected_event;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         virtual_person_activities {
           virtual_person_id: 10
-          label {
-            demo {
-              gender: GENDER_FEMALE
-              age { min_age: 25 max_age: 1000 }
-            }
-          }
+          label {demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}
         }
-        label {
-          demo {
-            gender: GENDER_FEMALE
-            age { min_age: 25 max_age: 1000 }
-          }
-        }
+        label {demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}
         acting_fingerprint: 10000
-      )pb",
-      &expected_event));
+      )pb", &expected_event));
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
@@ -166,11 +145,10 @@ TEST(PopulationNodeImplTest, ApplyWithSingleQuantumLabel) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
@@ -178,63 +156,32 @@ TEST(PopulationNodeImplTest, ApplyWithSingleQuantumLabel) {
   LabelerEvent input;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        quantum_labels {
-          quantum_labels {
-            labels {
-              demo {
-                gender: GENDER_FEMALE
-                age { min_age: 25 max_age: 1000 }
-              }
-            }
-            labels {
-              demo {
-                gender: GENDER_MALE
-                age { min_age: 25 max_age: 1000 }
-              }
-            }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-        }
+        quantum_labels {quantum_labels {
+          labels {demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}
+          labels {demo {gender: GENDER_MALE age {min_age: 25 max_age: 1000}}}
+          probabilities: 1.0
+          probabilities: 0.0
+          seed: "CollapseSeed"
+        }}
         acting_fingerprint: 10000
-      )pb",
-      &input));
+      )pb", &input));
   EXPECT_THAT(node->Apply(input), IsOk());
   LabelerEvent expected_event;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         virtual_person_activities {
           virtual_person_id: 10
-          label {
-            demo {
-              gender: GENDER_FEMALE
-              age { min_age: 25 max_age: 1000 }
-            }
-          }
+          label {demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}
         }
-        quantum_labels {
-          quantum_labels {
-            labels {
-              demo {
-                gender: GENDER_FEMALE
-                age { min_age: 25 max_age: 1000 }
-              }
-            }
-            labels {
-              demo {
-                gender: GENDER_MALE
-                age { min_age: 25 max_age: 1000 }
-              }
-            }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-        }
+        quantum_labels {quantum_labels {
+          labels {demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}
+          labels {demo {gender: GENDER_MALE age {min_age: 25 max_age: 1000}}}
+          probabilities: 1.0
+          probabilities: 0.0
+          seed: "CollapseSeed"
+        }}
         acting_fingerprint: 10000
-      )pb",
-      &expected_event));
+      )pb", &expected_event));
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
@@ -245,11 +192,10 @@ TEST(PopulationNodeImplTest, ApplyWithMultipleQuantumLabels) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
@@ -258,56 +204,43 @@ TEST(PopulationNodeImplTest, ApplyWithMultipleQuantumLabels) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         quantum_labels {
-          quantum_labels {
-            labels { demo { gender: GENDER_FEMALE } }
-            labels { demo { gender: GENDER_MALE } }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-          quantum_labels {
-            labels { demo { age { min_age: 25 max_age: 1000 } } }
-            labels { demo { age { min_age: 1 max_age: 24 } } }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-        }
+            quantum_labels {
+              labels {demo {gender: GENDER_FEMALE}}
+              labels {demo {gender: GENDER_MALE}} probabilities: 1.0
+              probabilities: 0.0
+              seed: "CollapseSeed"
+            }
+            quantum_labels {
+              labels {demo {age {min_age: 25 max_age: 1000}}}
+              labels {demo {age {min_age: 1 max_age: 24}}} probabilities: 1.0
+              probabilities: 0.0
+              seed: "CollapseSeed"
+            }}
         acting_fingerprint: 10000
-      )pb",
-      &input));
+      )pb", &input));
   EXPECT_THAT(node->Apply(input), IsOk());
   LabelerEvent expected_event;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         virtual_person_activities {
           virtual_person_id: 10
-          label {
-            demo {
-              gender: GENDER_FEMALE
-              age { min_age: 25 max_age: 1000 }
-            }
-          }
+          label {demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}
         }
         quantum_labels {
-          quantum_labels {
-            labels { demo { gender: GENDER_FEMALE } }
-            labels { demo { gender: GENDER_MALE } }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-          quantum_labels {
-            labels { demo { age { min_age: 25 max_age: 1000 } } }
-            labels { demo { age { min_age: 1 max_age: 24 } } }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-        }
+            quantum_labels {
+              labels {demo {gender: GENDER_FEMALE}}
+              labels {demo {gender: GENDER_MALE}} probabilities: 1.0
+              probabilities: 0.0
+              seed: "CollapseSeed"
+            }
+            quantum_labels {
+              labels {demo {age {min_age: 25 max_age: 1000}}}
+              labels {demo {age {min_age: 1 max_age: 24}}} probabilities: 1.0
+              probabilities: 0.0
+              seed: "CollapseSeed"
+            }}
         acting_fingerprint: 10000
-      )pb",
-      &expected_event));
+      )pb", &expected_event));
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
@@ -318,11 +251,10 @@ TEST(PopulationNodeImplTest, ApplyWithMultipleQuantumLabelsOverride) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
@@ -331,52 +263,42 @@ TEST(PopulationNodeImplTest, ApplyWithMultipleQuantumLabelsOverride) {
   LabelerEvent input;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        quantum_labels {
-          quantum_labels {
-            labels { demo { gender: GENDER_FEMALE } }
-            labels { demo { gender: GENDER_MALE } }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-          quantum_labels {
-            labels { demo { gender: GENDER_FEMALE } }
-            labels { demo { gender: GENDER_MALE } }
-            probabilities: 0.0
-            probabilities: 1.0
-            seed: "CollapseSeed"
-          }
+        quantum_labels {quantum_labels {
+          labels {demo {gender: GENDER_FEMALE}}
+          labels {demo {gender: GENDER_MALE}} probabilities: 1.0
+          probabilities: 0.0
+          seed: "CollapseSeed"
         }
+                        quantum_labels {
+                          labels {demo {gender: GENDER_FEMALE}}
+                          labels {demo {gender: GENDER_MALE}} probabilities: 0.0
+                          probabilities: 1.0
+                          seed: "CollapseSeed"
+                        }}
         acting_fingerprint: 10000
-      )pb",
-      &input));
+      )pb", &input));
   EXPECT_THAT(node->Apply(input), IsOk());
   LabelerEvent expected_event;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         virtual_person_activities {
           virtual_person_id: 10
-          label { demo { gender: GENDER_MALE } }
+          label {demo {gender: GENDER_MALE}}
         }
-        quantum_labels {
-          quantum_labels {
-            labels { demo { gender: GENDER_FEMALE } }
-            labels { demo { gender: GENDER_MALE } }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-          quantum_labels {
-            labels { demo { gender: GENDER_FEMALE } }
-            labels { demo { gender: GENDER_MALE } }
-            probabilities: 0.0
-            probabilities: 1.0
-            seed: "CollapseSeed"
-          }
+        quantum_labels {quantum_labels {
+          labels {demo {gender: GENDER_FEMALE}}
+          labels {demo {gender: GENDER_MALE}} probabilities: 1.0
+          probabilities: 0.0
+          seed: "CollapseSeed"
         }
+                        quantum_labels {
+                          labels {demo {gender: GENDER_FEMALE}}
+                          labels {demo {gender: GENDER_MALE}} probabilities: 0.0
+                          probabilities: 1.0
+                          seed: "CollapseSeed"
+                        }}
         acting_fingerprint: 10000
-      )pb",
-      &expected_event));
+      )pb", &expected_event));
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
@@ -387,11 +309,10 @@ TEST(PopulationNodeImplTest, ApplyWithQuantumLabelAndClassicLabel) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
@@ -399,45 +320,32 @@ TEST(PopulationNodeImplTest, ApplyWithQuantumLabelAndClassicLabel) {
   LabelerEvent input;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        quantum_labels {
-          quantum_labels {
-            labels { demo { gender: GENDER_FEMALE } }
-            labels { demo { gender: GENDER_MALE } }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-        }
-        label { demo { age { min_age: 25 max_age: 1000 } } }
+        quantum_labels {quantum_labels {
+          labels {demo {gender: GENDER_FEMALE}}
+          labels {demo {gender: GENDER_MALE}} probabilities: 1.0
+          probabilities: 0.0
+          seed: "CollapseSeed"
+        }}
+        label {demo {age {min_age: 25 max_age: 1000}}}
         acting_fingerprint: 10000
-      )pb",
-      &input));
+      )pb", &input));
   EXPECT_THAT(node->Apply(input), IsOk());
   LabelerEvent expected_event;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         virtual_person_activities {
           virtual_person_id: 10
-          label {
-            demo {
-              gender: GENDER_FEMALE
-              age { min_age: 25 max_age: 1000 }
-            }
-          }
+          label {demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}
         }
-        quantum_labels {
-          quantum_labels {
-            labels { demo { gender: GENDER_FEMALE } }
-            labels { demo { gender: GENDER_MALE } }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-        }
-        label { demo { age { min_age: 25 max_age: 1000 } } }
+        quantum_labels {quantum_labels {
+          labels {demo {gender: GENDER_FEMALE}}
+          labels {demo {gender: GENDER_MALE}} probabilities: 1.0
+          probabilities: 0.0
+          seed: "CollapseSeed"
+        }}
+        label {demo {age {min_age: 25 max_age: 1000}}}
         acting_fingerprint: 10000
-      )pb",
-      &expected_event));
+      )pb", &expected_event));
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
@@ -448,11 +356,10 @@ TEST(PopulationNodeImplTest, ApplyWithQuantumLabelAndClassicLabelOverride) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
@@ -461,40 +368,32 @@ TEST(PopulationNodeImplTest, ApplyWithQuantumLabelAndClassicLabelOverride) {
   LabelerEvent input;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        quantum_labels {
-          quantum_labels {
-            labels { demo { gender: GENDER_FEMALE } }
-            labels { demo { gender: GENDER_MALE } }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-        }
-        label { demo { gender: GENDER_MALE } }
+        quantum_labels {quantum_labels {
+          labels {demo {gender: GENDER_FEMALE}}
+          labels {demo {gender: GENDER_MALE}} probabilities: 1.0
+          probabilities: 0.0
+          seed: "CollapseSeed"
+        }}
+        label {demo {gender: GENDER_MALE}}
         acting_fingerprint: 10000
-      )pb",
-      &input));
+      )pb", &input));
   EXPECT_THAT(node->Apply(input), IsOk());
   LabelerEvent expected_event;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         virtual_person_activities {
           virtual_person_id: 10
-          label { demo { gender: GENDER_MALE } }
+          label {demo {gender: GENDER_MALE}}
         }
-        quantum_labels {
-          quantum_labels {
-            labels { demo { gender: GENDER_FEMALE } }
-            labels { demo { gender: GENDER_MALE } }
-            probabilities: 1.0
-            probabilities: 0.0
-            seed: "CollapseSeed"
-          }
-        }
-        label { demo { gender: GENDER_MALE } }
+        quantum_labels {quantum_labels {
+          labels {demo {gender: GENDER_FEMALE}}
+          labels {demo {gender: GENDER_MALE}} probabilities: 1.0
+          probabilities: 0.0
+          seed: "CollapseSeed"
+        }}
+        label {demo {gender: GENDER_MALE}}
         acting_fingerprint: 10000
-      )pb",
-      &expected_event));
+      )pb", &expected_event));
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
@@ -505,11 +404,10 @@ TEST(PopulationNodeImplTest, ApplyExistingVirtualPerson) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
@@ -517,10 +415,9 @@ TEST(PopulationNodeImplTest, ApplyExistingVirtualPerson) {
   LabelerEvent input;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        virtual_person_activities { virtual_person_id: 10 }
+        virtual_person_activities {virtual_person_id: 10}
         acting_fingerprint: 10000
-      )pb",
-      &input));
+      )pb", &input));
 
   EXPECT_THAT(node->Apply(input),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
@@ -535,11 +432,10 @@ TEST(PopulationNodeImplTest, EmptyPopulationPool) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 0 total_population: 0 }
+          pools {population_offset: 0 total_population: 0}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
@@ -547,36 +443,18 @@ TEST(PopulationNodeImplTest, EmptyPopulationPool) {
   LabelerEvent input;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        label {
-          demo {
-            gender: GENDER_FEMALE
-            age { min_age: 25 max_age: 1000 }
-          }
-        }
+        label {demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}
         acting_fingerprint: 10000
-      )pb",
-      &input));
+      )pb", &input));
   EXPECT_THAT(node->Apply(input), IsOk());
   LabelerEvent expected_event;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        virtual_person_activities {
-          label {
-            demo {
-              gender: GENDER_FEMALE
-              age { min_age: 25 max_age: 1000 }
-            }
-          }
-        }
-        label {
-          demo {
-            gender: GENDER_FEMALE
-            age { min_age: 25 max_age: 1000 }
-          }
-        }
+        virtual_person_activities {label {
+            demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}}
+        label {demo {gender: GENDER_FEMALE age {min_age: 25 max_age: 1000}}}
         acting_fingerprint: 10000
-      )pb",
-      &expected_event));
+      )pb", &expected_event));
   EXPECT_THAT(input, EqualsProto(expected_event));
 }
 
@@ -588,13 +466,12 @@ TEST(PopulationNodeImplTest, InvalidPools) {
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 10 total_population: 0 }
-          pools { population_offset: 30 total_population: 0 }
-          pools { population_offset: 20 total_population: 0 }
+          pools {population_offset: 10 total_population: 0}
+          pools {population_offset: 30 total_population: 0}
+          pools {population_offset: 20 total_population: 0}
           random_seed: "TestRandomSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
 
   EXPECT_THAT(ModelNode::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));

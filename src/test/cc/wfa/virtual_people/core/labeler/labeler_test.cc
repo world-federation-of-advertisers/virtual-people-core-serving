@@ -45,27 +45,22 @@ TEST(LabelerTest, TestBuildFromRoot) {
         name: "TestNode1"
         branch_node {
           branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 0.4
           }
           branches {
-            node {
-              population_node {
-                pools { population_offset: 20 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed2"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 20 total_population: 1}
+              random_seed: "TestPopulationNodeSeed2"
+            }}
             chance: 0.6
           }
           random_seed: "TestBranchNodeSeed"
         }
-      )pb",
-      &root));
+      )pb", &root));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(root));
 
   absl::flat_hash_map<int64_t, double> vpid_counts;
@@ -96,32 +91,29 @@ TEST(LabelerTest, TestBuildFromNodesRootWithIndex) {
         index: 2
         name: "TestNode2"
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestPopulationNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 3
         name: "TestNode3"
         population_node {
-          pools { population_offset: 20 total_population: 1 }
+          pools {population_offset: 20 total_population: 1}
           random_seed: "TestPopulationNodeSeed2"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 1
         name: "TestNode1"
         branch_node {
-          branches { node_index: 2 chance: 0.4 }
-          branches { node_index: 3 chance: 0.6 }
+          branches {node_index: 2 chance: 0.4}
+          branches {node_index: 3 chance: 0.6}
           random_seed: "TestBranchNodeSeed"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
 
   absl::flat_hash_map<int64_t, double> vpid_counts;
@@ -152,31 +144,28 @@ TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
         index: 2
         name: "TestNode2"
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestPopulationNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 3
         name: "TestNode3"
         population_node {
-          pools { population_offset: 20 total_population: 1 }
+          pools {population_offset: 20 total_population: 1}
           random_seed: "TestPopulationNodeSeed2"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "TestNode1"
         branch_node {
-          branches { node_index: 2 chance: 0.4 }
-          branches { node_index: 3 chance: 0.6 }
+          branches {node_index: 2 chance: 0.4}
+          branches {node_index: 3 chance: 0.6}
           random_seed: "TestBranchNodeSeed"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
 
   absl::flat_hash_map<int64_t, double> vpid_counts;
@@ -203,11 +192,10 @@ TEST(LabelerTest, TestBuildFromListWithSingleNode) {
       R"pb(
         name: "TestNode1"
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestPopulationNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
 
   for (int event_id = 0; event_id < kEventIdNumber; ++event_id) {
@@ -226,29 +214,26 @@ TEST(LabelerTest, TestBuildFromNodesNodeAfterRoot) {
         index: 3
         name: "TestNode3"
         population_node {
-          pools { population_offset: 20 total_population: 1 }
+          pools {population_offset: 20 total_population: 1}
           random_seed: "TestPopulationNodeSeed2"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "TestNode1"
         branch_node {
-          branches { node_index: 3 chance: 1 }
+          branches {node_index: 3 chance: 1}
           random_seed: "TestBranchNodeSeed"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "TestNode2"
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestPopulationNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   EXPECT_THAT(Labeler::Build(nodes).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -263,52 +248,47 @@ TEST(LabelerTest, TestBuildFromNodesMultipleRoots) {
         index: 3
         name: "TestNode3"
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestPopulationNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 4
         name: "TestNode4"
         population_node {
-          pools { population_offset: 20 total_population: 1 }
+          pools {population_offset: 20 total_population: 1}
           random_seed: "TestPopulationNodeSeed2"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 5
         name: "TestNode5"
         population_node {
-          pools { population_offset: 20 total_population: 1 }
+          pools {population_offset: 20 total_population: 1}
           random_seed: "TestPopulationNodeSeed3"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 1
         name: "TestNode1"
         branch_node {
-          branches { node_index: 3 chance: 0.4 }
-          branches { node_index: 4 chance: 0.6 }
+          branches {node_index: 3 chance: 0.4}
+          branches {node_index: 4 chance: 0.6}
           random_seed: "TestBranchNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 2
         name: "TestNode2"
         branch_node {
-          branches { node_index: 5 chance: 1 }
+          branches {node_index: 5 chance: 1}
           random_seed: "TestBranchNodeSeed2"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   EXPECT_THAT(Labeler::Build(nodes).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -322,21 +302,19 @@ TEST(LabelerTest, TestBuildFromNodesNoRoot) {
         index: 1
         name: "TestNode1"
         branch_node {
-          branches { node_index: 2 chance: 1 }
+          branches {node_index: 2 chance: 1}
           random_seed: "TestBranchNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 2
         name: "TestNode2"
         branch_node {
-          branches { node_index: 1 chance: 1 }
+          branches {node_index: 1 chance: 1}
           random_seed: "TestBranchNodeSeed2"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   EXPECT_THAT(Labeler::Build(nodes).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -348,11 +326,10 @@ TEST(LabelerTest, TestBuildFromNodesNoNodeForIndex) {
         index: 1
         name: "TestNode1"
         branch_node {
-          branches { node_index: 2 chance: 1 }
+          branches {node_index: 2 chance: 1}
           random_seed: "TestBranchNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   EXPECT_THAT(Labeler::Build(nodes).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -364,30 +341,27 @@ TEST(LabelerTest, TestBuildFromNodesDuplicatedIndexes) {
         index: 2
         name: "TestNode2"
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestPopulationNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 2
         name: "TestNode3"
         population_node {
-          pools { population_offset: 20 total_population: 1 }
+          pools {population_offset: 20 total_population: 1}
           random_seed: "TestPopulationNodeSeed2"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "TestNode1"
         branch_node {
-          branches { node_index: 2 chance: 1 }
+          branches {node_index: 2 chance: 1}
           random_seed: "TestBranchNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   EXPECT_THAT(Labeler::Build(nodes).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -400,31 +374,28 @@ TEST(LabelerTest, TestBuildFromNodesMultipleParents) {
         index: 3
         name: "TestNode3"
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestPopulationNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 2
         name: "TestNode2"
         branch_node {
-          branches { node_index: 3 chance: 1 }
+          branches {node_index: 3 chance: 1}
           random_seed: "TestBranchNodeSeed2"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "TestNode1"
         branch_node {
-          branches { node_index: 2 chance: 0.5 }
-          branches { node_index: 3 chance: 0.5 }
+          branches {node_index: 2 chance: 0.5}
+          branches {node_index: 3 chance: 0.5}
           random_seed: "TestBranchNodeSeed1"
         }
-      )pb",
-      &nodes.emplace_back()));
+      )pb", &nodes.emplace_back()));
   EXPECT_THAT(Labeler::Build(nodes).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }

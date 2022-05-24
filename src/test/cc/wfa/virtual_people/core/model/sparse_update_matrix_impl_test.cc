@@ -42,8 +42,7 @@ TEST(SparseUpdateMatrixImplTest, TestNoColumns) {
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -54,14 +53,13 @@ TEST(SparseUpdateMatrixImplTest, TestNoColumnAttrs) {
       R"pb(
         sparse_update_matrix {
           columns {
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
             probabilities: 1
           }
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -71,12 +69,11 @@ TEST(SparseUpdateMatrixImplTest, TestNoRows) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         sparse_update_matrix {
-          columns { column_attrs { person_country_code: "COUNTRY_1" } }
+          columns {column_attrs {person_country_code: "COUNTRY_1"}}
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -87,16 +84,15 @@ TEST(SparseUpdateMatrixImplTest, TestNoRowInSecondColumn) {
       R"pb(
         sparse_update_matrix {
           columns {
-            column_attrs { person_country_code: "COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            column_attrs {person_country_code: "COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
             probabilities: 1
           }
-          columns { column_attrs { person_country_code: "COUNTRY_2" } }
+          columns {column_attrs {person_country_code: "COUNTRY_2"}}
           pass_through_non_matches: false
           random_seed: "TestSeed1"
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -107,16 +103,15 @@ TEST(SparseUpdateMatrixImplTest, TestProbabilitiesCountNotMatch) {
       R"pb(
         sparse_update_matrix {
           columns {
-            column_attrs { person_country_code: "COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            column_attrs {person_country_code: "COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
             probabilities: 1
             probabilities: 0
           }
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -127,15 +122,14 @@ TEST(SparseUpdateMatrixImplTest, TestInvalidProbability) {
       R"pb(
         sparse_update_matrix {
           columns {
-            column_attrs { person_country_code: "COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            column_attrs {person_country_code: "COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
             probabilities: -1
           }
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -151,17 +145,17 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistribution) {
       R"pb(
         sparse_update_matrix {
           columns {
-            column_attrs { person_country_code: "COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_2" }
+            column_attrs {person_country_code: "COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_2"}
             probabilities: 0.8
             probabilities: 0.2
           }
           columns {
-            column_attrs { person_country_code: "COUNTRY_2" }
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_2" }
-            rows { person_country_code: "UPDATED_COUNTRY_3" }
+            column_attrs {person_country_code: "COUNTRY_2"}
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_2"}
+            rows {person_country_code: "UPDATED_COUNTRY_3"}
             probabilities: 0.2
             probabilities: 0.4
             probabilities: 0.4
@@ -169,8 +163,7 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistribution) {
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
@@ -232,17 +225,17 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistributionNotNormalized) {
       R"pb(
         sparse_update_matrix {
           columns {
-            column_attrs { person_country_code: "COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_2" }
+            column_attrs {person_country_code: "COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_2"}
             probabilities: 1.6
             probabilities: 0.4
           }
           columns {
-            column_attrs { person_country_code: "COUNTRY_2" }
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_2" }
-            rows { person_country_code: "UPDATED_COUNTRY_3" }
+            column_attrs {person_country_code: "COUNTRY_2"}
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_2"}
+            rows {person_country_code: "UPDATED_COUNTRY_3"}
             probabilities: 0.2
             probabilities: 0.4
             probabilities: 0.4
@@ -250,8 +243,7 @@ TEST(SparseUpdateMatrixImplTest, TestOutputDistributionNotNormalized) {
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -265,15 +257,14 @@ TEST(SparseUpdateMatrixImplTest, TestNoMatchingNotPass) {
       R"pb(
         sparse_update_matrix {
           columns {
-            column_attrs { person_country_code: "COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            column_attrs {person_country_code: "COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
             probabilities: 1
           }
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
@@ -294,15 +285,14 @@ TEST(SparseUpdateMatrixImplTest, TestNoMatchingPass) {
       R"pb(
         sparse_update_matrix {
           columns {
-            column_attrs { person_country_code: "COUNTRY_1" }
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            column_attrs {person_country_code: "COUNTRY_1"}
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
             probabilities: 1
           }
           pass_through_non_matches: true
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
@@ -327,15 +317,14 @@ TEST(SparseUpdateMatrixImplTest, TestHashFieldMask) {
               person_country_code: "COUNTRY_1"
               person_region_code: "REGION_1"
             }
-            rows { person_country_code: "UPDATED_COUNTRY_1" }
+            rows {person_country_code: "UPDATED_COUNTRY_1"}
             probabilities: 1
           }
-          hash_field_mask { paths: "person_country_code" }
+          hash_field_mask {paths: "person_country_code"}
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
@@ -375,7 +364,7 @@ TEST(UpdateMatrixImplTest, TestHashFieldMaskFieldNotSet) {
       R"pb(
         sparse_update_matrix {
           columns {
-            column_attrs { person_region_code: "REGION_1" }
+            column_attrs {person_region_code: "REGION_1"}
             rows {
               person_country_code: "UPDATED_COUNTRY_1"
               person_region_code: "UPDATED_REGION_1"
@@ -389,8 +378,7 @@ TEST(UpdateMatrixImplTest, TestHashFieldMaskFieldNotSet) {
           pass_through_non_matches: false
           random_seed: "TestSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 

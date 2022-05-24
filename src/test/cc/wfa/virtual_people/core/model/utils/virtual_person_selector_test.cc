@@ -39,11 +39,10 @@ TEST(VirtualPersonSelectorTest, TestGetVirtualPersonId) {
   PopulationNode population_node;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        pools { population_offset: 10 total_population: 3 }
-        pools { population_offset: 30 total_population: 3 }
-        pools { population_offset: 20 total_population: 4 }
-      )pb",
-      &population_node));
+        pools {population_offset: 10 total_population: 3}
+        pools {population_offset: 30 total_population: 3}
+        pools {population_offset: 20 total_population: 4}
+      )pb", &population_node));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<VirtualPersonSelector> selector,
                        VirtualPersonSelector::Build(population_node.pools()));
 
@@ -74,11 +73,10 @@ TEST(VirtualPersonSelectorTest, TestInvalidPools) {
   PopulationNode population_node;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        pools { population_offset: 10 total_population: 0 }
-        pools { population_offset: 30 total_population: 0 }
-        pools { population_offset: 20 total_population: 0 }
-      )pb",
-      &population_node));
+        pools {population_offset: 10 total_population: 0}
+        pools {population_offset: 30 total_population: 0}
+        pools {population_offset: 20 total_population: 0}
+      )pb", &population_node));
   EXPECT_THAT(VirtualPersonSelector::Build(population_node.pools()).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }

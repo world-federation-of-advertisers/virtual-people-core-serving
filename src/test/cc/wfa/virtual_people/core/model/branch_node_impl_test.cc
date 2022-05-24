@@ -52,27 +52,22 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeByChance) {
         index: 1
         branch_node {
           branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 0.4
           }
           branches {
-            node {
-              population_node {
-                pools { population_offset: 20 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 20 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 0.6
           }
           random_seed: "TestBranchNodeSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -103,12 +98,11 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
         name: "TestBranchNode"
         index: 1
         branch_node {
-          branches { node_index: 2 chance: 0.4 }
-          branches { node_index: 3 chance: 0.6 }
+          branches {node_index: 2 chance: 0.4}
+          branches {node_index: 3 chance: 0.6}
           random_seed: "TestBranchNodeSeed"
         }
-      )pb",
-      &branch_node_config));
+      )pb", &branch_node_config));
 
   CompiledNode population_node_config_1;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -116,11 +110,10 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
         name: "TestPopulationNode1"
         index: 2
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestPopulationNodeSeed1"
         }
-      )pb",
-      &population_node_config_1));
+      )pb", &population_node_config_1));
 
   CompiledNode population_node_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -128,11 +121,10 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
         name: "TestPopulationNode2"
         index: 3
         population_node {
-          pools { population_offset: 20 total_population: 1 }
+          pools {population_offset: 20 total_population: 1}
           random_seed: "TestPopulationNodeSeed2"
         }
-      )pb",
-      &population_node_config_2));
+      )pb", &population_node_config_2));
 
   // Set up map from indexes to child nodes.
   absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
@@ -166,12 +158,11 @@ TEST(BranchNodeImplTest, TestBranchWithNodeIndexByChanceNotNormalized) {
         name: "TestBranchNode"
         index: 1
         branch_node {
-          branches { node_index: 2 chance: 0.8 }
-          branches { node_index: 3 chance: 0.12 }
+          branches {node_index: 2 chance: 0.8}
+          branches {node_index: 3 chance: 0.12}
           random_seed: "TestBranchNodeSeed"
         }
-      )pb",
-      &branch_node_config));
+      )pb", &branch_node_config));
 
   CompiledNode population_node_config_1;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -179,11 +170,10 @@ TEST(BranchNodeImplTest, TestBranchWithNodeIndexByChanceNotNormalized) {
         name: "TestPopulationNode1"
         index: 2
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestPopulationNodeSeed1"
         }
-      )pb",
-      &population_node_config_1));
+      )pb", &population_node_config_1));
 
   CompiledNode population_node_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -191,11 +181,10 @@ TEST(BranchNodeImplTest, TestBranchWithNodeIndexByChanceNotNormalized) {
         name: "TestPopulationNode2"
         index: 3
         population_node {
-          pools { population_offset: 20 total_population: 1 }
+          pools {population_offset: 20 total_population: 1}
           random_seed: "TestPopulationNodeSeed2"
         }
-      )pb",
-      &population_node_config_2));
+      )pb", &population_node_config_2));
 
   // Set up map from indexes to child nodes.
   absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
@@ -219,35 +208,25 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeByCondition) {
         name: "TestBranchNode"
         index: 1
         branch_node {
-          branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
-            condition {
-              name: "person_country_code"
-              op: EQUAL
-              value: "country_code_1"
-            }
-          }
-          branches {
-            node {
-              population_node {
-                pools { population_offset: 20 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
-            condition {
-              name: "person_country_code"
-              op: EQUAL
-              value: "country_code_2"
-            }
-          }
-        }
-      )pb",
-      &config));
+            branches {node {population_node {
+                        pools {population_offset: 10 total_population: 1}
+                        random_seed: "TestPopulationNodeSeed1"
+                      }}
+                      condition {
+                        name: "person_country_code"
+                        op: EQUAL
+                        value: "country_code_1"
+                      }}
+            branches {node {population_node {
+                        pools {population_offset: 20 total_population: 1}
+                        random_seed: "TestPopulationNodeSeed1"
+                      }}
+                      condition {
+                        name: "person_country_code"
+                        op: EQUAL
+                        value: "country_code_2"
+                      }}}
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -280,12 +259,11 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
         name: "TestBranchNode1"
         index: 1
         branch_node {
-          branches { node_index: 2 chance: 0.4 }
-          branches { node_index: 3 chance: 0.6 }
+          branches {node_index: 2 chance: 0.4}
+          branches {node_index: 3 chance: 0.6}
           random_seed: "TestBranchNodeSeed1"
         }
-      )pb",
-      &branch_node_config_1));
+      )pb", &branch_node_config_1));
 
   CompiledNode branch_node_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -293,11 +271,10 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
         name: "TestBranchNode2"
         index: 2
         branch_node {
-          branches { node_index: 4 chance: 1 }
+          branches {node_index: 4 chance: 1}
           random_seed: "TestBranchNodeSeed2"
         }
-      )pb",
-      &branch_node_config_2));
+      )pb", &branch_node_config_2));
 
   CompiledNode branch_node_config_3;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -305,11 +282,10 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
         name: "TestBranchNode3"
         index: 3
         branch_node {
-          branches { node_index: 5 chance: 1 }
+          branches {node_index: 5 chance: 1}
           random_seed: "TestBranchNodeSeed3"
         }
-      )pb",
-      &branch_node_config_3));
+      )pb", &branch_node_config_3));
 
   CompiledNode population_node_config_1;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -317,11 +293,10 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
         name: "TestPopulationNode1"
         index: 4
         population_node {
-          pools { population_offset: 10 total_population: 1 }
+          pools {population_offset: 10 total_population: 1}
           random_seed: "TestPopulationNodeSeed1"
         }
-      )pb",
-      &population_node_config_1));
+      )pb", &population_node_config_1));
 
   CompiledNode population_node_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -329,11 +304,10 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
         name: "TestPopulationNode2"
         index: 5
         population_node {
-          pools { population_offset: 20 total_population: 1 }
+          pools {population_offset: 20 total_population: 1}
           random_seed: "TestPopulationNodeSeed2"
         }
-      )pb",
-      &population_node_config_2));
+      )pb", &population_node_config_2));
 
   // Set up map from indexes to child nodes.
   absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
@@ -365,13 +339,10 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
 
 TEST(BranchNodeImplTest, TestNoBranch) {
   CompiledNode config;
-  ASSERT_TRUE(
-      google::protobuf::TextFormat::ParseFromString(R"pb(
-                                                      name: "TestBranchNode"
-                                                      index: 1
-                                                      branch_node {}
-                                                    )pb",
-                                                    &config));
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestBranchNode" index: 1 branch_node {}
+      )pb", &config));
   EXPECT_THAT(ModelNode::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -380,11 +351,8 @@ TEST(BranchNodeImplTest, TestNoChildNode) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        name: "TestBranchNode"
-        index: 1
-        branch_node { branches { chance: 1 } }
-      )pb",
-      &config));
+        name: "TestBranchNode" index: 1 branch_node {branches {chance: 1}}
+      )pb", &config));
   EXPECT_THAT(ModelNode::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -396,17 +364,11 @@ TEST(BranchNodeImplTest, TestNoSelectBy) {
         name: "TestBranchNode"
         index: 1
         branch_node {
-          branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
-          }
-        }
-      )pb",
-      &config));
+            branches {node {population_node {
+                        pools {population_offset: 10 total_population: 1}
+                        random_seed: "TestPopulationNodeSeed1"
+                      }}}}
+      )pb", &config));
   EXPECT_THAT(ModelNode::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -418,27 +380,19 @@ TEST(BranchNodeImplTest, TestDifferentSelectBy) {
         name: "TestBranchNode"
         index: 1
         branch_node {
-          branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
+            branches {
+              node {population_node {
+                pools {population_offset: 10 total_population: 1}
                 random_seed: "TestPopulationNodeSeed1"
-              }
+              }}
+              chance: 0.5
             }
-            chance: 0.5
-          }
-          branches {
-            node {
-              population_node {
-                pools { population_offset: 20 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
-            condition {}
-          }
-        }
-      )pb",
-      &config));
+            branches {node {population_node {
+                        pools {population_offset: 20 total_population: 1}
+                        random_seed: "TestPopulationNodeSeed1"
+                      }}
+                      condition {}}}
+      )pb", &config));
   EXPECT_THAT(ModelNode::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -450,11 +404,10 @@ TEST(BranchNodeImplTest, TestResolveChildReferencesIndexNotFound) {
         name: "TestBranchNode"
         index: 1
         branch_node {
-          branches { node_index: 2 chance: 1 }
+          branches {node_index: 2 chance: 1}
           random_seed: "TestBranchNodeSeed"
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(ModelNode::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -467,12 +420,11 @@ TEST(BranchNodeImplTest, TestBothUpdatesAndMultiplicity) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         update_matrix {
-          columns { person_country_code: "RAW_COUNTRY_1" }
-          rows { person_country_code: "country_code_1" }
+          columns {person_country_code: "RAW_COUNTRY_1"}
+          rows {person_country_code: "country_code_1"}
           probabilities: 1.0
         }
-      )pb",
-      &updater_config));
+      )pb", &updater_config));
   ASSERT_OK_AND_ASSIGN(updaters.emplace_back(),
                        AttributesUpdaterInterface::Build(updater_config));
 
@@ -485,8 +437,7 @@ TEST(BranchNodeImplTest, TestBothUpdatesAndMultiplicity) {
         cap_at_max: true
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &multiplicity_config));
+      )pb", &multiplicity_config));
   ASSERT_OK_AND_ASSIGN(multiplicity,
                        MultiplicityImpl::Build(multiplicity_config));
 
@@ -494,8 +445,7 @@ TEST(BranchNodeImplTest, TestBothUpdatesAndMultiplicity) {
   ASSERT_TRUE(
       google::protobuf::TextFormat::ParseFromString(R"pb(
                                                       name: "TestBranchNode"
-                                                    )pb",
-                                                    &node_config));
+                                                    )pb", &node_config));
 
   std::unique_ptr<BranchNodeImpl> node = absl::make_unique<BranchNodeImpl>(
       node_config, std::vector<std::unique_ptr<ModelNode>>(), nullptr,
@@ -523,49 +473,35 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
         name: "TestBranchNode"
         index: 1
         branch_node {
-          branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
-            condition {
-              name: "person_country_code"
-              op: EQUAL
-              value: "country_code_1"
-            }
-          }
-          branches {
-            node {
-              population_node {
-                pools { population_offset: 20 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
-            condition {
-              name: "person_country_code"
-              op: EQUAL
-              value: "country_code_2"
-            }
-          }
-          updates {
-            updates {
-              update_matrix {
-                columns { person_country_code: "RAW_COUNTRY_1" }
-                columns { person_country_code: "RAW_COUNTRY_2" }
-                rows { person_country_code: "country_code_1" }
-                rows { person_country_code: "country_code_2" }
-                probabilities: 0.8
-                probabilities: 0.2
-                probabilities: 0.2
-                probabilities: 0.8
-              }
-            }
-          }
-        }
-      )pb",
-      &config));
+            branches {node {population_node {
+                        pools {population_offset: 10 total_population: 1}
+                        random_seed: "TestPopulationNodeSeed1"
+                      }}
+                      condition {
+                        name: "person_country_code"
+                        op: EQUAL
+                        value: "country_code_1"
+                      }}
+            branches {node {population_node {
+                        pools {population_offset: 20 total_population: 1}
+                        random_seed: "TestPopulationNodeSeed1"
+                      }}
+                      condition {
+                        name: "person_country_code"
+                        op: EQUAL
+                        value: "country_code_2"
+                      }}
+            updates {updates {update_matrix {
+                       columns {person_country_code: "RAW_COUNTRY_1"}
+                       columns {person_country_code: "RAW_COUNTRY_2"}
+                       rows {person_country_code: "country_code_1"}
+                       rows {person_country_code: "country_code_2"}
+                       probabilities: 0.8
+                       probabilities: 0.2
+                       probabilities: 0.2
+                       probabilities: 0.8
+                     }}}}
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -637,38 +573,26 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
         name: "TestBranchNode"
         index: 1
         branch_node {
-          branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
-            condition {
-              name: "person_country_code"
-              op: EQUAL
-              value: "COUNTRY_3"
-            }
-          }
-          updates {
-            updates {
-              update_matrix {
-                columns { person_country_code: "COUNTRY_1" }
-                rows { person_country_code: "COUNTRY_2" }
-                probabilities: 1
-              }
-            }
-            updates {
-              update_matrix {
-                columns { person_country_code: "COUNTRY_2" }
-                rows { person_country_code: "COUNTRY_3" }
-                probabilities: 1
-              }
-            }
-          }
-        }
-      )pb",
-      &config));
+            branches {node {population_node {
+                        pools {population_offset: 10 total_population: 1}
+                        random_seed: "TestPopulationNodeSeed1"
+                      }}
+                      condition {
+                        name: "person_country_code"
+                        op: EQUAL
+                        value: "COUNTRY_3"
+                      }}
+            updates {updates {update_matrix {
+                       columns {person_country_code: "COUNTRY_1"}
+                       rows {person_country_code: "COUNTRY_2"}
+                       probabilities: 1
+                     }}
+                     updates {update_matrix {
+                       columns {person_country_code: "COUNTRY_2"}
+                       rows {person_country_code: "COUNTRY_3"}
+                       probabilities: 1
+                     }}}}
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -694,19 +618,16 @@ TEST(BranchNodeImplTest, TestInvalidMultiplicityField) {
         name: "TestBranchNode"
         branch_node {
           branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 1.0
           }
           random_seed: "TestBranchNodeSeed"
           multiplicity {}
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(ModelNode::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument,
                        "must set multiplicity_ref"));
@@ -724,12 +645,10 @@ TEST(BranchNodeImplTest, TestExplicitMultiplicityAndCapAtMaxTrue) {
         index: 1
         branch_node {
           branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 1.0
           }
           random_seed: "TestBranchNodeSeed"
@@ -741,8 +660,7 @@ TEST(BranchNodeImplTest, TestExplicitMultiplicityAndCapAtMaxTrue) {
             random_seed: "test multiplicity"
           }
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -775,12 +693,10 @@ TEST(BranchNodeImplTest, TestExplicitMultiplicityAndCapAtMaxFalse) {
         index: 1
         branch_node {
           branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 1.0
           }
           random_seed: "TestBranchNodeSeed"
@@ -792,8 +708,7 @@ TEST(BranchNodeImplTest, TestExplicitMultiplicityAndCapAtMaxFalse) {
             random_seed: "test multiplicity"
           }
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -818,12 +733,10 @@ TEST(BranchNodeImplTest, TestMultiplicityFieldAndCapAtMaxTrue) {
         index: 1
         branch_node {
           branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 1.0
           }
           random_seed: "TestBranchNodeSeed"
@@ -835,8 +748,7 @@ TEST(BranchNodeImplTest, TestMultiplicityFieldAndCapAtMaxTrue) {
             random_seed: "test multiplicity"
           }
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -895,12 +807,10 @@ TEST(BranchNodeImplTest, TestMultiplicityFieldAndCapAtMaxFalse) {
         index: 1
         branch_node {
           branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 1.0
           }
           random_seed: "TestBranchNodeSeed"
@@ -912,8 +822,7 @@ TEST(BranchNodeImplTest, TestMultiplicityFieldAndCapAtMaxFalse) {
             random_seed: "test multiplicity"
           }
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -967,21 +876,17 @@ TEST(BranchNodeImplTest, TestExplicitMultiplicity) {
         index: 1
         branch_node {
           branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 0.2
           }
           branches {
-            node {
-              population_node {
-                pools { population_offset: 20 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed2"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 20 total_population: 1}
+              random_seed: "TestPopulationNodeSeed2"
+            }}
             chance: 0.8
           }
           random_seed: "TestBranchNodeSeed"
@@ -993,8 +898,7 @@ TEST(BranchNodeImplTest, TestExplicitMultiplicity) {
             random_seed: "test multiplicity"
           }
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -1057,21 +961,17 @@ TEST(BranchNodeImplTest, TestMultiplicityLessThanOne) {
         index: 1
         branch_node {
           branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 0.2
           }
           branches {
-            node {
-              population_node {
-                pools { population_offset: 20 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed2"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 20 total_population: 1}
+              random_seed: "TestPopulationNodeSeed2"
+            }}
             chance: 0.8
           }
           random_seed: "TestBranchNodeSeed"
@@ -1083,8 +983,7 @@ TEST(BranchNodeImplTest, TestMultiplicityLessThanOne) {
             random_seed: "test multiplicity"
           }
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -1122,21 +1021,17 @@ TEST(BranchNodeImplTest, TestMultiplicityFromField) {
         index: 1
         branch_node {
           branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
             chance: 0.2
           }
           branches {
-            node {
-              population_node {
-                pools { population_offset: 20 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed2"
-              }
-            }
+            node {population_node {
+              pools {population_offset: 20 total_population: 1}
+              random_seed: "TestPopulationNodeSeed2"
+            }}
             chance: 0.8
           }
           random_seed: "TestBranchNodeSeed"
@@ -1148,8 +1043,7 @@ TEST(BranchNodeImplTest, TestMultiplicityFromField) {
             random_seed: "test multiplicity"
           }
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -1211,35 +1105,26 @@ TEST(BranchNodeImplTest, TestUsePersonIndex) {
       R"pb(
         name: "TestBranchNode"
         index: 1
-        branch_node {
-          branches {
-            node {
-              population_node {
-                pools { population_offset: 10 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed1"
-              }
-            }
-            condition { name: "multiplicity_person_index" op: EQUAL value: "0" }
-          }
-          branches {
-            node {
-              population_node {
-                pools { population_offset: 20 total_population: 1 }
-                random_seed: "TestPopulationNodeSeed2"
-              }
-            }
-            condition { op: TRUE }
-          }
-          multiplicity {
-            expected_multiplicity_field: "expected_multiplicity"
-            max_value: 2
-            cap_at_max: true
-            person_index_field: "multiplicity_person_index"
-            random_seed: "test multiplicity"
-          }
-        }
-      )pb",
-      &config));
+        branch_node {branches {
+            node {population_node {
+              pools {population_offset: 10 total_population: 1}
+              random_seed: "TestPopulationNodeSeed1"
+            }}
+            condition {name: "multiplicity_person_index" op: EQUAL value: "0"}}
+                     branches {
+                         node {population_node {
+                           pools {population_offset: 20 total_population: 1}
+                           random_seed: "TestPopulationNodeSeed2"
+                         }}
+                         condition {op: TRUE}}
+                     multiplicity {
+                       expected_multiplicity_field: "expected_multiplicity"
+                       max_value: 2
+                       cap_at_max: true
+                       person_index_field: "multiplicity_person_index"
+                       random_seed: "test multiplicity"
+                     }}
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
@@ -1292,51 +1177,41 @@ TEST(BranchNodeImplTest, TestNestedMultiplicity) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "BranchLevel1"
-        branch_node {
-          multiplicity {
-            expected_multiplicity: 1.2
-            max_value: 2
-            cap_at_max: true
-            person_index_field: "multiplicity_person_index"
-            random_seed: "test multiplicity 1"
-          }
-          branches {
-            condition { op: TRUE }
-            node {
-              name: "BranchLevel2"
-              branch_node {
-                multiplicity {
-                  expected_multiplicity: 1.6
-                  max_value: 2
-                  cap_at_max: true
-                  person_index_field: "multiplicity_person_index"
-                  random_seed: "test multiplicity 2"
-                }
-                branches {
-                  node {
-                    population_node {
-                      pools { population_offset: 10 total_population: 1 }
-                      random_seed: "TestPopulationNodeSeed1"
-                    }
-                  }
-                  chance: 0.2
-                }
-                branches {
-                  node {
-                    population_node {
-                      pools { population_offset: 20 total_population: 1 }
-                      random_seed: "TestPopulationNodeSeed2"
-                    }
-                  }
-                  chance: 0.8
-                }
-                random_seed: "TestBranchNodeSeed"
-              }
-            }
-          }
+        branch_node {multiplicity {
+          expected_multiplicity: 1.2
+          max_value: 2
+          cap_at_max: true
+          person_index_field: "multiplicity_person_index"
+          random_seed: "test multiplicity 1"
         }
-      )pb",
-      &config));
+                     branches {condition {op: TRUE} node {
+                       name: "BranchLevel2"
+                       branch_node {
+                         multiplicity {
+                           expected_multiplicity: 1.6
+                           max_value: 2
+                           cap_at_max: true
+                           person_index_field: "multiplicity_person_index"
+                           random_seed: "test multiplicity 2"
+                         }
+                         branches {
+                           node {population_node {
+                             pools {population_offset: 10 total_population: 1}
+                             random_seed: "TestPopulationNodeSeed1"
+                           }}
+                           chance: 0.2
+                         }
+                         branches {
+                           node {population_node {
+                             pools {population_offset: 20 total_population: 1}
+                             random_seed: "TestPopulationNodeSeed2"
+                           }}
+                           chance: 0.8
+                         }
+                         random_seed: "TestBranchNodeSeed"
+                       }
+                     }}}
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 

@@ -34,9 +34,8 @@ TEST(UpdateTreeImplTest, TestEmptyTree) {
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        update_tree { root { stop_node {} } }
-      )pb",
-      &config));
+        update_tree {root {stop_node {}}}
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
@@ -51,27 +50,14 @@ TEST(UpdateTreeImplTest, TestSingleBranch) {
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        update_tree {
-          root {
-            branch_node {
-              branches {
-                node { stop_node {} }
-                condition { op: TRUE }
-              }
-              updates {
-                updates {
-                  update_matrix {
-                    columns { person_country_code: "COUNTRY_1" }
-                    rows { person_country_code: "UPDATED_COUNTRY_1" }
-                    probabilities: 1
-                  }
-                }
-              }
-            }
-          }
-        }
-      )pb",
-      &config));
+        update_tree {root {branch_node {
+            branches {node {stop_node {}} condition {op: TRUE}}
+            updates {updates {update_matrix {
+                       columns {person_country_code: "COUNTRY_1"}
+                       rows {person_country_code: "UPDATED_COUNTRY_1"}
+                       probabilities: 1
+                     }}}}}}
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
@@ -97,62 +83,32 @@ TEST(UpdateTreeImplTest, TestTwoBranches) {
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        update_tree {
-          root {
-            branch_node {
-              branches {
-                node {
-                  branch_node {
-                    branches {
-                      node { stop_node {} }
-                      condition { op: TRUE }
-                    }
-                    updates {
-                      updates {
-                        update_matrix {
-                          columns { person_country_code: "COUNTRY_1" }
-                          rows { person_country_code: "UPDATED_COUNTRY_1" }
-                          probabilities: 1
-                        }
-                      }
-                    }
-                  }
-                }
-                condition {
-                  name: "person_country_code"
-                  op: EQUAL
-                  value: "COUNTRY_1"
-                }
-              }
-              branches {
-                node {
-                  branch_node {
-                    branches {
-                      node { stop_node {} }
-                      condition { op: TRUE }
-                    }
-                    updates {
-                      updates {
-                        update_matrix {
-                          columns { person_country_code: "COUNTRY_2" }
-                          rows { person_country_code: "UPDATED_COUNTRY_2" }
-                          probabilities: 1
-                        }
-                      }
-                    }
-                  }
-                }
-                condition {
-                  name: "person_country_code"
-                  op: EQUAL
-                  value: "COUNTRY_2"
-                }
-              }
-            }
-          }
-        }
-      )pb",
-      &config));
+        update_tree {root {branch_node {
+            branches {node {branch_node {
+                branches {node {stop_node {}} condition {op: TRUE}}
+                updates {updates {update_matrix {
+                           columns {person_country_code: "COUNTRY_1"}
+                           rows {person_country_code: "UPDATED_COUNTRY_1"}
+                           probabilities: 1
+                         }}}}}
+                      condition {
+                        name: "person_country_code"
+                        op: EQUAL
+                        value: "COUNTRY_1"
+                      }}
+            branches {node {branch_node {
+                branches {node {stop_node {}} condition {op: TRUE}}
+                updates {updates {update_matrix {
+                           columns {person_country_code: "COUNTRY_2"}
+                           rows {person_country_code: "UPDATED_COUNTRY_2"}
+                           probabilities: 1
+                         }}}}}
+                      condition {
+                        name: "person_country_code"
+                        op: EQUAL
+                        value: "COUNTRY_2"
+                      }}}}}
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
@@ -183,74 +139,47 @@ TEST(UpdateTreeImplTest, TestTwoBranchesWithIndexes) {
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        update_tree {
-          root {
-            branch_node {
-              branches {
-                node_index: 1
-                condition {
-                  name: "person_country_code"
-                  op: EQUAL
-                  value: "COUNTRY_1"
-                }
-              }
-              branches {
-                node_index: 2
-                condition {
-                  name: "person_country_code"
-                  op: EQUAL
-                  value: "COUNTRY_2"
-                }
-              }
-            }
-          }
-        }
-      )pb",
-      &config));
+        update_tree {root {branch_node {branches {
+                             node_index: 1
+                             condition {
+                               name: "person_country_code"
+                               op: EQUAL
+                               value: "COUNTRY_1"
+                             }
+                           }
+                                        branches {
+                                          node_index: 2
+                                          condition {
+                                            name: "person_country_code"
+                                            op: EQUAL
+                                            value: "COUNTRY_2"
+                                          }
+                                        }}}}
+      )pb", &config));
 
   CompiledNode node_config_1;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 1
-        branch_node {
-          branches {
-            node { stop_node {} }
-            condition { op: TRUE }
-          }
-          updates {
-            updates {
-              update_matrix {
-                columns { person_country_code: "COUNTRY_1" }
-                rows { person_country_code: "UPDATED_COUNTRY_1" }
-                probabilities: 1
-              }
-            }
-          }
-        }
-      )pb",
-      &node_config_1));
+        branch_node {branches {node {stop_node {}} condition {op: TRUE}}
+                     updates {updates {update_matrix {
+                                columns {person_country_code: "COUNTRY_1"}
+                                rows {person_country_code: "UPDATED_COUNTRY_1"}
+                                probabilities: 1
+                              }}}}
+      )pb", &node_config_1));
 
   CompiledNode node_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         index: 2
-        branch_node {
-          branches {
-            node { stop_node {} }
-            condition { op: TRUE }
-          }
-          updates {
-            updates {
-              update_matrix {
-                columns { person_country_code: "COUNTRY_2" }
-                rows { person_country_code: "UPDATED_COUNTRY_2" }
-                probabilities: 1
-              }
-            }
-          }
-        }
-      )pb",
-      &node_config_2));
+        branch_node {branches {node {stop_node {}} condition {op: TRUE}}
+                     updates {updates {update_matrix {
+                                columns {person_country_code: "COUNTRY_2"}
+                                rows {person_country_code: "UPDATED_COUNTRY_2"}
+                                probabilities: 1
+                              }}}}
+      )pb", &node_config_2));
 
   absl::flat_hash_map<uint32_t, std::unique_ptr<ModelNode>> node_refs;
   ASSERT_OK_AND_ASSIGN(node_refs[1], ModelNode::Build(node_config_1));

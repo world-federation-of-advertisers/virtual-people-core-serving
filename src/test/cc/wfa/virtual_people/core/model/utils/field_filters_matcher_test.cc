@@ -54,24 +54,21 @@ TEST(FieldFiltersMatcherTest, TestGetFirstMatch) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "person_country_code" op: EQUAL value: "country_code_1"
-      )pb",
-      &filter_config_1));
+      )pb", &filter_config_1));
   filter_configs.emplace_back(&filter_config_1);
   // Match when person_country_code is "country_code_2".
   FieldFilterProto filter_config_2;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "person_country_code" op: EQUAL value: "country_code_2"
-      )pb",
-      &filter_config_2));
+      )pb", &filter_config_2));
   filter_configs.emplace_back(&filter_config_2);
   // Match when person_country_code is "country_code_3".
   FieldFilterProto filter_config_3;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "person_country_code" op: EQUAL value: "country_code_3"
-      )pb",
-      &filter_config_3));
+      )pb", &filter_config_3));
   filter_configs.emplace_back(&filter_config_3);
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<FieldFiltersMatcher> matcher,
                        FieldFiltersMatcher::Build(filter_configs));

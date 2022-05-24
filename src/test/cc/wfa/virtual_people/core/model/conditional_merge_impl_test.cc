@@ -32,9 +32,8 @@ TEST(ConditionalMergeImplTest, TestNoNodes) {
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        conditional_merge { pass_through_non_matches: false }
-      )pb",
-      &config));
+        conditional_merge {pass_through_non_matches: false}
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -44,11 +43,10 @@ TEST(ConditionalMergeImplTest, TestNoCondition) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         conditional_merge {
-          nodes { update { person_country_code: "UPDATED_COUNTRY_1" } }
+          nodes {update {person_country_code: "UPDATED_COUNTRY_1"}}
           pass_through_non_matches: false
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -61,14 +59,11 @@ TEST(ConditionalMergeImplTest, TestInvalidCondition) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         conditional_merge {
-          nodes {
-            condition { op: EQUAL }
-            update { person_country_code: "UPDATED_COUNTRY_1" }
-          }
+          nodes {condition {op: EQUAL}
+                 update {person_country_code: "UPDATED_COUNTRY_1"}}
           pass_through_non_matches: false
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -78,17 +73,14 @@ TEST(ConditionalMergeImplTest, TestNoUpdate) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         conditional_merge {
-          nodes {
-            condition {
-              op: EQUAL
-              name: "person_country_code"
-              value: "COUNTRY_1"
-            }
-          }
+          nodes {condition {
+            op: EQUAL
+            name: "person_country_code"
+            value: "COUNTRY_1"
+          }}
           pass_through_non_matches: false
         }
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
@@ -98,26 +90,21 @@ TEST(ConditionalMergeImplTest, TestUpdateEvents) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         conditional_merge {
-          nodes {
-            condition {
-              op: EQUAL
-              name: "person_country_code"
-              value: "COUNTRY_1"
-            }
-            update { person_country_code: "UPDATED_COUNTRY_1" }
+          nodes {condition {
+            op: EQUAL
+            name: "person_country_code"
+            value: "COUNTRY_1"
           }
-          nodes {
-            condition {
-              op: EQUAL
-              name: "person_country_code"
-              value: "COUNTRY_2"
-            }
-            update { person_country_code: "UPDATED_COUNTRY_2" }
+                 update {person_country_code: "UPDATED_COUNTRY_1"}}
+          nodes {condition {
+            op: EQUAL
+            name: "person_country_code"
+            value: "COUNTRY_2"
           }
+                 update {person_country_code: "UPDATED_COUNTRY_2"}}
           pass_through_non_matches: false
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
@@ -139,26 +126,21 @@ TEST(ConditionalMergeImplTest, TestNoMatchingNotPass) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         conditional_merge {
-          nodes {
-            condition {
-              op: EQUAL
-              name: "person_country_code"
-              value: "COUNTRY_1"
-            }
-            update { person_country_code: "UPDATED_COUNTRY_1" }
+          nodes {condition {
+            op: EQUAL
+            name: "person_country_code"
+            value: "COUNTRY_1"
           }
-          nodes {
-            condition {
-              op: EQUAL
-              name: "person_country_code"
-              value: "COUNTRY_2"
-            }
-            update { person_country_code: "UPDATED_COUNTRY_2" }
+                 update {person_country_code: "UPDATED_COUNTRY_1"}}
+          nodes {condition {
+            op: EQUAL
+            name: "person_country_code"
+            value: "COUNTRY_2"
           }
+                 update {person_country_code: "UPDATED_COUNTRY_2"}}
           pass_through_non_matches: false
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
@@ -174,26 +156,18 @@ TEST(ConditionalMergeImplTest, TestNoMatchingNotPassByDefault) {
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        conditional_merge {
-          nodes {
-            condition {
-              op: EQUAL
-              name: "person_country_code"
-              value: "COUNTRY_1"
-            }
-            update { person_country_code: "UPDATED_COUNTRY_1" }
-          }
-          nodes {
-            condition {
-              op: EQUAL
-              name: "person_country_code"
-              value: "COUNTRY_2"
-            }
-            update { person_country_code: "UPDATED_COUNTRY_2" }
-          }
-        }
-      )pb",
-      &config));
+        conditional_merge {nodes {
+            condition {op: EQUAL name: "person_country_code" value: "COUNTRY_1"}
+            update {person_country_code: "UPDATED_COUNTRY_1"}}
+                           nodes {condition {
+                             op: EQUAL
+                             name: "person_country_code"
+                             value: "COUNTRY_2"
+                           }
+                                  update {
+                                    person_country_code: "UPDATED_COUNTRY_2"
+                                  }}}
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
@@ -210,26 +184,21 @@ TEST(ConditionalMergeImplTest, TestNoMatchingPass) {
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         conditional_merge {
-          nodes {
-            condition {
-              op: EQUAL
-              name: "person_country_code"
-              value: "COUNTRY_1"
-            }
-            update { person_country_code: "UPDATED_COUNTRY_1" }
+          nodes {condition {
+            op: EQUAL
+            name: "person_country_code"
+            value: "COUNTRY_1"
           }
-          nodes {
-            condition {
-              op: EQUAL
-              name: "person_country_code"
-              value: "COUNTRY_2"
-            }
-            update { person_country_code: "UPDATED_COUNTRY_2" }
+                 update {person_country_code: "UPDATED_COUNTRY_1"}}
+          nodes {condition {
+            op: EQUAL
+            name: "person_country_code"
+            value: "COUNTRY_2"
           }
+                 update {person_country_code: "UPDATED_COUNTRY_2"}}
           pass_through_non_matches: true
         }
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 

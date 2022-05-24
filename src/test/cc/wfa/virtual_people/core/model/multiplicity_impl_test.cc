@@ -43,8 +43,7 @@ TEST(MultiplicityImplTest, TestMultiplicityRefNotSet) {
         cap_at_max: true
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(MultiplicityImpl::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument,
                        "must set multiplicity_ref"));
@@ -59,8 +58,7 @@ TEST(MultiplicityImplTest, TestInvalidMultiplicityFieldName) {
         cap_at_max: true
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(
       MultiplicityImpl::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, "field name is invalid"));
@@ -76,8 +74,7 @@ TEST(MultiplicityImplTest, TestInvalidMultiplicityFieldType) {
         cap_at_max: true
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(MultiplicityImpl::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument,
                        "field type for multiplicity"));
@@ -91,8 +88,7 @@ TEST(MultiplicityImplTest, TestPersonIndexFieldNotSet) {
         max_value: 1.2
         cap_at_max: true
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(MultiplicityImpl::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument,
                        "must set person_index_field"));
@@ -107,8 +103,7 @@ TEST(MultiplicityImplTest, TestInvalidPersonIndexFieldName) {
         cap_at_max: true
         person_index_field: "bad field name"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(
       MultiplicityImpl::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, "field name is invalid"));
@@ -124,8 +119,7 @@ TEST(MultiplicityImplTest, TestInvalidPersonIndexFieldType) {
         cap_at_max: true
         person_index_field: "expected_multiplicity"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(MultiplicityImpl::Build(config).status(),
               StatusIs(absl::StatusCode::kInvalidArgument,
                        "type for person_index_field"));
@@ -139,8 +133,7 @@ TEST(MultiplicityImplTest, TestMaxValueNotSet) {
         cap_at_max: true
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(
       MultiplicityImpl::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, "must set max_value"));
@@ -154,8 +147,7 @@ TEST(MultiplicityImplTest, TestCapAtMaxNotSet) {
         max_value: 1.2
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(
       MultiplicityImpl::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, "must set cap_at_max"));
@@ -169,8 +161,7 @@ TEST(MultiplicityImplTest, TestRandomSeedNotSet) {
         cap_at_max: true
         max_value: 1.2
         person_index_field: "multiplicity_person_index"
-      )pb",
-      &config));
+      )pb", &config));
   EXPECT_THAT(
       MultiplicityImpl::Build(config).status(),
       StatusIs(absl::StatusCode::kInvalidArgument, "must set random_seed"));
@@ -239,8 +230,7 @@ TEST(MultiplicityImplTest, TestExplicitMultiplicityAndCapAtMaxTrue) {
         cap_at_max: true
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<MultiplicityImpl> multiplicity,
                        MultiplicityImpl::Build(config));
 
@@ -267,8 +257,7 @@ TEST(MultiplicityImplTest, TestExplicitMultiplicityAndCapAtMaxFalse) {
         cap_at_max: false
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<MultiplicityImpl> multiplicity,
                        MultiplicityImpl::Build(config));
 
@@ -291,8 +280,7 @@ TEST(MultiplicityImplTest, TestExplicitMultiplicityIsNegative) {
         cap_at_max: false
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<MultiplicityImpl> multiplicity,
                        MultiplicityImpl::Build(config));
 
@@ -315,8 +303,7 @@ TEST(MultiplicityImplTest, TestMultiplicityFieldAndCapAtMaxTrue) {
         cap_at_max: true
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<MultiplicityImpl> multiplicity,
                        MultiplicityImpl::Build(config));
 
@@ -366,8 +353,7 @@ TEST(MultiplicityImplTest, TestMultiplicityFieldAndCapAtMaxFalse) {
         cap_at_max: false
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<MultiplicityImpl> multiplicity,
                        MultiplicityImpl::Build(config));
 
@@ -413,8 +399,7 @@ TEST(MultiplicityImplTest, TestMultiplicityFieldIsNegative) {
         cap_at_max: false
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<MultiplicityImpl> multiplicity,
                        MultiplicityImpl::Build(config));
 
@@ -438,8 +423,7 @@ TEST(MultiplicityImplTest, TestMultiplicityLessThanOne) {
         cap_at_max: true
         person_index_field: "multiplicity_person_index"
         random_seed: "test multiplicity"
-      )pb",
-      &config));
+      )pb", &config));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<MultiplicityImpl> multiplicity,
                        MultiplicityImpl::Build(config));
 

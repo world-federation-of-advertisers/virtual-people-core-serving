@@ -1,0 +1,41 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_jvm_external//:defs.bzl", "java_export")
+
+package(default_visibility = [
+    "//src/main/kotlin/org/wfanet/virtual_people:__subpackages__",
+    "//src/test/kotlin/org/wfanet/virtual_people:__subpackages__",
+])
+
+# TODO: Drop this if rules_swig gains support for embedding the native shared library as a resource
+java_library(
+    name = "swig_resources",
+    resources = [
+        "//src/main/swig/wfa/virtual_people/core/labeler:liblabeler.so",
+    ],
+)
+
+kt_jvm_library(
+    name = "labeler",
+    srcs = glob(["*.kt"]),
+    data = ["//src/test/cc/wfa/virtual_people/core/labeler/test_data"],
+    runtime_deps = [":swig_resources"],
+    deps = [
+        "//src/main/proto/wfa/virtual_people/core/labeler:event_kt_jvm_proto",
+        "//src/main/proto/wfa/virtual_people/core/labeler:input_labeler_kt_jvm_proto",
+        "//src/main/proto/wfa/virtual_people/core/labeler:label_kt_jvm_proto",
+        "//src/main/proto/wfa/virtual_people/core/labeler:model_kt_jvm_proto",
+        "//src/main/swig/wfa/virtual_people/core/labeler",
+        "@wfa_common_jvm//imports/java/com/google/protobuf",
+        "@wfa_common_jvm//src/main/kotlin/org/wfanet/measurement/common",
+    ],
+)
+
+java_export(
+    name = "maven",
+    data = ["//src/test/cc/wfa/virtual_people/core/labeler/test_data"],
+    deploy_env = [],
+    maven_coordinates = "org.wfanet:virtual-people-core-serving-labeler:${TAG_NAME}",
+    pom_template = "//deploy:pom_template.xml",
+    tags = ["no-javadocs"],
+    runtime_deps = [":labeler"],
+)
