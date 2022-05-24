@@ -33,6 +33,7 @@ cc_test(
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_input_10.textproto",
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_input_11.textproto",
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_input_12.textproto",
+        "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_input_13.textproto",
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_output_01.textproto",
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_output_02.textproto",
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_output_03.textproto",
@@ -45,6 +46,7 @@ cc_test(
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_output_10.textproto",
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_output_11.textproto",
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_output_12.textproto",
+        "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_output_13.textproto",
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:toy_model.textproto",
     ],
     deps = [

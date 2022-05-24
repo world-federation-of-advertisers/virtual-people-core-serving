@@ -75,7 +75,8 @@ TEST(LabelerIntegrationTest, TestBuildFromRoot) {
       {"labeler_input_09.textproto", "labeler_output_09.textproto"},
       {"labeler_input_10.textproto", "labeler_output_10.textproto"},
       {"labeler_input_11.textproto", "labeler_output_11.textproto"},
-      {"labeler_input_12.textproto", "labeler_output_12.textproto"}};
+      {"labeler_input_12.textproto", "labeler_output_12.textproto"},
+      {"labeler_input_13.textproto", "labeler_output_13.textproto"}};
   for (auto& [input_path, output_path] : input_output_paths) {
     ApplyAndValidate(model_path, input_path, output_path);
   }
