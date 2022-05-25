@@ -46,6 +46,7 @@ cc_test(
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_output_11.textproto",
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:labeler_output_12.textproto",
         "//src/test/cc/wfa/virtual_people/core/labeler/test_data:toy_model.textproto",
+        "//src/test/cc/wfa/virtual_people/core/labeler/test_data:toy_model_riegeli_list",
     ],
     deps = [
         "//src/main/cc/wfa/virtual_people/core/labeler",
@@ -55,6 +56,7 @@ cc_test(
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:event_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
         "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/protobuf_util:riegeli_io",
         "@wfa_common_cpp//src/main/cc/common_cpp/protobuf_util:textproto_io",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:common_matchers",
         "@wfa_common_cpp//src/main/cc/common_cpp/testing:status",
