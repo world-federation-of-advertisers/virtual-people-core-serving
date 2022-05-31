@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
+#include "common_cpp/protobuf_util/riegeli_io.h"
 #include "common_cpp/protobuf_util/textproto_io.h"
 #include "common_cpp/testing/common_matchers.h"
 #include "common_cpp/testing/status_macros.h"
@@ -30,6 +33,7 @@ namespace {
 
 using ::wfa::EqualsProto;
 using ::wfa::IsOk;
+using ::wfa::ReadRiegeliFile;
 using ::wfa::ReadTextProtoFile;
 
 const char kTestDataDir[] =
@@ -37,13 +41,21 @@ const char kTestDataDir[] =
 
 void ApplyAndValidate(absl::string_view model_path,
                       absl::string_view input_path,
-                      absl::string_view output_path) {
+                      absl::string_view output_path, bool is_single_node_file) {
   SCOPED_TRACE(absl::StrCat("ApplyAndValidate(", model_path, ", ", input_path,
                             ", ", output_path));
-  CompiledNode root;
-  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_path), root),
-              IsOk());
-  ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(root));
+  std::unique_ptr<Labeler> labeler = nullptr;
+  if (is_single_node_file) {
+    CompiledNode root;
+    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_path), root),
+                IsOk());
+    ASSERT_OK_AND_ASSIGN(labeler, Labeler::Build(root));
+  } else {
+    std::vector<CompiledNode> nodes;
+    EXPECT_THAT(ReadRiegeliFile(absl::StrCat(kTestDataDir, model_path), nodes),
+                IsOk());
+    ASSERT_OK_AND_ASSIGN(labeler, Labeler::Build(nodes));
+  }
 
   LabelerInput input;
   EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, input_path), input),
@@ -62,7 +74,8 @@ void ApplyAndValidate(absl::string_view model_path,
 }
 
 TEST(LabelerIntegrationTest, TestBuildFromRoot) {
-  std::string model_path = "toy_model.textproto";
+  std::string single_node_model_path = "toy_model.textproto";
+  std::string node_list_model_path = "toy_model_riegeli_list";
   absl::flat_hash_map<std::string, std::string> input_output_paths = {
       {"labeler_input_01.textproto", "labeler_output_01.textproto"},
       {"labeler_input_02.textproto", "labeler_output_02.textproto"},
@@ -77,7 +90,10 @@ TEST(LabelerIntegrationTest, TestBuildFromRoot) {
       {"labeler_input_11.textproto", "labeler_output_11.textproto"},
       {"labeler_input_12.textproto", "labeler_output_12.textproto"}};
   for (auto& [input_path, output_path] : input_output_paths) {
-    ApplyAndValidate(model_path, input_path, output_path);
+    ApplyAndValidate(single_node_model_path, input_path, output_path,
+                     /* is_single_node_file = */ true);
+    ApplyAndValidate(node_list_model_path, input_path, output_path,
+                     /* is_single_node_file = */ false);
   }
 }
 

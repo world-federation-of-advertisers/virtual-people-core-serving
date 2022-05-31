@@ -14,7 +14,6 @@
 
 package org.wfanet.virtualpeople.core.labeler
 
-import org.wfanet.virtualpeople.common.CompiledNode
 import org.wfanet.virtualpeople.common.LabelerInput
 import org.wfanet.virtualpeople.common.LabelerOutput
 
@@ -22,5 +21,5 @@ import org.wfanet.virtualpeople.common.LabelerOutput
 interface Labeler {
 
   /** Labels a list of inputs. */
-  fun label(nodes: List<CompiledNode>, inputs: List<LabelerInput>): List<LabelerOutput>
+  fun label(modelPath: String, inputs: List<LabelerInput>): List<LabelerOutput>
 }

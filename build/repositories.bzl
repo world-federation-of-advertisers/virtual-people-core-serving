@@ -21,9 +21,14 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 def virtual_people_core_serving_repositories():
     """Imports all direct dependencies for virtual_people."""
 
+    native.local_repository(
+        name = "wfa_common_cpp",
+        path = "/development/common-cpp",
+    )
+
     # TODO Update to version before merging
     http_archive(
-        name = "wfa_common_cpp",
+        name = "wfa_common_cpp2",
         sha256 = "885f286e73e060adc94ac6b2784a125fc6dcd554dd8c6155db73d4b6c368b1e6",
         strip_prefix = "common-cpp-4a32da909004a1d6a53fba50f8c5e44d34d5131b",
         url = "https://github.com/world-federation-of-advertisers/common-cpp/archive/4a32da909004a1d6a53fba50f8c5e44d34d5131b.tar.gz",

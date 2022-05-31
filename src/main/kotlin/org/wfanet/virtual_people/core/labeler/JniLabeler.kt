@@ -17,7 +17,6 @@ package org.wfanet.virtualpeople.core.labeler
 import org.wfanet.measurement.common.loadLibraryFromResource
 import org.wfanet.measurement.common.wrapJniException
 import org.wfanet.virtualpeople.LabelerSwig
-import org.wfanet.virtualpeople.common.CompiledNode
 import org.wfanet.virtualpeople.common.LabelerInput
 import org.wfanet.virtualpeople.common.LabelerOutput
 
@@ -31,10 +30,9 @@ class JniLabeler : Labeler {
   }
 
   /** Labels a list of inputs. */
-  override fun label(nodes: List<CompiledNode>, inputs: List<LabelerInput>): List<LabelerOutput> {
+  override fun label(modelPath: String, inputs: List<LabelerInput>): List<LabelerOutput> {
     val request = labelEventsRequest {
-      // TODO: pass in all the nodes once Wei uploads an example toy model
-      rootNode = nodes.single()
+      this.modelPath = modelPath
       this.inputs += inputs
     }
     val response = wrapJniException {

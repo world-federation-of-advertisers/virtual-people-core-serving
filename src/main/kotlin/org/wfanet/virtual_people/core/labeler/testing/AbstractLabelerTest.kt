@@ -20,10 +20,8 @@ import java.nio.file.Paths
 import org.junit.Test
 import org.wfanet.measurement.common.getRuntimePath
 import org.wfanet.measurement.common.parseTextProto
-import org.wfanet.virtualpeople.common.CompiledNode
 import org.wfanet.virtualpeople.common.LabelerInput
 import org.wfanet.virtualpeople.common.LabelerOutput
-import org.wfanet.virtualpeople.common.compiledNode
 import org.wfanet.virtualpeople.common.labelerInput
 import org.wfanet.virtualpeople.common.labelerOutput
 import org.wfanet.virtualpeople.core.labeler.Labeler
@@ -43,7 +41,7 @@ private val DATA_PATH: Path =
     )
   )!!
 
-private const val MODEL_PATH = "toy_model.textproto"
+private const val MODEL_PATH = "toy_model_riegeli_list"
 private val INPUT_FILES =
   listOf(
     "labeler_input_01.textproto",
@@ -84,14 +82,11 @@ abstract class AbstractLabelerTest {
   val expectedOutputs: List<LabelerOutput> by lazy {
     OUTPUT_FILES.map { file -> parseTextProto(DATA_PATH.resolve(file).toFile(), labelerOutput {}) }
   }
-  val nodes: List<CompiledNode> by lazy {
-    listOf(parseTextProto(DATA_PATH.resolve(MODEL_PATH).toFile(), compiledNode {}))
-  }
 
   @Test
   fun testLabeler() {
 
-    val outputs = labeler.label(nodes, inputs)
+    val outputs = labeler.label(DATA_PATH.resolve(MODEL_PATH)!!.toString(), inputs)
     assertThat(outputs).isEqualTo(expectedOutputs)
   }
 }

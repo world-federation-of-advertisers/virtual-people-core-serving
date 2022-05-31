@@ -16,6 +16,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
+#include "common_cpp/protobuf_util/riegeli_io.h"
 #include "common_cpp/protobuf_util/textproto_io.h"
 #include "common_cpp/testing/common_matchers.h"
 #include "common_cpp/testing/status_macros.h"
@@ -33,13 +34,14 @@ using ::testing::Eq;
 using ::testing::Pointwise;
 using ::wfa::EqualsProto;
 using ::wfa::IsOk;
+using ::wfa::ReadRiegeliFile;
 using ::wfa::ReadTextProtoFile;
 
 const char kTestDataDir[] =
     "src/test/cc/wfa/virtual_people/core/labeler/test_data/";
 
-TEST(LabelerWrapperTest, TestBuildFromRoot) {
-  std::string model_path = "toy_model.textproto";
+TEST(LabelerWrapperTest, TestBuildFromNodeList) {
+  std::string model_path = "toy_model_riegeli_list";
   std::vector<std::string> input_paths = {
       "labeler_input_01.textproto", "labeler_input_02.textproto",
       "labeler_input_03.textproto", "labeler_input_04.textproto",
@@ -54,25 +56,6 @@ TEST(LabelerWrapperTest, TestBuildFromRoot) {
       "labeler_output_07.textproto", "labeler_output_08.textproto",
       "labeler_output_09.textproto", "labeler_output_10.textproto",
       "labeler_output_11.textproto", "labeler_output_12.textproto"};
-  CompiledNode root;
-  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_path), root),
-              IsOk());
-  LabelEventsRequest request;
-  *request.mutable_root_node() = root;
-  for (auto &input_path : input_paths) {
-    LabelerInput input;
-    EXPECT_THAT(
-        ReadTextProtoFile(absl::StrCat(kTestDataDir, input_path), input),
-        IsOk());
-    *request.add_inputs() = input;
-  }
-  std::string serialized_request;
-  request.SerializeToString(&serialized_request);
-  ASSERT_OK_AND_ASSIGN(std::string serialized_response,
-                       LabelEventsWrapper(serialized_request));
-  LabelEventsResponse response;
-  response.ParseFromString(serialized_response);
-  ASSERT_EQ(response.outputs_size(), 12);
 
   std::vector<LabelerOutput> expected_outputs;
   std::transform(
@@ -84,6 +67,23 @@ TEST(LabelerWrapperTest, TestBuildFromRoot) {
                     IsOk());
         return expected_output;
       });
+
+  LabelEventsRequest request;
+  for (auto &input_path : input_paths) {
+    LabelerInput input;
+    EXPECT_THAT(
+        ReadTextProtoFile(absl::StrCat(kTestDataDir, input_path), input),
+        IsOk());
+    *request.add_inputs() = input;
+  }
+  request.set_model_path(absl::StrCat(kTestDataDir, model_path));
+  std::string serialized_request;
+  request.SerializeToString(&serialized_request);
+  ASSERT_OK_AND_ASSIGN(std::string serialized_response,
+                       LabelEventsWrapper(serialized_request));
+  LabelEventsResponse response;
+  response.ParseFromString(serialized_response);
+  ASSERT_EQ(response.outputs_size(), 12);
   EXPECT_THAT(response.outputs(), Pointwise(EqualsProto(), expected_outputs));
 }
 

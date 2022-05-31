@@ -15,9 +15,11 @@
 #include "wfa/virtual_people/core/labeler/labeler_wrapper.h"
 
 #include <memory>
+#include <vector>
 
 #include "absl/status/statusor.h"
 #include "common_cpp/jni/jni_wrap.h"
+#include "common_cpp/protobuf_util/riegeli_io.h"
 #include "wfa/virtual_people/core/labeler/labeler.h"
 
 using wfa::JniWrap;
@@ -25,10 +27,14 @@ using wfa::JniWrap;
 namespace wfa_virtual_people {
 
 namespace {
+
+using ::wfa::ReadRiegeliFile;
+
 absl::StatusOr<LabelEventsResponse> LabelEvents(
     const LabelEventsRequest& request) {
-  ASSIGN_OR_RETURN(std::unique_ptr<Labeler> labeler,
-                   Labeler::Build(request.root_node()));
+  std::vector<CompiledNode> nodes;
+  RETURN_IF_ERROR(ReadRiegeliFile(request.model_path(), nodes));
+  ASSIGN_OR_RETURN(std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
   LabelEventsResponse response;
   for (LabelerInput input : request.inputs()) {
     LabelerOutput output;
