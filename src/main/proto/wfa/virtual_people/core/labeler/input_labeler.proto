@@ -23,14 +23,10 @@ import "wfa/virtual_people/common/event.proto";
 import "wfa/virtual_people/common/label.proto";
 import "wfa/virtual_people/common/model.proto";
 
-// Request to Load Model
-message LoadModel {
-  string model_path = 1;
-}
-
 // Request to Label Events
 message LabelEventsRequest {
-  repeated LabelerInput inputs = 1;
+  string model_path = 1;
+  repeated LabelerInput inputs = 2;
 }
 
 // Response to Label Events
