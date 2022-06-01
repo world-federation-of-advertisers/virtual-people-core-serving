@@ -16,6 +16,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "common_cpp/protobuf_util/riegeli_io.h"
 #include "common_cpp/protobuf_util/textproto_io.h"
 #include "common_cpp/testing/common_matchers.h"
@@ -69,26 +70,18 @@ void ApplyAndValidate(absl::string_view model_path,
   EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, output_path),
                                 expected_output),
               IsOk());
-
   EXPECT_THAT(output, EqualsProto(expected_output));
 }
 
 TEST(LabelerIntegrationTest, TestBuildFromRoot) {
   std::string single_node_model_path = "toy_model.textproto";
   std::string node_list_model_path = "toy_model_riegeli_list";
-  absl::flat_hash_map<std::string, std::string> input_output_paths = {
-      {"labeler_input_01.textproto", "labeler_output_01.textproto"},
-      {"labeler_input_02.textproto", "labeler_output_02.textproto"},
-      {"labeler_input_03.textproto", "labeler_output_03.textproto"},
-      {"labeler_input_04.textproto", "labeler_output_04.textproto"},
-      {"labeler_input_05.textproto", "labeler_output_05.textproto"},
-      {"labeler_input_06.textproto", "labeler_output_06.textproto"},
-      {"labeler_input_07.textproto", "labeler_output_07.textproto"},
-      {"labeler_input_08.textproto", "labeler_output_08.textproto"},
-      {"labeler_input_09.textproto", "labeler_output_09.textproto"},
-      {"labeler_input_10.textproto", "labeler_output_10.textproto"},
-      {"labeler_input_11.textproto", "labeler_output_11.textproto"},
-      {"labeler_input_12.textproto", "labeler_output_12.textproto"}};
+  absl::flat_hash_map<std::string, std::string> input_output_paths;
+  for (int i = 1; i < 17; ++i) {
+    input_output_paths[absl::StrFormat("labeler_input_%02d.textproto", i)] =
+        absl::StrFormat("labeler_output_%02d.textproto", i);
+  }
+
   for (auto& [input_path, output_path] : input_output_paths) {
     ApplyAndValidate(single_node_model_path, input_path, output_path,
                      /* is_single_node_file = */ true);

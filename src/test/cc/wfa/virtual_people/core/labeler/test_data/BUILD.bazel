@@ -1,3 +1,12 @@
+package(default_visibility = [
+    "//src/test/cc/wfa/virtual_people/core/labeler:__subpackages__",
+])
+
 exports_files(
     glob(["*.textproto"]) + ["toy_model_riegeli_list"],
+)
+
+filegroup(
+    name = "labeler_integration_test_data",
+    srcs = glob(["*.textproto"]) + ["toy_model_riegeli_list"],
 )
