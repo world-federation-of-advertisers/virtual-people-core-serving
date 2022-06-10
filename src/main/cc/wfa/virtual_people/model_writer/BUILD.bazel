@@ -2,8 +2,6 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 package(default_visibility = ["//src:__subpackages__"])
 
-_INCLUDE_PREFIX = "/src/main/cc"
-
 cc_binary(
     name = "model_writer_main",
     srcs = ["model_writer_main.cc"],
