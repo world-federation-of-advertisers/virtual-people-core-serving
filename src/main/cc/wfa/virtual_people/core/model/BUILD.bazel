@@ -55,3 +55,21 @@ cc_library(
         "@wfa_common_cpp//src/main/cc/common_cpp/macros",
     ],
 )
+
+cc_library(
+    name = "model_serializer",
+    srcs = [
+        "model_serializer.cc",
+    ],
+    hdrs = [
+        "model_serializer.h",
+    ],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
+        "@wfa_common_cpp//src/main/cc/common_cpp/macros",
+    ],
+)
