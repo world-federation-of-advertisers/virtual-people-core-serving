@@ -26,6 +26,7 @@
 #include "absl/strings/string_view.h"
 #include "common_cpp/macros/macros.h"
 #include "wfa/virtual_people/common/field_filter/utils/field_util.h"
+#include "wfa/virtual_people/common/label.pb.h"
 #include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/attributes_updater.h"
 #include "wfa/virtual_people/core/model/model_node.h"
