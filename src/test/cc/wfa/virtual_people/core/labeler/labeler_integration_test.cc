@@ -90,5 +90,22 @@ TEST(LabelerIntegrationTest, TestBuildFromRoot) {
   }
 }
 
+TEST(LabelerIntegrationTest, TestSingleIdModel) {
+  std::string single_node_model_path = "single_id_model.textproto";
+  std::string node_list_model_path = "single_id_model_riegeli_list";
+  absl::flat_hash_map<std::string, std::string> input_output_paths;
+  for (int i = 1; i < 19; ++i) {
+    input_output_paths[absl::StrFormat("labeler_input_%02d.textproto", i)] =
+        "single_id_labeler_output.textproto";
+  }
+
+  for (auto& [input_path, output_path] : input_output_paths) {
+    ApplyAndValidate(single_node_model_path, input_path, output_path,
+                     /* is_single_node_file = */ true);
+    ApplyAndValidate(node_list_model_path, input_path, output_path,
+                     /* is_single_node_file = */ false);
+  }
+}
+
 }  // namespace
 }  // namespace wfa_virtual_people
