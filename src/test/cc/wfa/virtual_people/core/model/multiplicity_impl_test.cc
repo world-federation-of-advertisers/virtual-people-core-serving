@@ -28,9 +28,6 @@ namespace {
 
 using ::testing::AnyOf;
 using ::testing::DoubleNear;
-using ::testing::Pair;
-using ::testing::UnorderedElementsAre;
-using ::wfa::IsOk;
 using ::wfa::StatusIs;
 
 constexpr int kEventCount = 10000;
