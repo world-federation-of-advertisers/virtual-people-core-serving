@@ -27,7 +27,7 @@ namespace {
 
 // Forward declaration.
 absl::StatusOr<int64_t> AddChildren(int64_t next_index, CompiledNode& node,
-                                    std::vector<CompiledNode>& node_map);
+                                    std::vector<CompiledNode>& node_list);
 
 // Add all nodes in the subtree under @node to @node_list.
 // @next_index is the node index to use for the next node added.
