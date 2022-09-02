@@ -1,12 +1,33 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# Common-cpp
-http_archive(
-    name = "wfa_common_cpp",
-    sha256 = "60e9c808d55d14be65347cab008b8bd4f8e2dd8186141609995333bc75fc08ce",
-    strip_prefix = "common-cpp-0.8.0",
-    url = "https://github.com/world-federation-of-advertisers/common-cpp/archive/refs/tags/v0.8.0.tar.gz",
+load("//build:repositories.bzl", "virtual_people_core_serving_repositories")
+
+virtual_people_core_serving_repositories()
+
+load("@wfa_common_jvm//build:common_jvm_repositories.bzl", "common_jvm_repositories")
+
+common_jvm_repositories()
+
+load("@wfa_common_jvm//build:common_jvm_deps.bzl", "common_jvm_deps")
+
+common_jvm_deps()
+
+load("@wfa_common_jvm//build:common_jvm_maven.bzl", "COMMON_JVM_MAVEN_OVERRIDE_TARGETS", "common_jvm_maven_artifacts")
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+maven_install(
+    artifacts = common_jvm_maven_artifacts(),
+    fetch_sources = True,
+    generate_compat_repositories = True,
+    override_targets = COMMON_JVM_MAVEN_OVERRIDE_TARGETS,
+    repositories = [
+        "https://repo.maven.apache.org/maven2/",
+    ],
 )
+
+load("@wfa_common_jvm//build:common_jvm_extra_deps.bzl", "common_jvm_extra_deps")
+
+common_jvm_extra_deps()
 
 load("@wfa_common_cpp//build:common_cpp_repositories.bzl", "common_cpp_repositories")
 
@@ -15,11 +36,3 @@ common_cpp_repositories()
 load("@wfa_common_cpp//build:common_cpp_deps.bzl", "common_cpp_deps")
 
 common_cpp_deps()
-
-# Virtual-people-common
-http_archive(
-    name = "virtual_people_common",
-    sha256 = "878da77d98f5216951c90e72a6da5f0cd5ed5cdc8e862c0934f7cf7d200e9ce3",
-    strip_prefix = "virtual-people-common-7268767b7034bdf7ad4e5282cb892d0618cd1030",
-    url = "https://github.com/world-federation-of-advertisers/virtual-people-common/archive/7268767b7034bdf7ad4e5282cb892d0618cd1030.tar.gz",
-)
