@@ -69,6 +69,11 @@ uint64_t RandomKey() {
                        std::numeric_limits<std::uint64_t>::max());
 }
 
+TEST(JumpConsistentHashTest, CheckCorrectnessOfExamples) {
+  EXPECT_EQ(93, JumpConsistentHash(1000ULL, 1000));
+  EXPECT_EQ(31613, JumpConsistentHash(1000ULL, kMaxBuckets));
+}
+
 TEST(JumpConsistentHashTest, TestCorrectness) {
   std::random_device rd;
   std::mt19937 gen(rd());
