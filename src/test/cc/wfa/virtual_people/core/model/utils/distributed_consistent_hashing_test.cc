@@ -72,20 +72,16 @@ TEST(DistributedConsistentHashingTest, TestOutputDistribution) {
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
-  absl::flat_hash_map<int32_t, double> output_counts;
+  absl::flat_hash_map<int32_t, int32_t> output_counts;
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
     ++output_counts[output];
   }
-  for (auto& [key, value] : output_counts) {
-    value /= static_cast<double>(kSeedNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
+  // Compare to the exact results to make sure C++ and Kotlin implementations
+  // have same output.
   EXPECT_THAT(output_counts,
-              UnorderedElementsAre(Pair(0, DoubleNear(0.4, 0.02)),
-                                   Pair(1, DoubleNear(0.2, 0.02)),
-                                   Pair(2, DoubleNear(0.2, 0.02)),
-                                   Pair(3, DoubleNear(0.2, 0.02))));
+              UnorderedElementsAre(Pair(0, 4032), Pair(1, 2012), Pair(2, 1996),
+                                   Pair(3, 1960)));
 }
 
 TEST(DistributedConsistentHashingTest, TestNotNormalized) {
@@ -132,20 +128,16 @@ TEST(DistributedConsistentHashingTest,
   ASSERT_OK_AND_ASSIGN(
       std::unique_ptr<DistributedConsistentHashing> hashing,
       DistributedConsistentHashing::Build(std::move(distribution)));
-  absl::flat_hash_map<int32_t, double> output_counts;
+  absl::flat_hash_map<int32_t, int32_t> output_counts;
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int32_t output = hashing->Hash(std::to_string(seed));
     ++output_counts[output];
   }
-  for (auto& [key, value] : output_counts) {
-    value /= static_cast<double>(kSeedNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
+  // Compare to the exact results to make sure C++ and Kotlin implementations
+  // have same output.
   EXPECT_THAT(output_counts,
-              UnorderedElementsAre(Pair(0, DoubleNear(0.4, 0.02)),
-                                   Pair(2, DoubleNear(0.2, 0.02)),
-                                   Pair(4, DoubleNear(0.2, 0.02)),
-                                   Pair(6, DoubleNear(0.2, 0.02))));
+              UnorderedElementsAre(Pair(0, 4049), Pair(2, 1961), Pair(4, 2028),
+                                   Pair(6, 1962)));
 }
 
 TEST(DistributedConsistentHashingTest, TestOutputChangeCount) {
