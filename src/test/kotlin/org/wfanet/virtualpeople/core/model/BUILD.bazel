@@ -1,0 +1,12 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+kt_jvm_test(
+    name = "UpdateMatrixImplTest",
+    srcs = ["UpdateMatrixImplTest.kt"],
+    test_class = "org.wfanet.virtualpeople.core.model.UpdateMatrixImplTest",
+    deps = [
+        "//src/main/kotlin/org/wfanet/virtualpeople/core/model:model_node",
+        "@wfa_common_jvm//imports/java/org/junit",
+        "@wfa_common_jvm//imports/kotlin/kotlin/test",
+    ],
+)
