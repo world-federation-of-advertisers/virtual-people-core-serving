@@ -141,7 +141,7 @@ TEST(UpdateMatrixImplTest, TestOutputDistribution) {
   // person_country_code   probability
   // "UPDATED_COUNTRY_1"   0.8
   // "UPDATED_COUNTRY_2"   0.2
-  absl::flat_hash_map<std::string, double> output_counts_1;
+  absl::flat_hash_map<std::string, int32_t> output_counts_1;
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     LabelerEvent event;
     event.set_person_country_code("COUNTRY_1");
@@ -149,21 +149,18 @@ TEST(UpdateMatrixImplTest, TestOutputDistribution) {
     EXPECT_THAT(updater->Update(event), IsOk());
     ++output_counts_1[event.person_country_code()];
   }
-  for (auto& [key, value] : output_counts_1) {
-    value /= static_cast<double>(kSeedNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(
-      output_counts_1,
-      UnorderedElementsAre(Pair("UPDATED_COUNTRY_1", DoubleNear(0.8, 0.02)),
-                           Pair("UPDATED_COUNTRY_2", DoubleNear(0.2, 0.02))));
+  // Compares to the exact values to make sure the Kotlin and C++ implementation
+  // behave the same.
+  EXPECT_THAT(output_counts_1,
+              UnorderedElementsAre(Pair("UPDATED_COUNTRY_1", 7993),
+                                   Pair("UPDATED_COUNTRY_2", 2007)));
 
   // When the input person_country_code is "COUNTRY_2", the output probability
   // distribution is
   // person_country_code   probability
   // "UPDATED_COUNTRY_1"   0.2
   // "UPDATED_COUNTRY_2"   0.8
-  absl::flat_hash_map<std::string, double> output_counts_2;
+  absl::flat_hash_map<std::string, int32_t> output_counts_2;
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     LabelerEvent event;
     event.set_person_country_code("COUNTRY_2");
@@ -171,14 +168,11 @@ TEST(UpdateMatrixImplTest, TestOutputDistribution) {
     EXPECT_THAT(updater->Update(event), IsOk());
     ++output_counts_2[event.person_country_code()];
   }
-  for (auto& [key, value] : output_counts_2) {
-    value /= static_cast<double>(kSeedNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(
-      output_counts_2,
-      UnorderedElementsAre(Pair("UPDATED_COUNTRY_1", DoubleNear(0.2, 0.02)),
-                           Pair("UPDATED_COUNTRY_2", DoubleNear(0.8, 0.02))));
+  // Compares to the exact values to make sure the Kotlin and C++ implementation
+  // behave the same.
+  EXPECT_THAT(output_counts_2,
+              UnorderedElementsAre(Pair("UPDATED_COUNTRY_1", 1944),
+                                   Pair("UPDATED_COUNTRY_2", 8056)));
 }
 
 TEST(UpdateMatrixImplTest, TestNotNormalized) {
