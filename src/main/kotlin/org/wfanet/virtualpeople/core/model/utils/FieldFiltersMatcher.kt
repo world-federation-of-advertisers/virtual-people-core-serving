@@ -16,6 +16,7 @@ package org.wfanet.virtualpeople.core.model.utils
 
 import org.wfanet.virtualpeople.common.FieldFilterProto
 import org.wfanet.virtualpeople.common.LabelerEvent
+import org.wfanet.virtualpeople.common.LabelerEventOrBuilder
 import org.wfanet.virtualpeople.common.fieldfilter.FieldFilter
 
 /** Selects the field filter that a LabelerEvent matches. */
@@ -24,7 +25,7 @@ class FieldFiltersMatcher(private val filters: List<FieldFilter>) {
   /**
    * Returns the index of the first matching FieldFilter in [filters]. Returns -1 if no matching.
    */
-  fun getFirstMatch(event: LabelerEvent): Int {
+  fun getFirstMatch(event: LabelerEventOrBuilder): Int {
     return filters.indexOfFirst { it.matches(event) }
   }
 

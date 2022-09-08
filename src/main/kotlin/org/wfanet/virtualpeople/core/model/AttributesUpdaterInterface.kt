@@ -58,7 +58,7 @@ sealed interface AttributesUpdaterInterface {
       return when (config.updateCase) {
         UpdateCase.UPDATE_MATRIX -> UpdateMatrixImpl.build(config.updateMatrix)
         UpdateCase.SPARSE_UPDATE_MATRIX -> SparseUpdateMatrixImpl.build(config.sparseUpdateMatrix)
-        UpdateCase.CONDITIONAL_MERGE -> TODO("Unimplemented")
+        UpdateCase.CONDITIONAL_MERGE -> ConditionalMergeImpl.build(config.conditionalMerge)
         UpdateCase.CONDITIONAL_ASSIGNMENT ->
           ConditionalAssignmentImpl.build(config.conditionalAssignment)
         UpdateCase.UPDATE_TREE -> TODO("Unimplemented")
