@@ -57,7 +57,7 @@ sealed interface AttributesUpdaterInterface {
       @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA") // Proto enum fields are never null.
       return when (config.updateCase) {
         UpdateCase.UPDATE_MATRIX -> UpdateMatrixImpl.build(config.updateMatrix)
-        UpdateCase.SPARSE_UPDATE_MATRIX,
+        UpdateCase.SPARSE_UPDATE_MATRIX -> SparseUpdateMatrixImpl.build(config.sparseUpdateMatrix)
         UpdateCase.CONDITIONAL_MERGE,
         UpdateCase.CONDITIONAL_ASSIGNMENT,
         UpdateCase.UPDATE_TREE -> TODO("Unimplemented")
@@ -65,4 +65,9 @@ sealed interface AttributesUpdaterInterface {
       }
     }
   }
+}
+
+enum class PassThroughNonMatches {
+  NO,
+  YES
 }

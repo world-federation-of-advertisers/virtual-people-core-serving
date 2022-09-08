@@ -7,6 +7,7 @@ kt_jvm_library(
     srcs = [
         "AttributesUpdaterInterface.kt",
         "ModelNode.kt",
+        "SparseUpdateMatrixImpl.kt",
         "UpdateMatrixImpl.kt",
     ],
     deps = [
