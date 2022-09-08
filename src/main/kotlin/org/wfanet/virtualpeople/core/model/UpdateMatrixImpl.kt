@@ -19,11 +19,6 @@ import org.wfanet.virtualpeople.common.UpdateMatrix
 import org.wfanet.virtualpeople.common.fieldfilter.FieldFilter
 import org.wfanet.virtualpeople.core.model.utils.*
 
-enum class PassThroughNonMatches {
-  NO,
-  YES
-}
-
 /**
  * @param hashMatcher The matcher used to match input events to the column events when using hash
  * field mask.
