@@ -47,26 +47,21 @@ TEST(VirtualPersonSelectorTest, TestGetVirtualPersonId) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<VirtualPersonSelector> selector,
                        VirtualPersonSelector::Build(population_node.pools()));
 
-  absl::flat_hash_map<int64_t, double> id_counts;
+  absl::flat_hash_map<int64_t, int32_t> id_counts;
 
   for (int seed = 0; seed < kSeedNumber; ++seed) {
     int64_t id = selector->GetVirtualPersonId(static_cast<uint64_t>(seed));
     ++id_counts[id];
   }
-  for (auto& [key, value] : id_counts) {
-    value /= static_cast<double>(kSeedNumber);
-  }
 
-  // The expected ratio for getting a given virtual person id is 1 / 10 = 10%.
-  // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(
-      id_counts,
-      UnorderedElementsAre(
-          Pair(10, DoubleNear(0.1, 0.02)), Pair(11, DoubleNear(0.1, 0.02)),
-          Pair(12, DoubleNear(0.1, 0.02)), Pair(30, DoubleNear(0.1, 0.02)),
-          Pair(31, DoubleNear(0.1, 0.02)), Pair(32, DoubleNear(0.1, 0.02)),
-          Pair(20, DoubleNear(0.1, 0.02)), Pair(21, DoubleNear(0.1, 0.02)),
-          Pair(22, DoubleNear(0.1, 0.02)), Pair(23, DoubleNear(0.1, 0.02))));
+  // The expected count for getting a given virtual person id is 1 / 10 *
+  // kSeedNumber = 1000.  We compare to the exact values to make sure the kotlin
+  // and c++ implementations behave the same.
+  EXPECT_THAT(id_counts,
+              UnorderedElementsAre(Pair(10, 993), Pair(11, 997), Pair(12, 994),
+                                   Pair(20, 980), Pair(21, 1027), Pair(22, 979),
+                                   Pair(23, 1020), Pair(30, 1000),
+                                   Pair(31, 1015), Pair(32, 995)));
 }
 
 TEST(VirtualPersonSelectorTest, TestInvalidPools) {

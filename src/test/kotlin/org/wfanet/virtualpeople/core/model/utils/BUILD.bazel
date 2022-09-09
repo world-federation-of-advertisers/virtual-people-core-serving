@@ -43,3 +43,25 @@ kt_jvm_test(
         "@wfa_common_jvm//imports/kotlin/kotlin/test",
     ],
 )
+
+kt_jvm_test(
+    name = "UpdateMatrixHelperTest",
+    srcs = ["UpdateMatrixHelperTest.kt"],
+    test_class = "org.wfanet.virtualpeople.core.model.utils.UpdateMatrixHelperTest",
+    deps = [
+        "//src/main/kotlin/org/wfanet/virtualpeople/core/model/utils",
+        "@wfa_common_jvm//imports/java/org/junit",
+        "@wfa_common_jvm//imports/kotlin/kotlin/test",
+    ],
+)
+
+kt_jvm_test(
+    name = "VirtualPeopleSelectorTest",
+    srcs = ["VirtualPeopleSelectorTest.kt"],
+    test_class = "org.wfanet.virtualpeople.core.model.utils.VirtualPeopleSelectorTest",
+    deps = [
+        "//src/main/kotlin/org/wfanet/virtualpeople/core/model/utils",
+        "@wfa_common_jvm//imports/java/org/junit",
+        "@wfa_common_jvm//imports/kotlin/kotlin/test",
+    ],
+)
