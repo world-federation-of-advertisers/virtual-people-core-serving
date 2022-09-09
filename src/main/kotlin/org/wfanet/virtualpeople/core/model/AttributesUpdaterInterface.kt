@@ -43,7 +43,7 @@ sealed interface AttributesUpdaterInterface {
       nodeRefs: Map<Int, ModelNode>
     ): AttributesUpdaterInterface {
       return if (config.updateCase == UpdateCase.UPDATE_TREE) {
-        TODO("Unimplemented")
+        UpdateTreeImpl.build(config.updateTree, nodeRefs)
       } else {
         build(config)
       }
@@ -61,7 +61,7 @@ sealed interface AttributesUpdaterInterface {
         UpdateCase.CONDITIONAL_MERGE -> ConditionalMergeImpl.build(config.conditionalMerge)
         UpdateCase.CONDITIONAL_ASSIGNMENT ->
           ConditionalAssignmentImpl.build(config.conditionalAssignment)
-        UpdateCase.UPDATE_TREE -> TODO("Unimplemented")
+        UpdateCase.UPDATE_TREE -> UpdateTreeImpl.build(config.updateTree, mapOf())
         UpdateCase.UPDATE_NOT_SET -> error("config.update is not set.")
       }
     }

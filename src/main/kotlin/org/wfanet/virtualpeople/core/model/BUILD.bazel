@@ -15,6 +15,7 @@ kt_jvm_library(
         "SparseUpdateMatrixImpl.kt",
         "StopNodeImpl.kt",
         "UpdateMatrixImpl.kt",
+        "UpdateTreeImpl.kt",
     ],
     deps = [
         "//src/main/kotlin/org/wfanet/virtualpeople/core/model/utils",
