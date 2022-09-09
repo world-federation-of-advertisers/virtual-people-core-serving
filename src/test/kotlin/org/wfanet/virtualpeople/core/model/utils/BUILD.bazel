@@ -32,3 +32,14 @@ kt_jvm_test(
         "@wfa_common_jvm//imports/kotlin/kotlin/test",
     ],
 )
+
+kt_jvm_test(
+    name = "HashFieldMaskMatcherTest",
+    srcs = ["HashFieldMaskMatcherTest.kt"],
+    test_class = "org.wfanet.virtualpeople.core.model.utils.HashFieldMaskMatcherTest",
+    deps = [
+        "//src/main/kotlin/org/wfanet/virtualpeople/core/model/utils",
+        "@wfa_common_jvm//imports/java/org/junit",
+        "@wfa_common_jvm//imports/kotlin/kotlin/test",
+    ],
+)
