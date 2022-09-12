@@ -57,10 +57,10 @@ sealed class ModelNode(nodeConfig: CompiledNode) {
     /** Build nodes with no index references in the sub-tree. */
     fun build(config: CompiledNode): ModelNode {
       @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA") // Proto enum fields are never null.
-      when (config.typeCase) {
+      return when (config.typeCase) {
         TypeCase.BRANCH_NODE,
-        TypeCase.STOP_NODE,
-        TypeCase.POPULATION_NODE -> TODO("Unimplemented")
+        TypeCase.STOP_NODE -> TODO("Unimplemented")
+        TypeCase.POPULATION_NODE -> PopulationNodeImpl.build(config)
         TypeCase.TYPE_NOT_SET -> error("Node type is not set.")
       }
     }
