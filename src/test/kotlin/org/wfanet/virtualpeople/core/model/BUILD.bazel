@@ -34,3 +34,15 @@ kt_jvm_test(
         "@wfa_common_jvm//imports/kotlin/kotlin/test",
     ],
 )
+
+kt_jvm_test(
+    name = "ConditionalMergeImplTest",
+    srcs = ["ConditionalMergeImplTest.kt"],
+    test_class = "org.wfanet.virtualpeople.core.model.ConditionalMergeImplTest",
+    deps = [
+        "//src/main/kotlin/org/wfanet/virtualpeople/core/model:model_node",
+        "@wfa_common_jvm//imports/java/com/google/common/truth/extensions/proto",
+        "@wfa_common_jvm//imports/java/org/junit",
+        "@wfa_common_jvm//imports/kotlin/kotlin/test",
+    ],
+)
