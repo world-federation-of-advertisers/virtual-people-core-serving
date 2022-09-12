@@ -21,3 +21,16 @@ kt_jvm_test(
         "@wfa_common_jvm//imports/kotlin/kotlin/test",
     ],
 )
+
+kt_jvm_test(
+    name = "ConditionalAssignmentImplTest",
+    srcs = ["ConditionalAssignmentImplTest.kt"],
+    test_class = "org.wfanet.virtualpeople.core.model.ConditionalAssignmentImplTest",
+    deps = [
+        "//src/main/kotlin/org/wfanet/virtualpeople/core/model:model_node",
+        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:demographic_kt_jvm_proto",
+        "@wfa_common_jvm//imports/java/com/google/common/truth/extensions/proto",
+        "@wfa_common_jvm//imports/java/org/junit",
+        "@wfa_common_jvm//imports/kotlin/kotlin/test",
+    ],
+)
