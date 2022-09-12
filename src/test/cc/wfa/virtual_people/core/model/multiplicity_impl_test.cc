@@ -251,7 +251,9 @@ TEST(MultiplicityImplTest, TestExplicitMultiplicityAndCapAtMaxTrue) {
     person_total += clone_count;
   }
 
-  EXPECT_THAT(person_total * 1.0 / kEventCount, DoubleNear(1.3, 0.01));
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. The result should be around 1.3 * kEventCount = 13000
+  EXPECT_EQ(12947, person_total);
 }
 
 TEST(MultiplicityImplTest, TestExplicitMultiplicityAndCapAtMaxFalse) {
@@ -337,7 +339,9 @@ TEST(MultiplicityImplTest, TestMultiplicityFieldAndCapAtMaxTrue) {
     EXPECT_THAT(clone_count, AnyOf(1, 2));
     person_total += clone_count;
   }
-  EXPECT_THAT(person_total * 1.0 / kEventCount, DoubleNear(1.3, 0.01));
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. The result should be around 1.3 * kEventCount = 13000
+  EXPECT_EQ(12947, person_total);
 
   // multiplicity < max_value
   person_total = 0;
@@ -350,7 +354,9 @@ TEST(MultiplicityImplTest, TestMultiplicityFieldAndCapAtMaxTrue) {
     EXPECT_THAT(clone_count, AnyOf(1, 2));
     person_total += clone_count;
   }
-  EXPECT_THAT(person_total * 1.0 / kEventCount, DoubleNear(1.2, 0.01));
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. The result should be around 1.2 * kEventCount = 12000
+  EXPECT_EQ(11949, person_total);
 }
 
 TEST(MultiplicityImplTest, TestMultiplicityFieldAndCapAtMaxFalse) {
@@ -398,7 +404,9 @@ TEST(MultiplicityImplTest, TestMultiplicityFieldAndCapAtMaxFalse) {
     EXPECT_THAT(clone_count, AnyOf(1, 2));
     person_total += clone_count;
   }
-  EXPECT_THAT(person_total * 1.0 / kEventCount, DoubleNear(1.2, 0.01));
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. The result should be around 1.2 * kEventCount = 12000
+  EXPECT_EQ(11949, person_total);
 }
 
 TEST(MultiplicityImplTest, TestMultiplicityFieldIsNegative) {
@@ -450,7 +458,9 @@ TEST(MultiplicityImplTest, TestMultiplicityLessThanOne) {
     person_total += clone_count;
   }
 
-  EXPECT_THAT(person_total * 1.0 / kEventCount, DoubleNear(0.3, 0.01));
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. The result should be around 0.3 * kEventCount = 3000
+  EXPECT_EQ(2947, person_total);
 }
 
 }  // namespace
