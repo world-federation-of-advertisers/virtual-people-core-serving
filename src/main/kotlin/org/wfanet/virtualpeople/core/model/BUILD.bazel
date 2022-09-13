@@ -6,6 +6,7 @@ kt_jvm_library(
     name = "model_node",
     srcs = [
         "AttributesUpdaterInterface.kt",
+        "BranchNodeImpl.kt",
         "ConditionalAssignmentImpl.kt",
         "ConditionalMergeImpl.kt",
         "ModelNode.kt",

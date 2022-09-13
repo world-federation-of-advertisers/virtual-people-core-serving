@@ -85,7 +85,10 @@ private constructor(
 
     val eventSeed =
       Hashing.farmHashFingerprint64()
-        .hashString("$randomSeed${eventOrBuilder.actingFingerprint}", StandardCharsets.UTF_8)
+        .hashString(
+          "$randomSeed${eventOrBuilder.actingFingerprint.toULong()}",
+          StandardCharsets.UTF_8
+        )
         .asLong()
         .toULong()
     return computeBimodalInteger(expectedMultiplicity, eventSeed)
@@ -186,6 +189,7 @@ private constructor(
 
       /** Only [Double] or [MultiplicityFromField] is valid type for [multiplicityExtractor]. */
       val multiplicityExtractor: Any =
+        @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA") // Proto enum fields are never null.
         when (config.multiplicityRefCase) {
           MultiplicityRefCase.EXPECTED_MULTIPLICITY -> config.expectedMultiplicity
           MultiplicityRefCase.EXPECTED_MULTIPLICITY_FIELD -> {
