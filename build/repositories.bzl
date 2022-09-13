@@ -17,7 +17,7 @@ Adds external repos necessary for virtual_people_core_serving.
 """
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 def virtual_people_core_serving_repositories():
     """Imports all direct dependencies for virtual_people_core_serving."""
@@ -38,9 +38,6 @@ def virtual_people_core_serving_repositories():
     # TODO(@wangyaopw): switch to version based http_archive when the common library implementation is completed
     git_repository(
         name = "virtual_people_common",
-        commit = "fd55a91342608f8ac06ce0ffe96a017f86e7b3c6",
+        commit = "83ca732f75bbc5b9cf3e6f6f14fbdd29c2da5bcc",
         remote = "https://github.com/world-federation-of-advertisers/virtual-people-common.git",
     )
-
-
-

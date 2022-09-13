@@ -775,7 +775,6 @@ class PopulationNodeImplTest {
     }
 
     val exception = assertFailsWith<IllegalStateException> { ModelNode.build(config) }
-    println(exception)
     assertTrue(exception.message!!.contains("The model is invalid"))
   }
 }
