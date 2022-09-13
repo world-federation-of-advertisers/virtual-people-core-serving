@@ -12,6 +12,7 @@ kt_jvm_library(
         "MultiplicityImpl.kt",
         "PopulationNodeImpl.kt",
         "SparseUpdateMatrixImpl.kt",
+        "StopNodeImpl.kt",
         "UpdateMatrixImpl.kt",
     ],
     deps = [
