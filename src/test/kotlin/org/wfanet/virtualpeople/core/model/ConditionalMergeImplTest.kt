@@ -67,7 +67,6 @@ class ConditionalMergeImplTest {
       }
     }
     val error = assertFailsWith<IllegalStateException> { AttributesUpdaterInterface.build(config) }
-    println(error)
     assertTrue(error.message!!.contains("Name must be set."))
   }
 
