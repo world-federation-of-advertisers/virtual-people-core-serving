@@ -31,7 +31,6 @@ namespace wfa_virtual_people {
 namespace {
 
 using ::testing::AnyOf;
-using ::testing::DoubleNear;
 using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
 using ::wfa::IsOk;
@@ -76,19 +75,19 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeByChance) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, double> id_counts;
+  absl::flat_hash_map<int64_t, int32_t> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
     EXPECT_THAT(node->Apply(input), IsOk());
     ++id_counts[input.virtual_person_activities(0).virtual_person_id()];
   }
-  for (auto& [key, value] : id_counts) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(id_counts, UnorderedElementsAre(Pair(10, DoubleNear(0.4, 0.02)),
-                                              Pair(20, DoubleNear(0.6, 0.02))));
+
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same.
+  // The expected count for 10 is 0.4 * kFingerprintNumber = 4000
+  // The expected count for 20 is 0.6 * kFingerprintNumber = 6000
+  EXPECT_THAT(id_counts, UnorderedElementsAre(Pair(10, 4014), Pair(20, 5986)));
 }
 
 TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
@@ -143,19 +142,19 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> branch_node,
                        ModelNode::Build(branch_node_config, node_refs));
 
-  absl::flat_hash_map<int64_t, double> id_counts;
+  absl::flat_hash_map<int64_t, int32_t> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
     EXPECT_THAT(branch_node->Apply(input), IsOk());
     ++id_counts[input.virtual_person_activities(0).virtual_person_id()];
   }
-  for (auto& [key, value] : id_counts) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(id_counts, UnorderedElementsAre(Pair(10, DoubleNear(0.4, 0.02)),
-                                              Pair(20, DoubleNear(0.6, 0.02))));
+
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same.
+  // The expected count for 10 is 0.4 * kFingerprintNumber = 4000
+  // The expected count for 20 is 0.6 * kFingerprintNumber = 6000
+  EXPECT_THAT(id_counts, UnorderedElementsAre(Pair(10, 4014), Pair(20, 5986)));
 }
 
 TEST(BranchNodeImplTest, TestBranchWithNodeIndexByChanceNotNormalized) {
@@ -348,19 +347,19 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> branch_node_1,
                        ModelNode::Build(branch_node_config_1, node_refs));
 
-  absl::flat_hash_map<int64_t, double> id_counts;
+  absl::flat_hash_map<int64_t, int32_t> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
     EXPECT_THAT(branch_node_1->Apply(input), IsOk());
     ++id_counts[input.virtual_person_activities(0).virtual_person_id()];
   }
-  for (auto& [key, value] : id_counts) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
-  EXPECT_THAT(id_counts, UnorderedElementsAre(Pair(10, DoubleNear(0.4, 0.02)),
-                                              Pair(20, DoubleNear(0.6, 0.02))));
+
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same.
+  // The expected count for 10 is 0.4 * kFingerprintNumber = 4000
+  // The expected count for 20 is 0.6 * kFingerprintNumber = 6000
+  EXPECT_THAT(id_counts, UnorderedElementsAre(Pair(10, 4010), Pair(20, 5990)));
 }
 
 TEST(BranchNodeImplTest, TestNoBranch) {
@@ -570,7 +569,7 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
                        ModelNode::Build(config));
 
   // Test for RAW_COUNTRY_1
-  absl::flat_hash_map<int64_t, double> id_counts_1;
+  absl::flat_hash_map<int64_t, int32_t> id_counts_1;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_person_country_code("RAW_COUNTRY_1");
@@ -584,20 +583,17 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
                 AnyOf(Pair("country_code_1", 10), Pair("country_code_2", 20)));
     ++id_counts_1[id];
   }
-  for (auto& [key, value] : id_counts_1) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
   // The selected column is
   //                     "RAW_COUNTRY_1"
   // "country_code_1"         0.8
   // "country_code_2"         0.2
-  // Absolute error more than 2% is very unlikely.
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same.
   EXPECT_THAT(id_counts_1,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.8, 0.02)),
-                                   Pair(20, DoubleNear(0.2, 0.02))));
+              UnorderedElementsAre(Pair(10, 8022), Pair(20, 1978)));
 
   // Test for RAW_COUNTRY_2
-  absl::flat_hash_map<int64_t, double> id_counts_2;
+  absl::flat_hash_map<int64_t, int32_t> id_counts_2;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_person_country_code("RAW_COUNTRY_2");
@@ -609,17 +605,14 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
                 AnyOf(Pair("country_code_1", 10), Pair("country_code_2", 20)));
     ++id_counts_2[id];
   }
-  for (auto& [key, value] : id_counts_2) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
   // The selected column is
   //                     "RAW_COUNTRY_2"
   // "country_code_1"         0.2
   // "country_code_2"         0.8
-  // Absolute error more than 2% is very unlikely.
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same.
   EXPECT_THAT(id_counts_2,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.2, 0.02)),
-                                   Pair(20, DoubleNear(0.8, 0.02))));
+              UnorderedElementsAre(Pair(10, 2064), Pair(20, 7936)));
 }
 
 TEST(BranchNodeImplTest, TestApplyUpdateMatricesInOrder) {
@@ -759,8 +752,9 @@ TEST(BranchNodeImplTest, TestExplicitMultiplicityAndCapAtMaxTrue) {
     }
   }
 
-  // Average viewers ~1.2.
-  EXPECT_THAT(person_total * 1.0 / kFingerprintNumber, DoubleNear(1.2, 0.01));
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. View is around 1.2 * kFingerprintNumber = 12000
+  EXPECT_EQ(person_total, 11949);
 }
 
 TEST(BranchNodeImplTest, TestExplicitMultiplicityAndCapAtMaxFalse) {
@@ -862,8 +856,9 @@ TEST(BranchNodeImplTest, TestMultiplicityFieldAndCapAtMaxTrue) {
       EXPECT_EQ(person.virtual_person_id(), 10);
     }
   }
-  // Average viewers ~1.2.
-  EXPECT_THAT(person_total * 1.0 / kFingerprintNumber, DoubleNear(1.2, 0.01));
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. View is around 1.2 * kFingerprintNumber = 12000
+  EXPECT_EQ(person_total, 11949);
 
   // multiplicity < max_value
   // All virtual_person_id = 10.
@@ -879,8 +874,9 @@ TEST(BranchNodeImplTest, TestMultiplicityFieldAndCapAtMaxTrue) {
       EXPECT_EQ(person.virtual_person_id(), 10);
     }
   }
-  // Average viewers ~1.1.
-  EXPECT_THAT(person_total * 1.0 / kFingerprintNumber, DoubleNear(1.1, 0.01));
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. View is around 1.1 * kFingerprintNumber = 11000
+  EXPECT_EQ(person_total, 10959);
 }
 
 TEST(BranchNodeImplTest, TestMultiplicityFieldAndCapAtMaxFalse) {
@@ -949,8 +945,9 @@ TEST(BranchNodeImplTest, TestMultiplicityFieldAndCapAtMaxFalse) {
       EXPECT_EQ(person.virtual_person_id(), 10);
     }
   }
-  // Average viewers ~1.1.
-  EXPECT_THAT(person_total * 1.0 / kFingerprintNumber, DoubleNear(1.1, 0.01));
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. View is around 1.1 * kFingerprintNumber = 11000
+  EXPECT_EQ(person_total, 10959);
 }
 
 TEST(BranchNodeImplTest, TestExplicitMultiplicity) {
@@ -998,8 +995,8 @@ TEST(BranchNodeImplTest, TestExplicitMultiplicity) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, double> id_counts_index_0;
-  absl::flat_hash_map<int64_t, double> id_counts_index_1;
+  absl::flat_hash_map<int64_t, int32_t> id_counts_index_0;
+  absl::flat_hash_map<int64_t, int32_t> id_counts_index_1;
   int64_t same_pool = 0;
   int64_t different_pool = 0;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
@@ -1019,27 +1016,25 @@ TEST(BranchNodeImplTest, TestExplicitMultiplicity) {
       }
     }
   }
-  for (auto& [key, value] : id_counts_index_0) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
-  for (auto& [key, value] : id_counts_index_1) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
 
   // Expect ~70% events have 1 virtual person, ~30% events have 2.
   // The clones are labeled independently, so they have the same probability
   // to go to each pool.
-  // Absolute error more than 1% is very unlikely.
+  // Expected values are
+  //   idCountsIndex0[10] ~= kFingerprintNumber * 0.8 = 8000
+  //   idCountsIndex0[20] ~= kFingerprintNumber * 0.2 = 2000
+  //   idCountsIndex1[10] ~= kFingerprintNumber * 0.3 * 0.2 = 600
+  //   idCountsIndex2[20] ~= kFingerprintNumber * 0.3 * 0.8 = 2400
   EXPECT_THAT(id_counts_index_0,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.2, 0.01)),
-                                   Pair(20, DoubleNear(0.8, 0.01))));
+              UnorderedElementsAre(Pair(10, 1986), Pair(20, 8014)));
   EXPECT_THAT(id_counts_index_1,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.06, 0.01)),
-                                   Pair(20, DoubleNear(0.24, 0.01))));
+              UnorderedElementsAre(Pair(10, 570), Pair(20, 2377)));
   // Same pool chance: 0.2 * 0.2 + 0.8 * 0.8 = 0.68.
+  // Expect value for samePool is around kFingerprintNumber * 0.3 * 0.68 = 2040
   // Different pool chance: 0.2 * 0.8 * 2 = 0.32.
-  EXPECT_THAT(same_pool * 1.0 / (same_pool + different_pool),
-              DoubleNear(0.68, 0.01));
+  // Expect value for samePool is around kFingerprintNumber * 0.3 * 0.32 = 960
+  EXPECT_EQ(same_pool, 2000);
+  EXPECT_EQ(different_pool, 947);
 }
 
 TEST(BranchNodeImplTest, TestMultiplicityLessThanOne) {
@@ -1088,7 +1083,7 @@ TEST(BranchNodeImplTest, TestMultiplicityLessThanOne) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, double> id_counts;
+  absl::flat_hash_map<int64_t, int32_t> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
@@ -1098,14 +1093,12 @@ TEST(BranchNodeImplTest, TestMultiplicityLessThanOne) {
       ++id_counts[input.virtual_person_activities(0).virtual_person_id()];
     }
   }
-  for (auto& [key, value] : id_counts) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
 
-  // Expect ~70% events have 0 virtual person, ~30% events have 1.
-  EXPECT_THAT(id_counts,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.06, 0.01)),
-                                   Pair(20, DoubleNear(0.24, 0.01))));
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same.
+  // The expected count for 10 is kFingerprintNumber * 0.3 * 0.2 = 600
+  // The expected count for 20 is kFingerprintNumber * 0.3 * 0.8 = 2400
+  EXPECT_THAT(id_counts, UnorderedElementsAre(Pair(10, 593), Pair(20, 2354)));
 }
 
 TEST(BranchNodeImplTest, TestMultiplicityFromField) {
@@ -1153,8 +1146,8 @@ TEST(BranchNodeImplTest, TestMultiplicityFromField) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, double> id_counts_index_0;
-  absl::flat_hash_map<int64_t, double> id_counts_index_1;
+  absl::flat_hash_map<int64_t, int32_t> id_counts_index_0;
+  absl::flat_hash_map<int64_t, int32_t> id_counts_index_1;
   int64_t same_pool = 0;
   int64_t different_pool = 0;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
@@ -1178,27 +1171,29 @@ TEST(BranchNodeImplTest, TestMultiplicityFromField) {
       }
     }
   }
-  for (auto& [key, value] : id_counts_index_0) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
-  for (auto& [key, value] : id_counts_index_1) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
 
   // Expect ~70% events have 1 virtual person, ~30% events have 2.
   // The clones are labeled independently, so they have the same probability
   // to go to each pool.
-  // Absolute error more than 1% is very unlikely.
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same.
+  // Expected values are
+  //   id_counts_index_0[10] ~= kFingerprintNumber * 0.8 = 8000
+  //   id_counts_index_0[20] ~= kFingerprintNumber * 0.2 = 2000
+  //   id_counts_index_1[10] ~= kFingerprintNumber * 0.3 * 0.2 = 600
+  //   id_counts_index_1[20] ~= kFingerprintNumber * 0.3 * 0.8 = 2400
+
   EXPECT_THAT(id_counts_index_0,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.2, 0.01)),
-                                   Pair(20, DoubleNear(0.8, 0.01))));
+              UnorderedElementsAre(Pair(10, 1986), Pair(20, 8014)));
   EXPECT_THAT(id_counts_index_1,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.06, 0.01)),
-                                   Pair(20, DoubleNear(0.24, 0.01))));
+              UnorderedElementsAre(Pair(10, 570), Pair(20, 2377)));
   // Same pool chance: 0.2 * 0.2 + 0.8 * 0.8 = 0.68.
+  // Expect value for same_pool is around kFingerprintNumber * 0.3 * 0.68 = 2040
   // Different pool chance: 0.2 * 0.8 * 2 = 0.32.
-  EXPECT_THAT(same_pool * 1.0 / (same_pool + different_pool),
-              DoubleNear(0.68, 0.01));
+  // Expect value for different_pool is around kFingerprintNumber * 0.3 * 0.32 =
+  // 960
+  EXPECT_EQ(2000, same_pool);
+  EXPECT_EQ(947, different_pool);
 }
 
 TEST(BranchNodeImplTest, TestUsePersonIndex) {
@@ -1267,8 +1262,10 @@ TEST(BranchNodeImplTest, TestUsePersonIndex) {
 
   // All events have person_index 0.
   // ~30% events have person_index 1.
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same.
   EXPECT_EQ(id_counts[10], kFingerprintNumber);
-  EXPECT_THAT(id_counts[20] * 1.0 / kFingerprintNumber, DoubleNear(0.3, 0.01));
+  EXPECT_EQ(id_counts[20], 2947);
 }
 
 TEST(BranchNodeImplTest, TestNestedMultiplicity) {
@@ -1340,8 +1337,8 @@ TEST(BranchNodeImplTest, TestNestedMultiplicity) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, double> id_counts;
-  absl::flat_hash_map<int64_t, double> virtual_person_size_counts;
+  absl::flat_hash_map<int64_t, int32_t> id_counts;
+  absl::flat_hash_map<int64_t, int32_t> virtual_person_size_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
@@ -1351,13 +1348,6 @@ TEST(BranchNodeImplTest, TestNestedMultiplicity) {
     for (auto& person : input.virtual_person_activities()) {
       ++id_counts[person.virtual_person_id()];
     }
-  }
-
-  for (auto& [key, value] : id_counts) {
-    value /= static_cast<double>(kFingerprintNumber);
-  }
-  for (auto& [key, value] : virtual_person_size_counts) {
-    value /= static_cast<double>(kFingerprintNumber);
   }
 
   // Total multiplicity = 1.2 * 1.6 = 1.92, 20% with id 10, 80% with id 20.
@@ -1373,14 +1363,13 @@ TEST(BranchNodeImplTest, TestNestedMultiplicity) {
   //    0.2 * 0.4 * 0.6 + 0.2 * 0.6 * 0.4 = 0.096
   // 4 VP: first level 2 clones, second level 2 clones + 2 clones:
   //    0.2 * 0.6 * 0.6 = 0.072
-  EXPECT_THAT(id_counts,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.384, 0.01)),
-                                   Pair(20, DoubleNear(1.536, 0.01))));
+  //
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same.
+  EXPECT_THAT(id_counts, UnorderedElementsAre(Pair(10, 3884), Pair(20, 15384)));
   EXPECT_THAT(virtual_person_size_counts,
-              UnorderedElementsAre(Pair(1, DoubleNear(0.32, 0.01)),
-                                   Pair(2, DoubleNear(0.512, 0.01)),
-                                   Pair(3, DoubleNear(0.096, 0.01)),
-                                   Pair(4, DoubleNear(0.072, 0.01))));
+              UnorderedElementsAre(Pair(1, 3207), Pair(2, 5083), Pair(3, 945),
+                                   Pair(4, 765)));
 }
 
 }  // namespace
