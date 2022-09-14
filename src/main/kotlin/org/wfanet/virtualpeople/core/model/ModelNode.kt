@@ -59,7 +59,7 @@ sealed class ModelNode(nodeConfig: CompiledNode) {
       @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA") // Proto enum fields are never null.
       return when (config.typeCase) {
         TypeCase.BRANCH_NODE,
-        TypeCase.STOP_NODE -> TODO("Unimplemented")
+        TypeCase.STOP_NODE -> StopNodeImpl.build(config)
         TypeCase.POPULATION_NODE -> PopulationNodeImpl.build(config)
         TypeCase.TYPE_NOT_SET -> error("Node type is not set.")
       }
