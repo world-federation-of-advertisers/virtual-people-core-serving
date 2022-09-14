@@ -54,7 +54,7 @@ private constructor(
     if (virtualPeopleSelector != null) {
       val seed =
         Hashing.farmHashFingerprint64()
-          .hashString("$randomSeed${event.actingFingerprint}", StandardCharsets.UTF_8)
+          .hashString("$randomSeed${event.actingFingerprint.toULong()}", StandardCharsets.UTF_8)
           .asLong()
           .toULong()
       virtualPeopleActivity.virtualPersonId = virtualPeopleSelector.getVirtualPersonId(seed)
