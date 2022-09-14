@@ -38,6 +38,6 @@ def virtual_people_core_serving_repositories():
     # TODO(@wangyaopw): switch to version based http_archive when the common library implementation is completed
     git_repository(
         name = "virtual_people_common",
-        commit = "83ca732f75bbc5b9cf3e6f6f14fbdd29c2da5bcc",
+        commit = "7187e1c3460d6d9fb6c14ac9358801fda573b3c2",
         remote = "https://github.com/world-federation-of-advertisers/virtual-people-common.git",
     )

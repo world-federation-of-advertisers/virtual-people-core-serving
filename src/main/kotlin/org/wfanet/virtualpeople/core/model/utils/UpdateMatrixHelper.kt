@@ -44,6 +44,7 @@ fun selectFromMatrix(
     error("The returned index is out of range.")
   }
 
-  val rowIndex = rowHashings[columnIndex].hash("$randomSeed${event.actingFingerprint}")
+  /** The seed uses the string representation of actingFingerprint as an unsigned 64-bit integer */
+  val rowIndex = rowHashings[columnIndex].hash("$randomSeed${event.actingFingerprint.toULong()}")
   return MatrixIndexes(columnIndex, rowIndex)
 }

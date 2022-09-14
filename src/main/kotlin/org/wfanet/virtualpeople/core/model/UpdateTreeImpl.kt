@@ -32,7 +32,7 @@ internal class UpdateTreeImpl private constructor(private val root: ModelNode) :
      *
      * Throws an error when it fails to build [ModelNode] from [config].root.
      */
-    internal fun build(config: UpdateTree, nodeRefs: Map<Int, ModelNode>): UpdateTreeImpl {
+    internal fun build(config: UpdateTree, nodeRefs: MutableMap<Int, ModelNode>): UpdateTreeImpl {
       return UpdateTreeImpl(ModelNode.build(config.root, nodeRefs))
     }
   }
