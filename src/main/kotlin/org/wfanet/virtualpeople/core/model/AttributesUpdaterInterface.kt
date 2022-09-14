@@ -40,7 +40,7 @@ sealed interface AttributesUpdaterInterface {
      */
     fun build(
       config: AttributesUpdater,
-      nodeRefs: Map<Int, ModelNode>
+      nodeRefs: MutableMap<Int, ModelNode>
     ): AttributesUpdaterInterface {
       return if (config.updateCase == UpdateCase.UPDATE_TREE) {
         UpdateTreeImpl.build(config.updateTree, nodeRefs)
@@ -61,7 +61,7 @@ sealed interface AttributesUpdaterInterface {
         UpdateCase.CONDITIONAL_MERGE -> ConditionalMergeImpl.build(config.conditionalMerge)
         UpdateCase.CONDITIONAL_ASSIGNMENT ->
           ConditionalAssignmentImpl.build(config.conditionalAssignment)
-        UpdateCase.UPDATE_TREE -> UpdateTreeImpl.build(config.updateTree, mapOf())
+        UpdateCase.UPDATE_TREE -> UpdateTreeImpl.build(config.updateTree, mutableMapOf())
         UpdateCase.UPDATE_NOT_SET -> error("config.update is not set.")
       }
     }

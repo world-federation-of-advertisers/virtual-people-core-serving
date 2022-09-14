@@ -68,7 +68,7 @@ TEST(LabelerTest, TestBuildFromRoot) {
       &root));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(root));
 
-  absl::flat_hash_map<int64_t, double> vpid_counts;
+  absl::flat_hash_map<int64_t, int32_t> vpid_counts;
   for (int event_id = 0; event_id < kEventIdNumber; ++event_id) {
     LabelerInput input;
     input.mutable_event_id()->set_id(std::to_string(event_id));
@@ -76,13 +76,12 @@ TEST(LabelerTest, TestBuildFromRoot) {
     EXPECT_THAT(labeler->Label(input, output), IsOk());
     ++vpid_counts[output.people(0).virtual_person_id()];
   }
-  for (auto& [key, value] : vpid_counts) {
-    value /= static_cast<double>(kEventIdNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
+
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. The expected count for 10 is 0.4 * kEventIdNumber = 4000,
+  // the expected count for 20 is 0.6 * kEventIdNumber = 6000
   EXPECT_THAT(vpid_counts,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.4, 0.02)),
-                                   Pair(20, DoubleNear(0.6, 0.02))));
+              UnorderedElementsAre(Pair(10, 4061), Pair(20, 5939)));
 }
 
 TEST(LabelerTest, TestBuildFromNodesRootWithIndex) {
@@ -124,7 +123,7 @@ TEST(LabelerTest, TestBuildFromNodesRootWithIndex) {
       &nodes.emplace_back()));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
 
-  absl::flat_hash_map<int64_t, double> vpid_counts;
+  absl::flat_hash_map<int64_t, int32_t> vpid_counts;
   for (int event_id = 0; event_id < kEventIdNumber; ++event_id) {
     LabelerInput input;
     input.mutable_event_id()->set_id(std::to_string(event_id));
@@ -132,13 +131,12 @@ TEST(LabelerTest, TestBuildFromNodesRootWithIndex) {
     EXPECT_THAT(labeler->Label(input, output), IsOk());
     ++vpid_counts[output.people(0).virtual_person_id()];
   }
-  for (auto& [key, value] : vpid_counts) {
-    value /= static_cast<double>(kEventIdNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
+
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. The expected count for 10 is 0.4 * kEventIdNumber = 4000,
+  // the expected count for 20 is 0.6 * kEventIdNumber = 6000
   EXPECT_THAT(vpid_counts,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.4, 0.02)),
-                                   Pair(20, DoubleNear(0.6, 0.02))));
+              UnorderedElementsAre(Pair(10, 4061), Pair(20, 5939)));
 }
 
 TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
@@ -179,7 +177,7 @@ TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
       &nodes.emplace_back()));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
 
-  absl::flat_hash_map<int64_t, double> vpid_counts;
+  absl::flat_hash_map<int64_t, int32_t> vpid_counts;
   for (int event_id = 0; event_id < kEventIdNumber; ++event_id) {
     LabelerInput input;
     input.mutable_event_id()->set_id(std::to_string(event_id));
@@ -187,13 +185,12 @@ TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
     EXPECT_THAT(labeler->Label(input, output), IsOk());
     ++vpid_counts[output.people(0).virtual_person_id()];
   }
-  for (auto& [key, value] : vpid_counts) {
-    value /= static_cast<double>(kEventIdNumber);
-  }
-  // Absolute error more than 2% is very unlikely.
+
+  // Compare to the exact result to make sure C++ and Kotlin implementations
+  // behave the same. The expected count for 10 is 0.4 * kEventIdNumber = 4000,
+  // the expected count for 20 is 0.6 * kEventIdNumber = 6000
   EXPECT_THAT(vpid_counts,
-              UnorderedElementsAre(Pair(10, DoubleNear(0.4, 0.02)),
-                                   Pair(20, DoubleNear(0.6, 0.02))));
+              UnorderedElementsAre(Pair(10, 4061), Pair(20, 5939)));
 }
 
 TEST(LabelerTest, TestBuildFromListWithSingleNode) {

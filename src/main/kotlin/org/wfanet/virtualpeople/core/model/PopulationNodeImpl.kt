@@ -52,6 +52,9 @@ private constructor(
     val virtualPeopleActivity = VirtualPersonActivity.newBuilder()
     /** Only populate virtual_person_id when the pools is not an empty population pool. */
     if (virtualPeopleSelector != null) {
+      /**
+       * The seed uses the string representation of actingFingerprint as an unsigned 64-bit integer
+       */
       val seed =
         Hashing.farmHashFingerprint64()
           .hashString("$randomSeed${event.actingFingerprint.toULong()}", StandardCharsets.UTF_8)
@@ -66,7 +69,7 @@ private constructor(
         if (virtualPeopleActivity.hasVirtualPersonId()) {
           virtualPeopleActivity.virtualPersonId.toString()
         } else {
-          event.actingFingerprint.toString()
+          event.actingFingerprint.toULong().toString()
         }
       event.quantumLabels.quantumLabelsList.forEach {
         collapseQuantumLabel(it, seedSuffix, virtualPeopleActivity.labelBuilder)
