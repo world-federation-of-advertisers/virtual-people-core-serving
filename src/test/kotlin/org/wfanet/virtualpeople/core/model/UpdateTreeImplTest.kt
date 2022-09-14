@@ -264,7 +264,7 @@ class UpdateTreeImplTest {
     }
     val compiledNode1 = ModelNode.build(nodeConfig1)
     val compiledNode2 = ModelNode.build(nodeConfig2)
-    val nodeRefs = mapOf(Pair(1, compiledNode1), Pair(2, compiledNode2))
+    val nodeRefs = mutableMapOf(Pair(1, compiledNode1), Pair(2, compiledNode2))
 
     val updater = AttributesUpdaterInterface.build(config, nodeRefs)
 

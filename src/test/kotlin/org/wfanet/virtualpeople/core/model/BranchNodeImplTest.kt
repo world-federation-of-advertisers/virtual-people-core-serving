@@ -153,7 +153,7 @@ class BranchNodeImplTest {
     }
 
     val nodeRefs =
-      mapOf(
+      mutableMapOf(
         Pair(2, ModelNode.build(populationNodeConfig1)),
         Pair(3, ModelNode.build(populationNodeConfig2))
       )
@@ -229,7 +229,7 @@ class BranchNodeImplTest {
     }
 
     val nodeRefs =
-      mapOf(
+      mutableMapOf(
         Pair(2, ModelNode.build(populationNodeConfig1)),
         Pair(3, ModelNode.build(populationNodeConfig2))
       )
@@ -530,7 +530,7 @@ class BranchNodeImplTest {
 
     val exception = assertFailsWith<IllegalStateException> { ModelNode.build(config) }
     assertTrue(
-      exception.message!!.contains("The ModelNode object of the child node index is not provided")
+      exception.message!!.contains("The ModelNode object of the child node index 2 is not provided")
     )
   }
 
