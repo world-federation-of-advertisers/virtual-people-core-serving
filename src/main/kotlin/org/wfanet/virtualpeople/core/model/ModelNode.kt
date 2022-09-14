@@ -46,7 +46,7 @@ sealed class ModelNode(nodeConfig: CompiledNode) {
      * the child nodes referenced by indexes. Throws an error if any child node referenced by index
      * is not found in [nodeRefs].
      */
-    fun build(config: CompiledNode, nodeRefs: Map<Int, ModelNode>): ModelNode {
+    fun build(config: CompiledNode, nodeRefs: MutableMap<Int, ModelNode>): ModelNode {
       return if (config.typeCase == TypeCase.BRANCH_NODE) {
         BranchNodeImpl.build(config, nodeRefs)
       } else {
@@ -58,7 +58,7 @@ sealed class ModelNode(nodeConfig: CompiledNode) {
     fun build(config: CompiledNode): ModelNode {
       @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA") // Proto enum fields are never null.
       return when (config.typeCase) {
-        TypeCase.BRANCH_NODE -> BranchNodeImpl.build(config, mapOf())
+        TypeCase.BRANCH_NODE -> BranchNodeImpl.build(config, mutableMapOf())
         TypeCase.STOP_NODE -> StopNodeImpl.build(config)
         TypeCase.POPULATION_NODE -> PopulationNodeImpl.build(config)
         TypeCase.TYPE_NOT_SET -> error("Node type is not set.")

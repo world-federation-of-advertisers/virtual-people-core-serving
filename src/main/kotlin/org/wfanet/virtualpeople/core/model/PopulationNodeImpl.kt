@@ -66,7 +66,7 @@ private constructor(
         if (virtualPeopleActivity.hasVirtualPersonId()) {
           virtualPeopleActivity.virtualPersonId.toString()
         } else {
-          event.actingFingerprint.toString()
+          event.actingFingerprint.toULong().toString()
         }
       event.quantumLabels.quantumLabelsList.forEach {
         collapseQuantumLabel(it, seedSuffix, virtualPeopleActivity.labelBuilder)
