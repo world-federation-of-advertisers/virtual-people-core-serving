@@ -51,6 +51,9 @@ private constructor(
 ) : ModelNode(nodeConfig) {
 
   private fun applyChild(event: LabelerEvent.Builder) {
+    /**
+     * The seed uses the string representation of actingFingerprint as an unsigned 64-bit integer
+     */
     val selectedIndex =
       hashing?.hash("$randomSeed${event.actingFingerprint.toULong()}")
         ?: (matcher?.getFirstMatch(event) ?: error("No select options is set for the BranchNode."))
@@ -137,7 +140,7 @@ private constructor(
      * For any [nodeConfig].branch_node.branches with node_index set, the corresponding child node
      * is retrieved from [nodeRefs] using node_index as the key.
      */
-    fun build(nodeConfig: CompiledNode, nodeRefs: Map<Int, ModelNode>): BranchNodeImpl {
+    fun build(nodeConfig: CompiledNode, nodeRefs: MutableMap<Int, ModelNode>): BranchNodeImpl {
       if (!nodeConfig.hasBranchNode()) {
         error("This is not a branch node.")
       }
@@ -149,9 +152,16 @@ private constructor(
       val childNodes =
         branchNode.branchesList.map { branch ->
           if (branch.hasNodeIndex()) {
-            /** The child node is referenced by node index. */
-            nodeRefs[branch.nodeIndex]
-              ?: error("The ModelNode object of the child node index is not provided.")
+            /**
+             * The child node is referenced by node index.
+             *
+             * The node is removed from the [nodeRefs] once it is added as a childNode of other
+             * node.
+             */
+            nodeRefs.remove(branch.nodeIndex)
+              ?: error(
+                "The ModelNode object of the child node index ${branch.nodeIndex} is not provided."
+              )
           } else if (branch.hasNode()) {
             /** Create the ModelNode object and store. */
             ModelNode.build(branch.node, nodeRefs)

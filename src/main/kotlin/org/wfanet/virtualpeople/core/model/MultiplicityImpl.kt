@@ -83,6 +83,9 @@ private constructor(
       error("Expected multiplicity = $expectedMultiplicity, but multiplicity must >= 0.")
     }
 
+    /**
+     * The seed uses the string representation of actingFingerprint as an unsigned 64-bit integer
+     */
     val eventSeed =
       Hashing.farmHashFingerprint64()
         .hashString(

@@ -1,5 +1,6 @@
 package(default_visibility = [
     "//src/test/cc/wfa/virtual_people/core/labeler:__subpackages__",
+    "//src/test/kotlin/org/wfanet/virtualpeople/core/labeler:__subpackages__",
 ])
 
 exports_files(

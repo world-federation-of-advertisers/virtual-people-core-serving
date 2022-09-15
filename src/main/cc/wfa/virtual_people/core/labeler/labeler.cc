@@ -112,15 +112,51 @@ void SetFingerprints(LabelerEvent& event) {
   if (profile_info->has_phone_user_info()) {
     SetUserInfoFingerprint(*profile_info->mutable_phone_user_info());
   }
-  if (profile_info->has_proprietary_id_space_1_user_info()) {
-    SetUserInfoFingerprint(
-        *profile_info->mutable_proprietary_id_space_1_user_info());
-  }
   if (profile_info->has_logged_in_id_user_info()) {
     SetUserInfoFingerprint(*profile_info->mutable_logged_in_id_user_info());
   }
   if (profile_info->has_logged_out_id_user_info()) {
     SetUserInfoFingerprint(*profile_info->mutable_logged_out_id_user_info());
+  }
+  if (profile_info->has_proprietary_id_space_1_user_info()) {
+    SetUserInfoFingerprint(
+        *profile_info->mutable_proprietary_id_space_1_user_info());
+  }
+  if (profile_info->has_proprietary_id_space_2_user_info()) {
+    SetUserInfoFingerprint(
+        *profile_info->mutable_proprietary_id_space_2_user_info());
+  }
+  if (profile_info->has_proprietary_id_space_3_user_info()) {
+    SetUserInfoFingerprint(
+        *profile_info->mutable_proprietary_id_space_3_user_info());
+  }
+  if (profile_info->has_proprietary_id_space_4_user_info()) {
+    SetUserInfoFingerprint(
+        *profile_info->mutable_proprietary_id_space_4_user_info());
+  }
+  if (profile_info->has_proprietary_id_space_5_user_info()) {
+    SetUserInfoFingerprint(
+        *profile_info->mutable_proprietary_id_space_5_user_info());
+  }
+  if (profile_info->has_proprietary_id_space_6_user_info()) {
+    SetUserInfoFingerprint(
+        *profile_info->mutable_proprietary_id_space_6_user_info());
+  }
+  if (profile_info->has_proprietary_id_space_7_user_info()) {
+    SetUserInfoFingerprint(
+        *profile_info->mutable_proprietary_id_space_7_user_info());
+  }
+  if (profile_info->has_proprietary_id_space_8_user_info()) {
+    SetUserInfoFingerprint(
+        *profile_info->mutable_proprietary_id_space_8_user_info());
+  }
+  if (profile_info->has_proprietary_id_space_9_user_info()) {
+    SetUserInfoFingerprint(
+        *profile_info->mutable_proprietary_id_space_9_user_info());
+  }
+  if (profile_info->has_proprietary_id_space_10_user_info()) {
+    SetUserInfoFingerprint(
+        *profile_info->mutable_proprietary_id_space_10_user_info());
   }
 }
 
