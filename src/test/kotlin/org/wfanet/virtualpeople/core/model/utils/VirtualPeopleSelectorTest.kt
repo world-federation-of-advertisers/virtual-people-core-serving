@@ -39,7 +39,7 @@ class VirtualPeopleSelectorTest {
       )
       pools.add(
         virtualPersonPool {
-          populationOffset = 30
+          populationOffset = (ULong.MAX_VALUE - 100UL).toLong()
           totalPopulation = 3
         }
       )
@@ -52,7 +52,7 @@ class VirtualPeopleSelectorTest {
     }
     val selector = VirtualPeopleSelector.build(populationNode.poolsList)
 
-    val idCounts = mutableMapOf<Long, Int>()
+    val idCounts = mutableMapOf<ULong, Int>()
 
     (0 until SEED_NUMBER).forEach {
       val id = selector.getVirtualPersonId(it.toULong())
@@ -65,16 +65,16 @@ class VirtualPeopleSelectorTest {
      * The expected count for getting a given virtual person id is 1 / 10 * [SEED_NUMBER]= 1000. We
      * compare to the exact values to make sure the kotlin and c++ implementations behave the same.
      */
-    assertEquals(993, idCounts[10])
-    assertEquals(997, idCounts[11])
-    assertEquals(994, idCounts[12])
-    assertEquals(980, idCounts[20])
-    assertEquals(1027, idCounts[21])
-    assertEquals(979, idCounts[22])
-    assertEquals(1020, idCounts[23])
-    assertEquals(1000, idCounts[30])
-    assertEquals(1015, idCounts[31])
-    assertEquals(995, idCounts[32])
+    assertEquals(993, idCounts[10UL])
+    assertEquals(997, idCounts[11UL])
+    assertEquals(994, idCounts[12UL])
+    assertEquals(980, idCounts[20UL])
+    assertEquals(1027, idCounts[21UL])
+    assertEquals(979, idCounts[22UL])
+    assertEquals(1020, idCounts[23UL])
+    assertEquals(1000, idCounts[ULong.MAX_VALUE - 100UL])
+    assertEquals(1015, idCounts[ULong.MAX_VALUE - 99UL])
+    assertEquals(995, idCounts[ULong.MAX_VALUE - 98UL])
   }
 
   @Test

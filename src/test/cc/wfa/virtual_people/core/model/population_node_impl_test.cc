@@ -37,13 +37,14 @@ constexpr int kFingerprintNumber = 10000;
 
 TEST(PopulationNodeImplTest, Apply) {
   CompiledNode config;
+  // 18446744073709551515 = std::numeric_limits<uint64_t>::max()-100
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "TestPopulationNode"
         index: 1
         population_node {
           pools { population_offset: 10 total_population: 3 }
-          pools { population_offset: 30 total_population: 3 }
+          pools { population_offset: 18446744073709551515 total_population: 3 }
           pools { population_offset: 20 total_population: 4 }
           random_seed: "TestRandomSeed"
         }
@@ -53,7 +54,7 @@ TEST(PopulationNodeImplTest, Apply) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, int32_t> id_counts;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
@@ -64,11 +65,12 @@ TEST(PopulationNodeImplTest, Apply) {
   // Compare to the exact result to make sure C++ and Kotlin implementations
   // behave the same. The result should be around 0.1 * kFingerprintNumber =
   // 1000
-  EXPECT_THAT(id_counts,
-              UnorderedElementsAre(Pair(10, 1076), Pair(11, 990), Pair(12, 975),
-                                   Pair(30, 985), Pair(31, 982), Pair(32, 981),
-                                   Pair(20, 991), Pair(21, 1010),
-                                   Pair(22, 1005), Pair(23, 1005)));
+  EXPECT_THAT(id_counts, UnorderedElementsAre(
+                             Pair(10, 1076), Pair(11, 990), Pair(12, 975),
+                             Pair(18446744073709551515, 985),
+                             Pair(18446744073709551516, 982),
+                             Pair(18446744073709551517, 981), Pair(20, 991),
+                             Pair(21, 1010), Pair(22, 1005), Pair(23, 1005)));
 }
 
 TEST(PopulationNodeImplTest, ApplyNoLabel) {

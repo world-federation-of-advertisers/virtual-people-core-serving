@@ -25,7 +25,7 @@ import org.wfanet.virtualpeople.common.copy
 import org.wfanet.virtualpeople.common.labelerInput
 import org.wfanet.virtualpeople.common.labelerOutput
 
-private const val TEXTPROTO_PATH = "src/proto/wfa/virtual_people/core/labeler/test_data"
+private const val TEXTPROTO_PATH = "src/main/proto/wfa/virtual_people/core/labeler/test_data"
 
 @RunWith(JUnit4::class)
 class LabelerIntegrationTest {

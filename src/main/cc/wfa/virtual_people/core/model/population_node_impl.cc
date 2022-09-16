@@ -118,7 +118,7 @@ absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
     uint64_t seed = util::Fingerprint64(
         absl::StrCat(random_seed_, event.acting_fingerprint()));
     // Gets virtual person id from the pools.
-    int64_t virtual_person_id =
+    uint64_t virtual_person_id =
         virtual_person_selector_->GetVirtualPersonId(seed);
     virtual_person_activity->set_virtual_person_id(virtual_person_id);
   }

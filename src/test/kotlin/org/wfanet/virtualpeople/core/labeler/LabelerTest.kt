@@ -76,10 +76,10 @@ class LabelerTest {
     }
     val labeler = Labeler.build(root)
 
-    val vPidCounts = mutableMapOf<Long, Int>()
+    val vPidCounts = mutableMapOf<ULong, Int>()
     (0 until EVENT_ID_NUMBER).forEach {
       val input = labelerInput { eventId = eventId { id = it.toString() } }
-      val vPid = labeler.label(input).getPeople(0).virtualPersonId
+      val vPid = labeler.label(input).getPeople(0).virtualPersonId.toULong()
       vPidCounts[vPid] = vPidCounts.getOrDefault(vPid, 0) + 1
     }
 
@@ -89,8 +89,8 @@ class LabelerTest {
      * EVENT_ID_NUMBER = 6000
      */
     assertEquals(2, vPidCounts.size)
-    assertEquals(4061, vPidCounts[10])
-    assertEquals(5939, vPidCounts[20])
+    assertEquals(4061, vPidCounts[10UL])
+    assertEquals(5939, vPidCounts[20UL])
   }
 
   @Test
@@ -151,10 +151,10 @@ class LabelerTest {
     val nodes = listOf(node2, node3, node1)
     val labeler = Labeler.build(nodes)
 
-    val vPidCounts = mutableMapOf<Long, Int>()
+    val vPidCounts = mutableMapOf<ULong, Int>()
     (0 until EVENT_ID_NUMBER).forEach {
       val input = labelerInput { eventId = eventId { id = it.toString() } }
-      val vPid = labeler.label(input).getPeople(0).virtualPersonId
+      val vPid = labeler.label(input).getPeople(0).virtualPersonId.toULong()
       vPidCounts[vPid] = vPidCounts.getOrDefault(vPid, 0) + 1
     }
 
@@ -164,8 +164,8 @@ class LabelerTest {
      * EVENT_ID_NUMBER = 6000
      */
     assertEquals(2, vPidCounts.size)
-    assertEquals(4061, vPidCounts[10])
-    assertEquals(5939, vPidCounts[20])
+    assertEquals(4061, vPidCounts[10UL])
+    assertEquals(5939, vPidCounts[20UL])
   }
 
   @Test
@@ -225,10 +225,10 @@ class LabelerTest {
     val nodes = listOf(node2, node3, node1)
     val labeler = Labeler.build(nodes)
 
-    val vPidCounts = mutableMapOf<Long, Int>()
+    val vPidCounts = mutableMapOf<ULong, Int>()
     (0 until EVENT_ID_NUMBER).forEach {
       val input = labelerInput { eventId = eventId { id = it.toString() } }
-      val vPid = labeler.label(input).getPeople(0).virtualPersonId
+      val vPid = labeler.label(input).getPeople(0).virtualPersonId.toULong()
       vPidCounts[vPid] = vPidCounts.getOrDefault(vPid, 0) + 1
     }
 
@@ -238,8 +238,8 @@ class LabelerTest {
      * EVENT_ID_NUMBER = 6000
      */
     assertEquals(2, vPidCounts.size)
-    assertEquals(4061, vPidCounts[10])
-    assertEquals(5939, vPidCounts[20])
+    assertEquals(4061, vPidCounts[10UL])
+    assertEquals(5939, vPidCounts[20UL])
   }
 
   @Test
@@ -267,8 +267,8 @@ class LabelerTest {
 
     (0 until EVENT_ID_NUMBER).forEach {
       val input = labelerInput { eventId = eventId { id = it.toString() } }
-      val vPid = labeler.label(input).getPeople(0).virtualPersonId
-      assertEquals(10, vPid)
+      val vPid = labeler.label(input).getPeople(0).virtualPersonId.toULong()
+      assertEquals(10UL, vPid)
     }
   }
 

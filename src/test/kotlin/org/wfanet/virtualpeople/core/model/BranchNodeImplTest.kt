@@ -80,11 +80,11 @@ class BranchNodeImplTest {
     }
     val node = ModelNode.build(config)
 
-    val idCounts = mutableMapOf<Long, Int>()
+    val idCounts = mutableMapOf<ULong, Int>()
     (0 until FINGERPRINT_NUMBER).forEach {
       val input = labelerEvent { actingFingerprint = it }.toBuilder()
       node.apply(input)
-      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId
+      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId.toULong()
       idCounts[virtualPersonId] = idCounts.getOrDefault(virtualPersonId, 0) + 1
     }
 
@@ -94,8 +94,8 @@ class BranchNodeImplTest {
      * FINGERPRINT_NUMBER=6000
      */
     assertEquals(2, idCounts.size)
-    assertEquals(4014, idCounts[10])
-    assertEquals(5986, idCounts[20])
+    assertEquals(4014, idCounts[10UL])
+    assertEquals(5986, idCounts[20UL])
   }
 
   @Test
@@ -160,11 +160,11 @@ class BranchNodeImplTest {
 
     val node = ModelNode.build(branchNodeConfig, nodeRefs)
 
-    val idCounts = mutableMapOf<Long, Int>()
+    val idCounts = mutableMapOf<ULong, Int>()
     (0 until FINGERPRINT_NUMBER).forEach {
       val input = labelerEvent { actingFingerprint = it }.toBuilder()
       node.apply(input)
-      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId
+      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId.toULong()
       idCounts[virtualPersonId] = idCounts.getOrDefault(virtualPersonId, 0) + 1
     }
 
@@ -174,8 +174,8 @@ class BranchNodeImplTest {
      * 0.6*FINGERPRINT_NUMBER=6000
      */
     assertEquals(2, idCounts.size)
-    assertEquals(4014, idCounts[10])
-    assertEquals(5986, idCounts[20])
+    assertEquals(4014, idCounts[10UL])
+    assertEquals(5986, idCounts[20UL])
   }
 
   @Test
@@ -297,11 +297,11 @@ class BranchNodeImplTest {
 
     val input1 = labelerEvent { personCountryCode = "country_code_1" }.toBuilder()
     node.apply(input1)
-    assertEquals(10, input1.getVirtualPersonActivities(0).virtualPersonId)
+    assertEquals(10UL, input1.getVirtualPersonActivities(0).virtualPersonId.toULong())
 
     val input2 = labelerEvent { personCountryCode = "country_code_2" }.toBuilder()
     node.apply(input2)
-    assertEquals(20, input2.getVirtualPersonActivities(0).virtualPersonId)
+    assertEquals(20UL, input2.getVirtualPersonActivities(0).virtualPersonId.toULong())
 
     /** No branch matches. Returns error status. */
     val input3 = labelerEvent { personCountryCode = "country_code_3" }.toBuilder()
@@ -397,11 +397,11 @@ class BranchNodeImplTest {
 
     val branchNode1 = ModelNode.build(branchNodeConfig1, nodeRefs)
 
-    val idCounts = mutableMapOf<Long, Int>()
+    val idCounts = mutableMapOf<ULong, Int>()
     (0 until FINGERPRINT_NUMBER).forEach {
       val input = labelerEvent { actingFingerprint = it }.toBuilder()
       branchNode1.apply(input)
-      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId
+      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId.toULong()
       idCounts[virtualPersonId] = idCounts.getOrDefault(virtualPersonId, 0) + 1
     }
 
@@ -411,8 +411,8 @@ class BranchNodeImplTest {
      * 0.6*FINGERPRINT_NUMBER=6000
      */
     assertEquals(2, idCounts.size)
-    assertEquals(4010, idCounts[10])
-    assertEquals(5990, idCounts[20])
+    assertEquals(4010, idCounts[10UL])
+    assertEquals(5990, idCounts[20UL])
   }
 
   @Test
@@ -612,7 +612,7 @@ class BranchNodeImplTest {
     val node = ModelNode.build(config)
 
     /** Test for RAW_COUNTRY_1. */
-    val idCounts1 = mutableMapOf<Long, Int>()
+    val idCounts1 = mutableMapOf<ULong, Int>()
     (0 until FINGERPRINT_NUMBER).forEach {
       val input =
         labelerEvent {
@@ -624,10 +624,10 @@ class BranchNodeImplTest {
       /** Confirms the Fingerprint is not changed. */
       assertEquals(input.actingFingerprint, it)
       val personCountryCode = input.personCountryCode
-      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId
+      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId.toULong()
       assertTrue {
         Pair(personCountryCode, virtualPersonId) in
-          listOf(Pair("country_code_1", 10L), Pair("country_code_2", 20L))
+          listOf(Pair("country_code_1", 10UL), Pair("country_code_2", 20UL))
       }
       idCounts1[virtualPersonId] = idCounts1.getOrDefault(virtualPersonId, 0) + 1
     }
@@ -642,11 +642,11 @@ class BranchNodeImplTest {
      * Compare to the exact result to make sure C++ and Kotlin implementations behave the same.
      */
     assertEquals(2, idCounts1.size)
-    assertEquals(8022, idCounts1[10])
-    assertEquals(1978, idCounts1[20])
+    assertEquals(8022, idCounts1[10UL])
+    assertEquals(1978, idCounts1[20UL])
 
     /** Test for RAW_COUNTRY_2. */
-    val idCounts2 = mutableMapOf<Long, Int>()
+    val idCounts2 = mutableMapOf<ULong, Int>()
     (0 until FINGERPRINT_NUMBER).forEach {
       val input =
         labelerEvent {
@@ -658,10 +658,10 @@ class BranchNodeImplTest {
       /** Confirms the Fingerprint is not changed. */
       assertEquals(input.actingFingerprint, it)
       val personCountryCode = input.personCountryCode
-      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId
+      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId.toULong()
       assertTrue {
         Pair(personCountryCode, virtualPersonId) in
-          listOf(Pair("country_code_1", 10L), Pair("country_code_2", 20L))
+          listOf(Pair("country_code_1", 10UL), Pair("country_code_2", 20UL))
       }
       idCounts2[virtualPersonId] = idCounts2.getOrDefault(virtualPersonId, 0) + 1
     }
@@ -676,8 +676,8 @@ class BranchNodeImplTest {
      * Compare to the exact result to make sure C++ and Kotlin implementations behave the same.
      */
     assertEquals(2, idCounts2.size)
-    assertEquals(2064, idCounts2[10])
-    assertEquals(7936, idCounts2[20])
+    assertEquals(2064, idCounts2[10UL])
+    assertEquals(7936, idCounts2[20UL])
   }
 
   @Test
@@ -750,7 +750,7 @@ class BranchNodeImplTest {
       /** Confirms the Fingerprint is not changed. */
       assertEquals(it, input.actingFingerprint)
       assertEquals("COUNTRY_3", input.personCountryCode)
-      assertEquals(10, input.getVirtualPersonActivities(0).virtualPersonId)
+      assertEquals(10UL, input.getVirtualPersonActivities(0).virtualPersonId.toULong())
     }
   }
 
@@ -829,7 +829,7 @@ class BranchNodeImplTest {
       node.apply(input)
       assertTrue { input.virtualPersonActivitiesCount in listOf(1, 2) }
       personTotal += input.virtualPersonActivitiesCount
-      input.virtualPersonActivitiesList.forEach { assertEquals(10, it.virtualPersonId) }
+      input.virtualPersonActivitiesList.forEach { assertEquals(10UL, it.virtualPersonId.toULong()) }
     }
 
     /**
@@ -941,7 +941,7 @@ class BranchNodeImplTest {
       node.apply(input)
       assertTrue { input.virtualPersonActivitiesCount in listOf(1, 2) }
       personTotal += input.virtualPersonActivitiesCount
-      input.virtualPersonActivitiesList.forEach { assertEquals(10, it.virtualPersonId) }
+      input.virtualPersonActivitiesList.forEach { assertEquals(10UL, it.virtualPersonId.toULong()) }
     }
 
     /**
@@ -962,7 +962,7 @@ class BranchNodeImplTest {
       node.apply(input)
       assertTrue { input.virtualPersonActivitiesCount in listOf(1, 2) }
       personTotal += input.virtualPersonActivitiesCount
-      input.virtualPersonActivitiesList.forEach { assertEquals(10, it.virtualPersonId) }
+      input.virtualPersonActivitiesList.forEach { assertEquals(10UL, it.virtualPersonId.toULong()) }
     }
 
     /**
@@ -1041,7 +1041,7 @@ class BranchNodeImplTest {
       node.apply(input)
       assertTrue { input.virtualPersonActivitiesCount in listOf(1, 2) }
       personTotal += input.virtualPersonActivitiesCount
-      input.virtualPersonActivitiesList.forEach { assertEquals(10, it.virtualPersonId) }
+      input.virtualPersonActivitiesList.forEach { assertEquals(10UL, it.virtualPersonId.toULong()) }
     }
 
     /**
@@ -1107,8 +1107,8 @@ class BranchNodeImplTest {
     }
     val node = ModelNode.build(config)
 
-    val idCountsIndex0 = mutableMapOf<Long, Int>()
-    val idCountsIndex1 = mutableMapOf<Long, Int>()
+    val idCountsIndex0 = mutableMapOf<ULong, Int>()
+    val idCountsIndex1 = mutableMapOf<ULong, Int>()
     var samePool = 0
     var differentPool = 0
 
@@ -1116,10 +1116,10 @@ class BranchNodeImplTest {
       val input = labelerEvent { actingFingerprint = it }.toBuilder()
       node.apply(input)
       assertTrue { input.virtualPersonActivitiesCount in listOf(1, 2) }
-      val virtualPersonId0 = input.getVirtualPersonActivities(0).virtualPersonId
+      val virtualPersonId0 = input.getVirtualPersonActivities(0).virtualPersonId.toULong()
       idCountsIndex0[virtualPersonId0] = idCountsIndex0.getOrDefault(virtualPersonId0, 0) + 1
       if (input.virtualPersonActivitiesCount == 2) {
-        val virtualPersonId1 = input.getVirtualPersonActivities(1).virtualPersonId
+        val virtualPersonId1 = input.getVirtualPersonActivities(1).virtualPersonId.toULong()
         idCountsIndex1[virtualPersonId1] = idCountsIndex1.getOrDefault(virtualPersonId1, 0) + 1
         if (virtualPersonId1 == virtualPersonId0) {
           ++samePool
@@ -1137,18 +1137,18 @@ class BranchNodeImplTest {
      *
      * Expected values are
      * ```
-     *   idCountsIndex0[10] ~= FINGERPRINT_NUMBER * 0.8 = 8000
-     *   idCountsIndex0[20] ~= FINGERPRINT_NUMBER * 0.2 = 2000
-     *   idCountsIndex1[10] ~= FINGERPRINT_NUMBER * 0.3 * 0.2 = 600
-     *   idCountsIndex2[20] ~= FINGERPRINT_NUMBER * 0.3 * 0.8 = 2400
+     *   idCountsIndex0[10UL] ~= FINGERPRINT_NUMBER * 0.8 = 8000
+     *   idCountsIndex0[20UL] ~= FINGERPRINT_NUMBER * 0.2 = 2000
+     *   idCountsIndex1[10UL] ~= FINGERPRINT_NUMBER * 0.3 * 0.2 = 600
+     *   idCountsIndex2[20UL] ~= FINGERPRINT_NUMBER * 0.3 * 0.8 = 2400
      * ```
      */
     assertEquals(2, idCountsIndex0.size)
-    assertEquals(1986, idCountsIndex0[10])
-    assertEquals(8014, idCountsIndex0[20])
+    assertEquals(1986, idCountsIndex0[10UL])
+    assertEquals(8014, idCountsIndex0[20UL])
     assertEquals(2, idCountsIndex1.size)
-    assertEquals(570, idCountsIndex1[10])
-    assertEquals(2377, idCountsIndex1[20])
+    assertEquals(570, idCountsIndex1[10UL])
+    assertEquals(2377, idCountsIndex1[20UL])
 
     /**
      * ```
@@ -1218,13 +1218,13 @@ class BranchNodeImplTest {
     }
     val node = ModelNode.build(config)
 
-    val idCountsIndex = mutableMapOf<Long, Int>()
+    val idCountsIndex = mutableMapOf<ULong, Int>()
     (0 until FINGERPRINT_NUMBER).forEach {
       val input = labelerEvent { actingFingerprint = it }.toBuilder()
       node.apply(input)
       assertTrue { input.virtualPersonActivitiesCount in listOf(0, 1) }
       if (input.virtualPersonActivitiesCount == 1) {
-        val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId
+        val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId.toULong()
         idCountsIndex[virtualPersonId] = idCountsIndex.getOrDefault(virtualPersonId, 0) + 1
       }
     }
@@ -1235,13 +1235,13 @@ class BranchNodeImplTest {
      * Expect ~70% events have 0 virtual person, ~30% events have 1.
      * ```
      * Expected values are
-     *   idCountsIndex[10] ~= FINGERPRINT_NUMBER * 0.3 * 0.2 = 600
-     *   idCountsIndex[20] ~= FINGERPRINT_NUMBER * 0.3 * 0.8 = 2400
+     *   idCountsIndex[10UL] ~= FINGERPRINT_NUMBER * 0.3 * 0.2 = 600
+     *   idCountsIndex[20UL] ~= FINGERPRINT_NUMBER * 0.3 * 0.8 = 2400
      * ```
      */
     assertEquals(2, idCountsIndex.size)
-    assertEquals(593, idCountsIndex[10])
-    assertEquals(2354, idCountsIndex[20])
+    assertEquals(593, idCountsIndex[10UL])
+    assertEquals(2354, idCountsIndex[20UL])
   }
 
   @Test
@@ -1299,8 +1299,8 @@ class BranchNodeImplTest {
     }
     val node = ModelNode.build(config)
 
-    val idCountsIndex0 = mutableMapOf<Long, Int>()
-    val idCountsIndex1 = mutableMapOf<Long, Int>()
+    val idCountsIndex0 = mutableMapOf<ULong, Int>()
+    val idCountsIndex1 = mutableMapOf<ULong, Int>()
     var samePool = 0
     var differentPool = 0
 
@@ -1313,10 +1313,10 @@ class BranchNodeImplTest {
           .toBuilder()
       node.apply(input)
       assertTrue { input.virtualPersonActivitiesCount in listOf(1, 2) }
-      val virtualPersonId0 = input.getVirtualPersonActivities(0).virtualPersonId
+      val virtualPersonId0 = input.getVirtualPersonActivities(0).virtualPersonId.toULong()
       idCountsIndex0[virtualPersonId0] = idCountsIndex0.getOrDefault(virtualPersonId0, 0) + 1
       if (input.virtualPersonActivitiesCount == 2) {
-        val virtualPersonId1 = input.getVirtualPersonActivities(1).virtualPersonId
+        val virtualPersonId1 = input.getVirtualPersonActivities(1).virtualPersonId.toULong()
         idCountsIndex1[virtualPersonId1] = idCountsIndex1.getOrDefault(virtualPersonId1, 0) + 1
         if (virtualPersonId1 == virtualPersonId0) {
           ++samePool
@@ -1334,18 +1334,18 @@ class BranchNodeImplTest {
      *
      * Expected values are
      * ```
-     *   idCountsIndex0[10] ~= FINGERPRINT_NUMBER * 0.8 = 8000
-     *   idCountsIndex0[20] ~= FINGERPRINT_NUMBER * 0.2 = 2000
-     *   idCountsIndex1[10] ~= FINGERPRINT_NUMBER * 0.3 * 0.2 = 600
-     *   idCountsIndex1[20] ~= FINGERPRINT_NUMBER * 0.3 * 0.8 = 2400
+     *   idCountsIndex0[10UL] ~= FINGERPRINT_NUMBER * 0.8 = 8000
+     *   idCountsIndex0[20UL] ~= FINGERPRINT_NUMBER * 0.2 = 2000
+     *   idCountsIndex1[10UL] ~= FINGERPRINT_NUMBER * 0.3 * 0.2 = 600
+     *   idCountsIndex1[20UL] ~= FINGERPRINT_NUMBER * 0.3 * 0.8 = 2400
      * ```
      */
     assertEquals(2, idCountsIndex0.size)
-    assertEquals(1986, idCountsIndex0[10])
-    assertEquals(8014, idCountsIndex0[20])
+    assertEquals(1986, idCountsIndex0[10UL])
+    assertEquals(8014, idCountsIndex0[20UL])
     assertEquals(2, idCountsIndex1.size)
-    assertEquals(570, idCountsIndex1[10])
-    assertEquals(2377, idCountsIndex1[20])
+    assertEquals(570, idCountsIndex1[10UL])
+    assertEquals(2377, idCountsIndex1[20UL])
 
     /**
      * ```
@@ -1418,7 +1418,7 @@ class BranchNodeImplTest {
     val node = ModelNode.build(config)
 
     /** person_index = 0 get id 10, person_index = 1 get id 20. */
-    val idCountsIndex = mutableMapOf<Long, Int>()
+    val idCountsIndex = mutableMapOf<ULong, Int>()
     (0 until FINGERPRINT_NUMBER).forEach {
       val input =
         labelerEvent {
@@ -1428,12 +1428,12 @@ class BranchNodeImplTest {
           .toBuilder()
       node.apply(input)
       assertTrue { input.virtualPersonActivitiesCount in listOf(1, 2) }
-      val virtualPersonId0 = input.getVirtualPersonActivities(0).virtualPersonId
-      assertEquals(10, virtualPersonId0)
+      val virtualPersonId0 = input.getVirtualPersonActivities(0).virtualPersonId.toULong()
+      assertEquals(10UL, virtualPersonId0)
       idCountsIndex[virtualPersonId0] = idCountsIndex.getOrDefault(virtualPersonId0, 0) + 1
       if (input.virtualPersonActivitiesCount == 2) {
-        val virtualPersonId1 = input.getVirtualPersonActivities(1).virtualPersonId
-        assertEquals(20, virtualPersonId1)
+        val virtualPersonId1 = input.getVirtualPersonActivities(1).virtualPersonId.toULong()
+        assertEquals(20UL, virtualPersonId1)
         idCountsIndex[virtualPersonId1] = idCountsIndex.getOrDefault(virtualPersonId1, 0) + 1
       }
     }
@@ -1444,13 +1444,13 @@ class BranchNodeImplTest {
      * All events have person_index 0. ~30% events have person_index 1.
      * ```
      * Expected values are
-     *   idCountsIndex[10] ~= FINGERPRINT_NUMBER = 10000
-     *   idCountsIndex[20] ~= FINGERPRINT_NUMBER * 0.3 = 3000
+     *   idCountsIndex[10UL] ~= FINGERPRINT_NUMBER = 10000
+     *   idCountsIndex[20UL] ~= FINGERPRINT_NUMBER * 0.3 = 3000
      * ```
      */
     assertEquals(2, idCountsIndex.size)
-    assertEquals(10000, idCountsIndex[10])
-    assertEquals(2947, idCountsIndex[20])
+    assertEquals(10000, idCountsIndex[10UL])
+    assertEquals(2947, idCountsIndex[20UL])
   }
 
   @Test
@@ -1535,7 +1535,7 @@ class BranchNodeImplTest {
 
     val node = ModelNode.build(config)
 
-    val idCounts = mutableMapOf<Long, Int>()
+    val idCounts = mutableMapOf<ULong, Int>()
     val virtualPersonSizeCounts = mutableMapOf<Int, Int>()
     (0 until FINGERPRINT_NUMBER).forEach {
       val input =
@@ -1549,7 +1549,8 @@ class BranchNodeImplTest {
       virtualPersonSizeCounts[input.virtualPersonActivitiesCount] =
         virtualPersonSizeCounts.getOrDefault(input.virtualPersonActivitiesCount, 0) + 1
       input.virtualPersonActivitiesList.forEach {
-        idCounts[it.virtualPersonId] = idCounts.getOrDefault(it.virtualPersonId, 0) + 1
+        val virtualId = it.virtualPersonId.toULong()
+        idCounts[virtualId] = idCounts.getOrDefault(virtualId, 0) + 1
       }
     }
 
@@ -1576,8 +1577,8 @@ class BranchNodeImplTest {
      * ```
      */
     assertEquals(2, idCounts.size)
-    assertEquals(3884, idCounts[10])
-    assertEquals(15384, idCounts[20])
+    assertEquals(3884, idCounts[10UL])
+    assertEquals(15384, idCounts[20UL])
     assertEquals(4, virtualPersonSizeCounts.size)
     assertEquals(3207, virtualPersonSizeCounts[1])
     assertEquals(5083, virtualPersonSizeCounts[2])
