@@ -148,10 +148,10 @@ private constructor(
       type: Type
     ): (LabelerEventOrBuilder, List<FieldDescriptor>) -> Double {
       return when (type) {
-        Type.INT32,
-        Type.UINT32 -> { a, b -> extractValue<Int>(a, b).toDouble() }
-        Type.INT64,
-        Type.UINT64 -> { a, b -> extractValue<Long>(a, b).toDouble() }
+        Type.INT32 -> { a, b -> extractValue<Int>(a, b).toDouble() }
+        Type.UINT32 -> { a, b -> extractValue<UInt>(a, b).toDouble() }
+        Type.INT64 -> { a, b -> extractValue<Long>(a, b).toDouble() }
+        Type.UINT64 -> { a, b -> extractValue<ULong>(a, b).toDouble() }
         Type.FLOAT -> { a, b -> extractValue<Float>(a, b).toDouble() }
         Type.DOUBLE -> { a, b -> extractValue(a, b) }
         else -> error("Unsupported field type for multiplicity: $type")

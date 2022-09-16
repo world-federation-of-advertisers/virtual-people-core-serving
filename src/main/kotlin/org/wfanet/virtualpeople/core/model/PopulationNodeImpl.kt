@@ -60,14 +60,19 @@ private constructor(
           .hashString("$randomSeed${event.actingFingerprint.toULong()}", StandardCharsets.UTF_8)
           .asLong()
           .toULong()
-      virtualPeopleActivity.virtualPersonId = virtualPeopleSelector.getVirtualPersonId(seed)
+      /**
+       * virtual_person_id is uint64 in the proto, we need to use the signed value to set it in
+       * kotlin.
+       */
+      virtualPeopleActivity.virtualPersonId =
+        virtualPeopleSelector.getVirtualPersonId(seed).toLong()
     }
 
     /** Write to virtual_person_activity.label from quantum labels. */
     if (event.hasQuantumLabels()) {
       val seedSuffix =
         if (virtualPeopleActivity.hasVirtualPersonId()) {
-          virtualPeopleActivity.virtualPersonId.toString()
+          virtualPeopleActivity.virtualPersonId.toULong().toString()
         } else {
           event.actingFingerprint.toULong().toString()
         }

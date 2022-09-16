@@ -68,7 +68,7 @@ TEST(LabelerTest, TestBuildFromRoot) {
       &root));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(root));
 
-  absl::flat_hash_map<int64_t, int32_t> vpid_counts;
+  absl::flat_hash_map<uint64_t, int32_t> vpid_counts;
   for (int event_id = 0; event_id < kEventIdNumber; ++event_id) {
     LabelerInput input;
     input.mutable_event_id()->set_id(std::to_string(event_id));
@@ -123,7 +123,7 @@ TEST(LabelerTest, TestBuildFromNodesRootWithIndex) {
       &nodes.emplace_back()));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
 
-  absl::flat_hash_map<int64_t, int32_t> vpid_counts;
+  absl::flat_hash_map<uint64_t, int32_t> vpid_counts;
   for (int event_id = 0; event_id < kEventIdNumber; ++event_id) {
     LabelerInput input;
     input.mutable_event_id()->set_id(std::to_string(event_id));
@@ -177,7 +177,7 @@ TEST(LabelerTest, TestBuildFromNodesRootWithoutIndex) {
       &nodes.emplace_back()));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(nodes));
 
-  absl::flat_hash_map<int64_t, int32_t> vpid_counts;
+  absl::flat_hash_map<uint64_t, int32_t> vpid_counts;
   for (int event_id = 0; event_id < kEventIdNumber; ++event_id) {
     LabelerInput input;
     input.mutable_event_id()->set_id(std::to_string(event_id));

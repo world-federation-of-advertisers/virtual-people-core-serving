@@ -45,7 +45,7 @@ import org.wfanet.virtualpeople.common.PopulationNode.VirtualPersonPool
  */
 class VirtualPeopleSelector
 private constructor(
-  private val totalPopulation: Long,
+  private val totalPopulation: ULong,
   private val pools: List<VirtualPersonIdPool>
 ) {
 
@@ -53,8 +53,8 @@ private constructor(
    * Selects and returns an id from the virtual person pools, using consistent hashing based on the
    * random_seed.
    */
-  fun getVirtualPersonId(randomSeed: ULong): Long {
-    val populationIndex = jumpConsistentHash(randomSeed, totalPopulation.toInt())
+  fun getVirtualPersonId(randomSeed: ULong): ULong {
+    val populationIndex = jumpConsistentHash(randomSeed, totalPopulation.toInt()).toULong()
     /** Gets the first pool with population_index_offset larger than population_index. */
     val index = pools.indexOfFirst { populationIndex < it.populationIndexOffset }
     /** Pick the virtualPeopleId from the previous pool. */
@@ -98,16 +98,16 @@ private constructor(
     //   }
     // ]
     fun build(pools: List<VirtualPersonPool>): VirtualPeopleSelector {
-      var totalPopulation = 0L
+      var totalPopulation = 0UL
       val compiledPools = mutableListOf<VirtualPersonIdPool>()
       pools.forEach {
         /** Only process non-empty pool. */
-        if (it.totalPopulation > 0L) {
-          compiledPools.add(VirtualPersonIdPool(it.populationOffset, totalPopulation))
-          totalPopulation += it.totalPopulation
+        if (it.totalPopulation.toULong() > 0UL) {
+          compiledPools.add(VirtualPersonIdPool(it.populationOffset.toULong(), totalPopulation))
+          totalPopulation += it.totalPopulation.toULong()
         }
       }
-      if (totalPopulation == 0L) {
+      if (totalPopulation == 0UL) {
         error("The total population of the pools is 0. The model is invalid.")
       }
       return VirtualPeopleSelector(totalPopulation, compiledPools)
@@ -122,4 +122,4 @@ private constructor(
  * of this pool is [populationIndexOffset]. [populationIndexOffset] equals to the accumulated
  * population of all previous pools.
  */
-data class VirtualPersonIdPool(val virtualPeopleIdOffset: Long, val populationIndexOffset: Long)
+data class VirtualPersonIdPool(val virtualPeopleIdOffset: ULong, val populationIndexOffset: ULong)
