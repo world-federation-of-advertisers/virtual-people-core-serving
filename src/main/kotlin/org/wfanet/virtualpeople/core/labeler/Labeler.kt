@@ -82,6 +82,7 @@ class Labeler private constructor(private val rootNode: ModelNode) {
      * All the other nodes are referenced directly in branch_node.branches.node of the parent nodes.
      * Any index or node_index field is ignored.
      */
+    @JvmStatic
     fun build(root: CompiledNode): Labeler {
       return Labeler(ModelNode.build(root))
     }
@@ -95,6 +96,7 @@ class Labeler private constructor(private val rootNode: ModelNode) {
      *
      * [nodes] must be sorted in the order that any child node is prior to its parent node.
      */
+    @JvmStatic
     fun build(nodes: List<CompiledNode>): Labeler {
       var root: ModelNode? = null
       val nodeRefs = mutableMapOf<Int, ModelNode>()
