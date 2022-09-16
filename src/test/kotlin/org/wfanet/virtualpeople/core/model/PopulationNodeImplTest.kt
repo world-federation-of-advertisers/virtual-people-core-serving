@@ -43,7 +43,7 @@ class PopulationNodeImplTest {
         )
         pools.add(
           virtualPersonPool {
-            populationOffset = 30
+            populationOffset = (ULong.MAX_VALUE - 100UL).toLong()
             totalPopulation = 3
           }
         )
@@ -58,11 +58,11 @@ class PopulationNodeImplTest {
     }
     val node = ModelNode.build(config)
 
-    val idCounts = mutableMapOf<Long, Int>()
+    val idCounts = mutableMapOf<ULong, Int>()
     (0 until FINGERPRINT_NUMBER).forEach {
       val input = labelerEvent { actingFingerprint = it }.toBuilder()
       node.apply(input)
-      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId
+      val virtualPersonId = input.getVirtualPersonActivities(0).virtualPersonId.toULong()
       idCounts[virtualPersonId] = idCounts.getOrDefault(virtualPersonId, 0) + 1
     }
 
@@ -71,16 +71,16 @@ class PopulationNodeImplTest {
      * result should be around 0.1 * FINGERPRINT_NUMBER = 1000
      */
     assertEquals(10, idCounts.size)
-    assertEquals(1076, idCounts[10])
-    assertEquals(990, idCounts[11])
-    assertEquals(975, idCounts[12])
-    assertEquals(991, idCounts[20])
-    assertEquals(1010, idCounts[21])
-    assertEquals(1005, idCounts[22])
-    assertEquals(1005, idCounts[23])
-    assertEquals(985, idCounts[30])
-    assertEquals(982, idCounts[31])
-    assertEquals(981, idCounts[32])
+    assertEquals(1076, idCounts[10UL])
+    assertEquals(990, idCounts[11UL])
+    assertEquals(975, idCounts[12UL])
+    assertEquals(991, idCounts[20UL])
+    assertEquals(1010, idCounts[21UL])
+    assertEquals(1005, idCounts[22UL])
+    assertEquals(1005, idCounts[23UL])
+    assertEquals(985, idCounts[ULong.MAX_VALUE - 100UL])
+    assertEquals(982, idCounts[ULong.MAX_VALUE - 99UL])
+    assertEquals(981, idCounts[ULong.MAX_VALUE - 98UL])
   }
 
   @Test

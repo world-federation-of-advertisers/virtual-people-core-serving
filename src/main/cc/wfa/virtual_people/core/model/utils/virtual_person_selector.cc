@@ -89,7 +89,7 @@ VirtualPersonSelector::VirtualPersonSelector(
     std::vector<VirtualPersonIdPool>&& compiled_pools)
     : total_population_(total_population), pools_(std::move(compiled_pools)) {}
 
-int64_t VirtualPersonSelector::GetVirtualPersonId(
+uint64_t VirtualPersonSelector::GetVirtualPersonId(
     const uint64_t random_seed) const {
   uint64_t population_index =
       JumpConsistentHash(random_seed, static_cast<int32_t>(total_population_));
@@ -107,7 +107,7 @@ int64_t VirtualPersonSelector::GetVirtualPersonId(
 
   uint64_t virtual_people_id = population_index - it->population_index_offset +
                                it->virtual_people_id_offset;
-  return static_cast<int64_t>(virtual_people_id);
+  return virtual_people_id;
 }
 
 }  // namespace wfa_virtual_people

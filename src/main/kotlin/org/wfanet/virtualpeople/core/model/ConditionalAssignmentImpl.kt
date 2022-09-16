@@ -56,10 +56,10 @@ private constructor(private val condition: FieldFilter, private val assignments:
       type: Type
     ): (LabelerEvent.Builder, List<FieldDescriptor>, List<FieldDescriptor>) -> Unit {
       return when (type) {
-        Type.INT32,
-        Type.UINT32 -> { a, b, c -> assign<Int>(a, b, c) }
-        Type.INT64,
-        Type.UINT64 -> { a, b, c -> assign<Long>(a, b, c) }
+        Type.INT32 -> { a, b, c -> assign<Int>(a, b, c) }
+        Type.UINT32 -> { a, b, c -> assign<UInt>(a, b, c) }
+        Type.INT64 -> { a, b, c -> assign<Long>(a, b, c) }
+        Type.UINT64 -> { a, b, c -> assign<ULong>(a, b, c) }
         Type.BOOL -> { a, b, c -> assign<Boolean>(a, b, c) }
         Type.ENUM -> { a, b, c -> assign<EnumValueDescriptor>(a, b, c) }
         Type.STRING -> { a, b, c -> assign<String>(a, b, c) }

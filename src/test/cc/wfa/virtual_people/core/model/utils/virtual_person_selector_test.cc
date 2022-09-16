@@ -37,31 +37,33 @@ constexpr int kSeedNumber = 10000;
 
 TEST(VirtualPersonSelectorTest, TestGetVirtualPersonId) {
   PopulationNode population_node;
+  // 18446744073709551515 = std::numeric_limits<uint64_t>::max()-100
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         pools { population_offset: 10 total_population: 3 }
-        pools { population_offset: 30 total_population: 3 }
+        pools { population_offset: 18446744073709551515 total_population: 3 }
         pools { population_offset: 20 total_population: 4 }
       )pb",
       &population_node));
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<VirtualPersonSelector> selector,
                        VirtualPersonSelector::Build(population_node.pools()));
 
-  absl::flat_hash_map<int64_t, int32_t> id_counts;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts;
 
   for (int seed = 0; seed < kSeedNumber; ++seed) {
-    int64_t id = selector->GetVirtualPersonId(static_cast<uint64_t>(seed));
+    uint64_t id = selector->GetVirtualPersonId(static_cast<uint64_t>(seed));
     ++id_counts[id];
   }
 
   // The expected count for getting a given virtual person id is 1 / 10 *
   // kSeedNumber = 1000.  We compare to the exact values to make sure the kotlin
   // and c++ implementations behave the same.
-  EXPECT_THAT(id_counts,
-              UnorderedElementsAre(Pair(10, 993), Pair(11, 997), Pair(12, 994),
-                                   Pair(20, 980), Pair(21, 1027), Pair(22, 979),
-                                   Pair(23, 1020), Pair(30, 1000),
-                                   Pair(31, 1015), Pair(32, 995)));
+  EXPECT_THAT(id_counts, UnorderedElementsAre(
+                             Pair(10, 993), Pair(11, 997), Pair(12, 994),
+                             Pair(20, 980), Pair(21, 1027), Pair(22, 979),
+                             Pair(23, 1020), Pair(18446744073709551515, 1000),
+                             Pair(18446744073709551516, 1015),
+                             Pair(18446744073709551517, 995)));
 }
 
 TEST(VirtualPersonSelectorTest, TestInvalidPools) {

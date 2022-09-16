@@ -75,7 +75,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeByChance) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, int32_t> id_counts;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
@@ -142,7 +142,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexByChance) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> branch_node,
                        ModelNode::Build(branch_node_config, node_refs));
 
-  absl::flat_hash_map<int64_t, int32_t> id_counts;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
@@ -347,7 +347,7 @@ TEST(BranchNodeImplTest, TestApplyBranchWithNodeIndexResolvedRecursively) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> branch_node_1,
                        ModelNode::Build(branch_node_config_1, node_refs));
 
-  absl::flat_hash_map<int64_t, int32_t> id_counts;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
@@ -569,7 +569,7 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
                        ModelNode::Build(config));
 
   // Test for RAW_COUNTRY_1
-  absl::flat_hash_map<int64_t, int32_t> id_counts_1;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts_1;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_person_country_code("RAW_COUNTRY_1");
@@ -578,7 +578,7 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
     // Fingerprint is not changed.
     EXPECT_EQ(input.acting_fingerprint(), fingerprint);
     absl::string_view person_country_code = input.person_country_code();
-    int64_t id = input.virtual_person_activities(0).virtual_person_id();
+    uint64_t id = input.virtual_person_activities(0).virtual_person_id();
     EXPECT_THAT(std::pair(person_country_code, id),
                 AnyOf(Pair("country_code_1", 10), Pair("country_code_2", 20)));
     ++id_counts_1[id];
@@ -593,14 +593,14 @@ TEST(BranchNodeImplTest, TestApplyUpdateMatrix) {
               UnorderedElementsAre(Pair(10, 8022), Pair(20, 1978)));
 
   // Test for RAW_COUNTRY_2
-  absl::flat_hash_map<int64_t, int32_t> id_counts_2;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts_2;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_person_country_code("RAW_COUNTRY_2");
     input.set_acting_fingerprint(fingerprint);
     ASSERT_THAT(node->Apply(input), IsOk());
     absl::string_view person_country_code = input.person_country_code();
-    int64_t id = input.virtual_person_activities(0).virtual_person_id();
+    uint64_t id = input.virtual_person_activities(0).virtual_person_id();
     EXPECT_THAT(std::pair(person_country_code, id),
                 AnyOf(Pair("country_code_1", 10), Pair("country_code_2", 20)));
     ++id_counts_2[id];
@@ -995,8 +995,8 @@ TEST(BranchNodeImplTest, TestExplicitMultiplicity) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, int32_t> id_counts_index_0;
-  absl::flat_hash_map<int64_t, int32_t> id_counts_index_1;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts_index_0;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts_index_1;
   int64_t same_pool = 0;
   int64_t different_pool = 0;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
@@ -1083,7 +1083,7 @@ TEST(BranchNodeImplTest, TestMultiplicityLessThanOne) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, int32_t> id_counts;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
@@ -1146,8 +1146,8 @@ TEST(BranchNodeImplTest, TestMultiplicityFromField) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, int32_t> id_counts_index_0;
-  absl::flat_hash_map<int64_t, int32_t> id_counts_index_1;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts_index_0;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts_index_1;
   int64_t same_pool = 0;
   int64_t different_pool = 0;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
@@ -1240,7 +1240,7 @@ TEST(BranchNodeImplTest, TestUsePersonIndex) {
 
   // person_index = 0 get id 10
   // person_index = 1 get id 20
-  absl::flat_hash_map<int64_t, double> id_counts;
+  absl::flat_hash_map<uint64_t, double> id_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);
@@ -1337,8 +1337,8 @@ TEST(BranchNodeImplTest, TestNestedMultiplicity) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  absl::flat_hash_map<int64_t, int32_t> id_counts;
-  absl::flat_hash_map<int64_t, int32_t> virtual_person_size_counts;
+  absl::flat_hash_map<uint64_t, int32_t> id_counts;
+  absl::flat_hash_map<uint64_t, int32_t> virtual_person_size_counts;
   for (int fingerprint = 0; fingerprint < kFingerprintNumber; ++fingerprint) {
     LabelerEvent input;
     input.set_acting_fingerprint(fingerprint);

@@ -76,7 +76,7 @@ class VirtualPersonSelector {
 
   // Selects and returns an id from the virtual person pools, using consistent
   // hashing based on the random_seed.
-  int64_t GetVirtualPersonId(uint64_t random_seed) const;
+  uint64_t GetVirtualPersonId(uint64_t random_seed) const;
 
  private:
   // The sum of total population of all pools. Required for hashing.
