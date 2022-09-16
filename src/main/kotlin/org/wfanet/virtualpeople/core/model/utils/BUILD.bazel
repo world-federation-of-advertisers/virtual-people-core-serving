@@ -7,10 +7,10 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "@maven//:com_google_guava_guava",
-        "@virtual_people_common//src/main/kotlin/org/wfanet/virtualpeople/common/fieldfilter",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:field_filter_kt_jvm_proto",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_kt_jvm_proto",
         "@wfa_common_jvm//imports/java/com/google/protobuf",
         "@wfa_common_jvm//imports/java/com/google/protobuf/util",
+        "@wfa_virtual_people_common//src/main/kotlin/org/wfanet/virtualpeople/common/fieldfilter",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:field_filter_kt_jvm_proto",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_kt_jvm_proto",
     ],
 )

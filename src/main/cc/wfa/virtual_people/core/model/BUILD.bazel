@@ -47,12 +47,12 @@ cc_library(
         "@com_google_absl//absl/types:variant",
         "@com_google_protobuf//:protobuf",
         "@farmhash",
-        "@virtual_people_common//src/main/cc/wfa/virtual_people/common/field_filter",
-        "@virtual_people_common//src/main/cc/wfa/virtual_people/common/field_filter/utils:field_util",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:demographic_cc_proto",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
         "@wfa_common_cpp//src/main/cc/common_cpp/macros",
+        "@wfa_virtual_people_common//src/main/cc/wfa/virtual_people/common/field_filter",
+        "@wfa_virtual_people_common//src/main/cc/wfa/virtual_people/common/field_filter/utils:field_util",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:demographic_cc_proto",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:label_cc_proto",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
 
@@ -68,7 +68,7 @@ cc_library(
     deps = [
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
         "@wfa_common_cpp//src/main/cc/common_cpp/macros",
+        "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:model_cc_proto",
     ],
 )
