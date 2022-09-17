@@ -67,9 +67,9 @@ TEST(PopulationNodeImplTest, Apply) {
   // 1000
   EXPECT_THAT(id_counts, UnorderedElementsAre(
                              Pair(10, 1076), Pair(11, 990), Pair(12, 975),
-                             Pair(18446744073709551515, 985),
-                             Pair(18446744073709551516, 982),
-                             Pair(18446744073709551517, 981), Pair(20, 991),
+                             Pair(18446744073709551515u, 985),
+                             Pair(18446744073709551516u, 982),
+                             Pair(18446744073709551517u, 981), Pair(20, 991),
                              Pair(21, 1010), Pair(22, 1005), Pair(23, 1005)));
 }
 

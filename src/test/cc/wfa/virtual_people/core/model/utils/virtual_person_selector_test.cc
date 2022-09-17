@@ -61,9 +61,9 @@ TEST(VirtualPersonSelectorTest, TestGetVirtualPersonId) {
   EXPECT_THAT(id_counts, UnorderedElementsAre(
                              Pair(10, 993), Pair(11, 997), Pair(12, 994),
                              Pair(20, 980), Pair(21, 1027), Pair(22, 979),
-                             Pair(23, 1020), Pair(18446744073709551515, 1000),
-                             Pair(18446744073709551516, 1015),
-                             Pair(18446744073709551517, 995)));
+                             Pair(23, 1020), Pair(18446744073709551515u, 1000),
+                             Pair(18446744073709551516u, 1015),
+                             Pair(18446744073709551517u, 995)));
 }
 
 TEST(VirtualPersonSelectorTest, TestInvalidPools) {
