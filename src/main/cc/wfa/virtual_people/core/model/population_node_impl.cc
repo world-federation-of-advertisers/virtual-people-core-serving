@@ -37,7 +37,7 @@ namespace wfa_virtual_people {
 
 // TODO(@tcsnfkx): Merge these with the constants in virtual-people-training.
 // The offset and size of the cookie monster pools.
-// Except the cookie monster pool, any pool cannot use ID starting from
+// Except for the cookie monster pool, any pool cannot use ID starting from
 // kCookieMonsterOffset.
 constexpr uint64_t kCookieMonsterOffset = 1000000000000000000;  // 10^18
 constexpr uint64_t kCookieMonsterSize = 100000000000000;        // 10^14
@@ -64,8 +64,8 @@ absl::Status IsValidPools(
     if (pool.population_offset() + pool.total_population() >
         kCookieMonsterOffset) {
       return absl::InvalidArgumentError(absl::StrCat(
-          "The virtual person pool contains ID range >= 10^18: ",
-          pool.DebugString()));
+          "The virtual person pool contains ID range >= CookieMonsterOffset: ",
+          kCookieMonsterOffset, "\n", "Pool: ", pool.DebugString()));
     }
   }
   return absl::OkStatus();
@@ -132,6 +132,9 @@ absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
   VirtualPersonActivity* virtual_person_activity =
       event.add_virtual_person_activities();
 
+  if (!virtual_person_selector_) {
+    return absl::InternalError("Failed to build population pools.");
+  }
   uint64_t seed = util::Fingerprint64(
       absl::StrCat(random_seed_, event.acting_fingerprint()));
   // Gets virtual person id from the pools.

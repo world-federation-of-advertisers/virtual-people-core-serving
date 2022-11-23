@@ -39,6 +39,7 @@ constexpr int kFingerprintNumber = 10000;
 
 TEST(PopulationNodeImplTest, Apply) {
   CompiledNode config;
+  // Test for a pool at the border of the reserved range.
   // 999999999999999997 = 10^18 - 3
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -67,12 +68,12 @@ TEST(PopulationNodeImplTest, Apply) {
   // Compare to the exact result to make sure C++ and Kotlin implementations
   // behave the same. The result should be around 0.1 * kFingerprintNumber =
   // 1000
-  EXPECT_THAT(id_counts, UnorderedElementsAre(
-                             Pair(10, 1076), Pair(11, 990), Pair(12, 975),
-                             Pair(999999999999999997, 985),
-                             Pair(999999999999999998, 982),
-                             Pair(999999999999999999, 981), Pair(20, 991),
-                             Pair(21, 1010), Pair(22, 1005), Pair(23, 1005)));
+  EXPECT_THAT(id_counts,
+              UnorderedElementsAre(
+                  Pair(10, 1076), Pair(11, 990), Pair(12, 975),
+                  Pair(999999999999999997, 985), Pair(999999999999999998, 982),
+                  Pair(999999999999999999, 981), Pair(20, 991), Pair(21, 1010),
+                  Pair(22, 1005), Pair(23, 1005)));
 }
 
 TEST(PopulationNodeImplTest, ApplyNoLabel) {
@@ -563,7 +564,28 @@ TEST(PopulationNodeImplTest, CookieMonsterPool) {
               Lt(1000000000000000000 + 100000000000000));
 }
 
-TEST(PopulationNodeImplTest, InvalidPool) {
+TEST(PopulationNodeImplTest, InvalidEmptyPool) {
+  // The node is invalid as the total pools size is 0.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode"
+        index: 1
+        population_node {
+          pools { population_offset: 10 total_population: 0 }
+          pools { population_offset: 30 total_population: 0 }
+          pools { population_offset: 20 total_population: 0 }
+          random_seed: "TestRandomSeed"
+        }
+      )pb",
+      &config));
+
+  EXPECT_THAT(ModelNode::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(PopulationNodeImplTest, InvalidPoolUsingReservedIdRange) {
+  // The node is invalid as it uses the reserved id range.
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
