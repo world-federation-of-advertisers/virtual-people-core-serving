@@ -35,17 +35,40 @@
 
 namespace wfa_virtual_people {
 
-// Check if the @pools represent an empty population pool.
-bool IsEmptyPopulationPool(
+// TODO(@tcsnfkx): Merge these with the constants in virtual-people-training.
+// The offset and size of the cookie monster pools.
+// Except for the cookie monster pool, any pool cannot use ID starting from
+// kCookieMonsterOffset.
+constexpr uint64_t kCookieMonsterOffset = 1000000000000000000;  // 10^18
+constexpr uint64_t kCookieMonsterSize = 100000000000000;        // 10^14
+
+// Check if the @pools represent a cookie monster pool.
+bool IsCookieMonsterPool(
     const RepeatedPtrField<PopulationNode::VirtualPersonPool>& pools) {
   if (pools.size() != 1) {
     return false;
   }
-  if (pools.Get(0).population_offset() == 0 &&
-      pools.Get(0).total_population() == 0) {
-    return true;
+  return (pools.Get(0).population_offset() == kCookieMonsterOffset &&
+          pools.Get(0).total_population() == kCookieMonsterSize);
+}
+
+// Check if the @pools is valid.
+// Returns error status when the @pools does not represent a cookie monster pool
+// and any pool contains ID range >= kCookieMonsterOffset.
+absl::Status IsValidPools(
+    const RepeatedPtrField<PopulationNode::VirtualPersonPool>& pools) {
+  if (IsCookieMonsterPool(pools)) {
+    return absl::OkStatus();
   }
-  return false;
+  for (const PopulationNode::VirtualPersonPool& pool : pools) {
+    if (pool.population_offset() + pool.total_population() >
+        kCookieMonsterOffset) {
+      return absl::InvalidArgumentError(absl::StrCat(
+          "The virtual person pool contains ID range >= CookieMonsterOffset: ",
+          kCookieMonsterOffset, "\n", "Pool: ", pool.DebugString()));
+    }
+  }
+  return absl::OkStatus();
 }
 
 // Collapse the @quantum_label to a single label based on the probabilities, and
@@ -81,10 +104,7 @@ absl::StatusOr<std::unique_ptr<PopulationNodeImpl>> PopulationNodeImpl::Build(
   if (!node_config.has_population_node()) {
     return absl::InvalidArgumentError("This is not a population node.");
   }
-  if (IsEmptyPopulationPool(node_config.population_node().pools())) {
-    return absl::make_unique<PopulationNodeImpl>(
-        node_config, nullptr, node_config.population_node().random_seed());
-  }
+  RETURN_IF_ERROR(IsValidPools(node_config.population_node().pools()));
   ASSIGN_OR_RETURN(
       std::unique_ptr<VirtualPersonSelector> virtual_person_selector,
       VirtualPersonSelector::Build(node_config.population_node().pools()));
@@ -112,16 +132,15 @@ absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
   VirtualPersonActivity* virtual_person_activity =
       event.add_virtual_person_activities();
 
-  // Only populate virtual_person_id when the pools is not an empty population
-  // pool.
-  if (virtual_person_selector_) {
-    uint64_t seed = util::Fingerprint64(
-        absl::StrCat(random_seed_, event.acting_fingerprint()));
-    // Gets virtual person id from the pools.
-    uint64_t virtual_person_id =
-        virtual_person_selector_->GetVirtualPersonId(seed);
-    virtual_person_activity->set_virtual_person_id(virtual_person_id);
+  if (!virtual_person_selector_) {
+    return absl::InternalError("Failed to build population pools.");
   }
+  uint64_t seed = util::Fingerprint64(
+      absl::StrCat(random_seed_, event.acting_fingerprint()));
+  // Gets virtual person id from the pools.
+  uint64_t virtual_person_id =
+      virtual_person_selector_->GetVirtualPersonId(seed);
+  virtual_person_activity->set_virtual_person_id(virtual_person_id);
 
   // Write to virtual_person_activity.label from quantum labels.
   if (event.has_quantum_labels()) {

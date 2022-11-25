@@ -27,6 +27,8 @@ namespace wfa_virtual_people {
 namespace {
 
 using ::testing::DoubleNear;
+using ::testing::Ge;
+using ::testing::Lt;
 using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
 using ::wfa::EqualsProto;
@@ -37,14 +39,15 @@ constexpr int kFingerprintNumber = 10000;
 
 TEST(PopulationNodeImplTest, Apply) {
   CompiledNode config;
-  // 18446744073709551515 = std::numeric_limits<uint64_t>::max()-100
+  // Test for a pool at the border of the reserved range.
+  // 999999999999999997 = 10^18 - 3
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "TestPopulationNode"
         index: 1
         population_node {
           pools { population_offset: 10 total_population: 3 }
-          pools { population_offset: 18446744073709551515 total_population: 3 }
+          pools { population_offset: 999999999999999997 total_population: 3 }
           pools { population_offset: 20 total_population: 4 }
           random_seed: "TestRandomSeed"
         }
@@ -65,12 +68,12 @@ TEST(PopulationNodeImplTest, Apply) {
   // Compare to the exact result to make sure C++ and Kotlin implementations
   // behave the same. The result should be around 0.1 * kFingerprintNumber =
   // 1000
-  EXPECT_THAT(id_counts, UnorderedElementsAre(
-                             Pair(10, 1076), Pair(11, 990), Pair(12, 975),
-                             Pair(18446744073709551515u, 985),
-                             Pair(18446744073709551516u, 982),
-                             Pair(18446744073709551517u, 981), Pair(20, 991),
-                             Pair(21, 1010), Pair(22, 1005), Pair(23, 1005)));
+  EXPECT_THAT(id_counts,
+              UnorderedElementsAre(
+                  Pair(10, 1076), Pair(11, 990), Pair(12, 975),
+                  Pair(999999999999999997, 985), Pair(999999999999999998, 982),
+                  Pair(999999999999999999, 981), Pair(20, 991), Pair(21, 1010),
+                  Pair(22, 1005), Pair(23, 1005)));
 }
 
 TEST(PopulationNodeImplTest, ApplyNoLabel) {
@@ -523,16 +526,17 @@ TEST(PopulationNodeImplTest, ApplyExistingVirtualPerson) {
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
-TEST(PopulationNodeImplTest, EmptyPopulationPool) {
-  // The node represents an empty population pool, which will not assign a
-  // virtual person id.
+TEST(PopulationNodeImplTest, CookieMonsterPool) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
         name: "TestPopulationNode"
         index: 1
         population_node {
-          pools { population_offset: 0 total_population: 0 }
+          pools {
+            population_offset: 1000000000000000000
+            total_population: 100000000000000
+          }
           random_seed: "TestRandomSeed"
         }
       )pb",
@@ -554,30 +558,13 @@ TEST(PopulationNodeImplTest, EmptyPopulationPool) {
       )pb",
       &input));
   EXPECT_THAT(node->Apply(input), IsOk());
-  LabelerEvent expected_event;
-  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
-      R"pb(
-        virtual_person_activities {
-          label {
-            demo {
-              gender: GENDER_FEMALE
-              age { min_age: 25 max_age: 1000 }
-            }
-          }
-        }
-        label {
-          demo {
-            gender: GENDER_FEMALE
-            age { min_age: 25 max_age: 1000 }
-          }
-        }
-        acting_fingerprint: 10000
-      )pb",
-      &expected_event));
-  EXPECT_THAT(input, EqualsProto(expected_event));
+  EXPECT_THAT(input.virtual_person_activities(0).virtual_person_id(),
+              Ge(1000000000000000000));
+  EXPECT_THAT(input.virtual_person_activities(0).virtual_person_id(),
+              Lt(1000000000000000000 + 100000000000000));
 }
 
-TEST(PopulationNodeImplTest, InvalidPools) {
+TEST(PopulationNodeImplTest, InvalidEmptyPool) {
   // The node is invalid as the total pools size is 0.
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -588,6 +575,24 @@ TEST(PopulationNodeImplTest, InvalidPools) {
           pools { population_offset: 10 total_population: 0 }
           pools { population_offset: 30 total_population: 0 }
           pools { population_offset: 20 total_population: 0 }
+          random_seed: "TestRandomSeed"
+        }
+      )pb",
+      &config));
+
+  EXPECT_THAT(ModelNode::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(PopulationNodeImplTest, InvalidPoolUsingReservedIdRange) {
+  // The node is invalid as it uses the reserved id range.
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestPopulationNode"
+        index: 1
+        population_node {
+          pools { population_offset: 0 total_population: 1000000000000000001 }
           random_seed: "TestRandomSeed"
         }
       )pb",
