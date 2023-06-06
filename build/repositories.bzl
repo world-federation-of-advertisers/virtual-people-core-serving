@@ -40,3 +40,10 @@ def virtual_people_core_serving_repositories():
         strip_prefix = "virtual-people-common-0.2.2",
         url = "https://github.com/world-federation-of-advertisers/virtual-people-common/archive/refs/tags/v0.2.2.tar.gz",
     )
+
+    http_archive(
+        name = "wfa_measurement_proto",
+        sha256 = "50934e930ab470ae0eb17b593616b79a9814a09fb24b1e51f4cd5d4dd7fbadcd",
+        strip_prefix = "cross-media-measurement-api-0.33.0",
+        url = "https://github.com/world-federation-of-advertisers/cross-media-measurement-api/archive/refs/tags/v0.33.0.tar.gz",
+    )
