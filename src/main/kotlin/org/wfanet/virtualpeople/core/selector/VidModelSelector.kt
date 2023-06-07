@@ -12,26 +12,147 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package src.main.kotlin.org.wfanet.virtualpeople.core.selector
+package org.wfanet.virtualpeople.core.selector
 
+import kotlin.math.abs
 import org.wfanet.measurement.api.v2alpha.ModelLine
 import org.wfanet.measurement.api.v2alpha.ModelRollout
-import org.wfanet.measurement.api.v2alpha.ModelRelease
-import src.main.kotlin.org.wfanet.virtualpeople.core.selector.cache.LRUCache
 import org.wfanet.virtualpeople.common.*
+import org.wfanet.virtualpeople.core.common.getFingerprint64Long
 
 const val CACHE_SIZE = 60
 
 class VidModelSelector(private val modelLine: ModelLine, private val rollouts: List<ModelRollout>) {
 
-  private val lruCache: LRUCache<Int, Array<Triple<Double, Double, ModelRelease>>>
+  private val lruCache: LRUCache<Long, ArrayList<Triple<Double, Double, String>>> = LRUCache(CACHE_SIZE)
 
-  init {
-      lruCache = LRUCache<Int, Array<Triple<Double,Double,ModelRelease>>>(CACHE_SIZE)
-  }
-
-  fun getModelRelease(labelerInput: LabelerInput): ModelRelease? {
+  fun getModelRelease(labelerInput: LabelerInput): String? {
+    val eventTimestampSec = labelerInput.timestampUsec / 1_000_000L
+    if (eventTimestampSec >= modelLine.activeStartTime.seconds && eventTimestampSec < modelLine.activeEndTime.seconds) {
+      val eventFingerprint = getEventFingerprint(labelerInput)
+      val reducedEventId = abs(eventFingerprint.toDouble() / Long.MAX_VALUE)
+      val eventDay: Long = eventTimestampSec / 86_400L
+      val ranges = lruCache[eventDay] ?: kotlin.run {
+        val adoption = calculateRanges(eventDay)
+        lruCache[eventDay] = adoption
+        adoption
+      }
+      for(triple in ranges) {
+        if (reducedEventId < triple.second) {
+          return triple.third
+        }
+      }
+    }
     return null
   }
 
+  private fun calculateRanges(eventDay: Long): ArrayList<Triple<Double, Double, String>> {
+    val activeRollouts = retrieveActiveRollouts(eventDay)
+    val ranges = arrayListOf<Triple<Double, Double, String>>()
+    if (activeRollouts.size == 1) {
+      ranges.add(Triple(0.0,1.1,activeRollouts.elementAt(0).modelRelease))
+    } else {
+      ranges.add(Triple(0.0, calculatePercentageAdoption(eventDay, activeRollouts.elementAt(0)), activeRollouts.elementAt(0).modelRelease))
+      var taken = ranges.elementAt(0).second
+      for (i in 1 until activeRollouts.size - 1) {
+        val percentageAdoption = calculatePercentageAdoption(eventDay, activeRollouts.elementAt(i))
+        if (i < activeRollouts.size - 1) {
+          ranges.add(Triple(ranges[i-1].second, (percentageAdoption * (1 - taken)) + ranges[i-1].second, activeRollouts.elementAt(i).modelRelease))
+        } else {
+          ranges.add(Triple(ranges[i-1].second, 1.1, activeRollouts.elementAt(i).modelRelease))
+        }
+        taken = ranges[i].second
+      }
+    }
+    return ranges
+  }
+
+  private fun calculatePercentageAdoption(eventDay: Long, modelRollout: ModelRollout): Double {
+    val rolloutPeriodStartDay =
+      (modelRollout.rolloutPeriod.startTime.seconds / 86_400L).toDouble()
+    val rolloutPeriodEndDay =
+      (modelRollout.rolloutPeriod.endTime.seconds / 86_400L).toDouble()
+    val percentage: Double =
+      (eventDay - rolloutPeriodStartDay) / (rolloutPeriodEndDay - rolloutPeriodStartDay)
+    return percentage
+  }
+
+  private fun retrieveActiveRollouts(eventDay: Long): List<ModelRollout> {
+    if (rollouts.isEmpty()) {
+      return rollouts
+    }
+    val sortedRollouts = rollouts.sortedBy { it.rolloutPeriod.startTime.seconds }
+    val firstRolloutPeriodStartDay = sortedRollouts.elementAt(0).rolloutPeriod.startTime.seconds / 86_400L
+    if (eventDay < firstRolloutPeriodStartDay) {
+      return arrayListOf()
+    }
+    val activeRollouts = arrayListOf<ModelRollout>()
+    for (i in sortedRollouts.size - 1 downTo 0) {
+      val rolloutPeriodEndDay = rollouts.elementAt(i).rolloutPeriod.endTime.seconds / 86_400L
+      if (eventDay >= rolloutPeriodEndDay) {
+        activeRollouts.add(rollouts.elementAt(i))
+        break
+      }
+      val rolloutPeriodStartDay = rollouts.elementAt(i).rolloutPeriod.startTime.seconds / 86_400L
+      if (eventDay >= rolloutPeriodStartDay) {
+        activeRollouts.add(rollouts.elementAt(i))
+        if (rollouts.elementAt(i).rolloutPeriod.startTime.seconds == rollouts.elementAt(i).rolloutPeriod.endTime.seconds) {
+          // No gradual rollout. The rollout immediately labels 100% of events
+          break
+        }
+      }
+    }
+    return activeRollouts
+  }
+
+  private fun getEventFingerprint(labelerInput: LabelerInput): Long {
+    if (labelerInput.hasProfileInfo()) {
+      val profileInfo = labelerInput.profileInfo
+      if (profileInfo.hasEmailUserInfo() && profileInfo.emailUserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.emailUserInfo.userId)
+      }
+      if (profileInfo.hasPhoneUserInfo() && profileInfo.phoneUserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.phoneUserInfo.userId)
+      }
+      if (profileInfo.hasLoggedInIdUserInfo() && profileInfo.loggedInIdUserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.loggedInIdUserInfo.userId)
+      }
+      if (profileInfo.hasLoggedOutIdUserInfo() && profileInfo.loggedOutIdUserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.loggedOutIdUserInfo.userId)
+      }
+      if (profileInfo.hasProprietaryIdSpace1UserInfo() && profileInfo.proprietaryIdSpace1UserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.proprietaryIdSpace1UserInfo.userId)
+      }
+      if (profileInfo.hasProprietaryIdSpace2UserInfo() && profileInfo.proprietaryIdSpace2UserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.proprietaryIdSpace2UserInfo.userId)
+      }
+      if (profileInfo.hasProprietaryIdSpace3UserInfo() && profileInfo.proprietaryIdSpace3UserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.proprietaryIdSpace3UserInfo.userId)
+      }
+      if (profileInfo.hasProprietaryIdSpace4UserInfo() && profileInfo.proprietaryIdSpace4UserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.proprietaryIdSpace4UserInfo.userId)
+      }
+      if (profileInfo.hasProprietaryIdSpace5UserInfo() && profileInfo.proprietaryIdSpace5UserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.proprietaryIdSpace5UserInfo.userId)
+      }
+      if (profileInfo.hasProprietaryIdSpace6UserInfo() && profileInfo.proprietaryIdSpace6UserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.proprietaryIdSpace6UserInfo.userId)
+      }
+      if (profileInfo.hasProprietaryIdSpace7UserInfo() && profileInfo.proprietaryIdSpace7UserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.proprietaryIdSpace7UserInfo.userId)
+      }
+      if (profileInfo.hasProprietaryIdSpace8UserInfo() && profileInfo.proprietaryIdSpace8UserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.proprietaryIdSpace8UserInfo.userId)
+      }
+      if (profileInfo.hasProprietaryIdSpace9UserInfo() && profileInfo.proprietaryIdSpace9UserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.proprietaryIdSpace9UserInfo.userId)
+      }
+      if (profileInfo.hasProprietaryIdSpace10UserInfo() && profileInfo.proprietaryIdSpace10UserInfo.hasUserId()) {
+        return getFingerprint64Long(profileInfo.proprietaryIdSpace10UserInfo.userId)
+      }
+    } else if (labelerInput.hasEventId() && labelerInput.eventId.hasId()) {
+      return getFingerprint64Long(labelerInput.eventId.id)
+    }
+    return (0..Long.MAX_VALUE).random()
+  }
 }

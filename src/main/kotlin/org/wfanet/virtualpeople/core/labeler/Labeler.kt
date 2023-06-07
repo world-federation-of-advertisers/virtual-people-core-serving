@@ -14,9 +14,8 @@
 
 package org.wfanet.virtualpeople.core.labeler
 
-import com.google.common.hash.Hashing
-import java.nio.charset.StandardCharsets
 import org.wfanet.virtualpeople.common.*
+import org.wfanet.virtualpeople.core.common.getFingerprint64Long
 import org.wfanet.virtualpeople.core.model.ModelNode
 
 class Labeler private constructor(private val rootNode: ModelNode) {
@@ -142,9 +141,9 @@ class Labeler private constructor(private val rootNode: ModelNode) {
      * We need to convert it to ULong whenever we need to consume it, and convert it back to Long
      * when we write back to proto.
      */
-    private fun getFingerprint64Long(seed: String): Long {
+    /*private fun getFingerprint64Long(seed: String): Long {
       return Hashing.farmHashFingerprint64().hashString(seed, StandardCharsets.UTF_8).asLong()
-    }
+    }*/
 
     private fun setUserInfoFingerprint(userInfo: UserInfo.Builder) {
       if (userInfo.hasUserId()) {
