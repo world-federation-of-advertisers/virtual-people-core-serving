@@ -34,18 +34,18 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   }
 
   private val lruCache: LRUCache<Long, ArrayList<Triple<Double, Double, String>>> = LRUCache(CACHE_SIZE)
-// TODO consider freeze time
-  // TODO check that rollouts are own by the given model line
+
   fun getModelRelease(labelerInput: LabelerInput): String? {
     val eventTimestampSec = labelerInput.timestampUsec / 1_000_000L
     if (eventTimestampSec >= modelLine.activeStartTime.seconds && eventTimestampSec < modelLine.activeEndTime.seconds) {
       val eventFingerprint = getEventFingerprint(labelerInput)
-      println("eventFingerprint: ${eventFingerprint}")
       val reducedEventId = abs(eventFingerprint.toDouble() / Long.MAX_VALUE)
       println("REduced event id: ${reducedEventId}")
       val eventDay: Long = eventTimestampSec / 86_400L
       val ranges = readFromCache(eventDay)
-      println(ranges)
+      for(triple in ranges) {
+        println(triple)
+      }
       for(triple in ranges) {
         if (reducedEventId < triple.second) {
           return triple.third
@@ -92,13 +92,26 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   }
 
   private fun calculatePercentageAdoption(eventDay: Long, modelRollout: ModelRollout): Double {
+    val modelRolloutFreezeTimeDay = if (modelRollout.hasRolloutFreezeTime()) {
+      modelRollout.rolloutFreezeTime.seconds / 86_400L
+    } else {
+      Long.MAX_VALUE
+    }
+
     val rolloutPeriodStartDay =
       (modelRollout.rolloutPeriod.startTime.seconds / 86_400L).toDouble()
     val rolloutPeriodEndDay =
       (modelRollout.rolloutPeriod.endTime.seconds / 86_400L).toDouble()
-    val percentage: Double =
-      (eventDay - rolloutPeriodStartDay) / (rolloutPeriodEndDay - rolloutPeriodStartDay)
-    return percentage
+
+    if (eventDay >= modelRolloutFreezeTimeDay) {
+      val percentage: Double =
+        (modelRolloutFreezeTimeDay - rolloutPeriodStartDay) / (rolloutPeriodEndDay - rolloutPeriodStartDay)
+      return percentage
+    } else {
+      val percentage: Double =
+        (eventDay - rolloutPeriodStartDay) / (rolloutPeriodEndDay - rolloutPeriodStartDay)
+      return percentage
+    }
   }
 
   private fun retrieveActiveRollouts(eventDay: Long): List<ModelRollout> {
@@ -114,8 +127,13 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     for (i in sortedRollouts.size - 1 downTo 0) {
       val rolloutPeriodEndDay = sortedRollouts.elementAt(i).rolloutPeriod.endTime.seconds / 86_400L
       if (eventDay >= rolloutPeriodEndDay) {
-        activeRollouts.add(sortedRollouts.elementAt(i))
-        break
+        val rollout = sortedRollouts.elementAt(i)
+        activeRollouts.add(rollout)
+        if (!rollout.hasRolloutFreezeTime()) {
+          // Stop only if there is no Freeze time set, otherwise we take one more rollout, if present
+          break
+        }
+        continue
       }
       val rolloutPeriodStartDay = sortedRollouts.elementAt(i).rolloutPeriod.startTime.seconds / 86_400L
       if (eventDay >= rolloutPeriodStartDay) {

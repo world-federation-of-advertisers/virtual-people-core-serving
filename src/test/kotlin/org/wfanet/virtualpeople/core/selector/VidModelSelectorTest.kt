@@ -33,14 +33,29 @@ private const val TEXTPROTO_PATH = "src/test/proto/wfa/virtual_people/core/selec
 
 @RunWith(JUnit4::class)
 class VidModelSelectorTest {
-/*
+
+  @Test
+  fun `VidModelSelector object creation fails when ModelRollout is not parented by the provided ModelLine`() {
+
+    val modelLine =
+      parseTextProto(File("$TEXTPROTO_PATH/model_line_02.textproto").bufferedReader(), modelLine {})
+    val modelRollout =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+
+    val exception =
+      assertFailsWith<IllegalArgumentException> { VidModelSelector(modelLine, listOf(modelRollout)) }
+
+    assertEquals(exception.message, "ModelRollouts must be parented by the provided ModelLine.")
+
+  }
+
   @Test
   fun `getModelRelease returns null when model line is not yet active`() {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val vidModelSelector = VidModelSelector(modelLine, listOf())
     val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_200_000_000_000_000L
+      timestampUsec = 900_000_000_000_000L
     })
     assertNull(modelRelease)
   }
@@ -51,7 +66,7 @@ class VidModelSelectorTest {
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val vidModelSelector = VidModelSelector(modelLine, listOf())
     val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_200_000_000_000_000L
+      timestampUsec = 2_100_000_000_000_000L
     })
     assertNull(modelRelease)
   }
@@ -68,12 +83,12 @@ class VidModelSelectorTest {
   }
 
   @Test
-  fun `getModelRelease returns null when event time precede rollout period start time`() {
+  fun `getModelRelease returns null when event time precedes rollout period start time`() {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
-    val modelRollout =
+    val modelRollout1 =
       parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
-    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout))
+    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
     val modelRelease = vidModelSelector.getModelRelease(labelerInput {
       timestampUsec = 1_050_000_000_000_000L
     })
@@ -84,9 +99,9 @@ class VidModelSelectorTest {
   fun `getModelRelease returns correct ModelRelease with single ModelRollout with rollout period`() {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
-    val modelRollout =
+    val modelRollout1 =
       parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
-    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout))
+    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
     val modelRelease = vidModelSelector.getModelRelease(labelerInput {
       timestampUsec = 1_200_000_000_000_000L
     })
@@ -97,18 +112,18 @@ class VidModelSelectorTest {
   fun `getModelRelease returns correct ModelRelease with single ModelRollout without rollout period`() {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
-    val modelRollout =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_05.textproto").bufferedReader(), modelRollout {})
-    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout))
+    val modelRolloutWithoutRolloutPeriod2 =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_02.textproto").bufferedReader(), modelRollout {})
+    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRolloutWithoutRolloutPeriod2))
     val modelRelease = vidModelSelector.getModelRelease(labelerInput {
       timestampUsec = 1_200_000_000_000_000L
     })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_05")
+    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_02")
   }
 
 
   @Test
-  fun `getModelRelease returns correct ModelRelease when event time is after last rollout period end time`() {
+  fun `getModelRelease returns correct ModelRelease when rollouts stack is (R1, R2(0,0 - 1,1)) and event time is after R2 rollout period end time`() {
 
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
@@ -125,7 +140,7 @@ class VidModelSelectorTest {
   }
 
   @Test
-  fun `getModelRelease returns rollout_2 ModelRelease when ranges are R2 = (0,0 - 0,80), R1 = (0,80 - 1,1) and reduceEventId is 0,75`() {
+  fun `getModelRelease returns correct ModelRelease when rollouts stack is (R2(0,0 - 0,80), R1(0,80 - 1,1)) and reduceEventId is 0,75`() {
 
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
@@ -147,7 +162,7 @@ class VidModelSelectorTest {
   }
 
   @Test
-  fun `getModelRelease returns rollout_1 ModelRelease when ranges are R2 = (0,0 - 0,50), R1 = (0,50 - 1,1) and reduceEventId is 0,75`() {
+  fun `getModelRelease returns correct ModelRelease when rollouts stack is (R2(0,0 - 0,50), R1(0,50 - 1,1)) and reduceEventId is 0,75`() {
 
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
@@ -169,7 +184,7 @@ class VidModelSelectorTest {
   }
 
   @Test
-  fun `getModelRelease returns rollout_2 ModelRelease when ranges are R2 = (0,0 - 0,50), R1 = (0,50 - 1,1) and reduceEventId is 0,36`() {
+  fun `getModelRelease returns correct ModelRelease when rollouts stack is (R2(0,0 - 0,50), R1(0,50 - 1,1)) and reduceEventId is 0,36`() {
 
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
@@ -191,7 +206,7 @@ class VidModelSelectorTest {
   }
 
   @Test
-  fun `getModelRelease returns correct ModelRelease when event happens during rollout_1 rollout period but before rollout_2 rollout period start time`() {
+  fun `getModelRelease returns correct ModelRelease when event happens during rollout_01's rollout period but before rollout_02's rollout period start time`() {
 
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
@@ -245,7 +260,7 @@ class VidModelSelectorTest {
   }
 
   @Test
-  fun `getModelRelease returns rollout_2 ModelRelease when ranges are R3 = (0,0 - 0,12), R2 = (0,12 - 0,45), R1 = (0,45 - 1,1) and reduceEventId is 0,36`() {
+  fun `getModelRelease returns correct ModelRelease when rollouts stack is (R3(0,0 - 0,12), R2(0,12 - 0,45), R1(0,45 - 1,1)) and reduceEventId is 0,36`() {
 
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
@@ -269,7 +284,7 @@ class VidModelSelectorTest {
   }
 
   @Test
-  fun `getModelRelease returns rollout_2 ModelRelease when ranges are R3 = (0,0 - 0,12), R2 = (0,12 - 0,45), R1 = (0,45 - 1,1) and reduceEventId is 0,75`() {
+  fun `getModelRelease returns correct ModelRelease when rollouts stack is (R3(0,0 - 0,12), R2(0,12 - 0,45), R1(0,45 - 1,1)) and reduceEventId is 0,75`() {
 
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
@@ -291,9 +306,9 @@ class VidModelSelectorTest {
     assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01")
 
   }
-*/
+
   @Test
-  fun `getModelRelease excludes rollouts that precede a rollout without rollout period interval`() {
+  fun `getModelRelease excludes rollouts that precedes a rollout without rollout period interval`() {
 
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
@@ -303,9 +318,9 @@ class VidModelSelectorTest {
       parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
     val modelRollout3 =
       parseTextProto(File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(), modelRollout {})
-    val modelRollout4 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_04.textproto").bufferedReader(), modelRollout {})
-    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1, modelRollout3, modelRollout4))
+    val modelRolloutWithoutRolloutPeriod1 =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_01.textproto").bufferedReader(), modelRollout {})
+    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1, modelRollout3, modelRolloutWithoutRolloutPeriod1))
     val modelRelease = vidModelSelector.getModelRelease(labelerInput {
       timestampUsec = 1_450_000_000_000_000L
       profileInfo = profileInfo {
@@ -314,22 +329,117 @@ class VidModelSelectorTest {
         }
       }
     })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_04")
+    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_01")
 
   }
 
   @Test
-  fun `VidModelSelector object creation fails when ModelRollout is not parented by the provided ModelLine`() {
+  fun `getModelRelease blocks rollout expansion when even is after rollout freeze time and reduceEventId is 0,36`() {
 
     val modelLine =
-      parseTextProto(File("$TEXTPROTO_PATH/model_line_02.textproto").bufferedReader(), modelLine {})
-    val modelRollout =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
+    val modelRollout2 =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+    val modelRolloutFreeze =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(), modelRollout {})
+    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRolloutFreeze))
+    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
+      timestampUsec = 1_900_000_000_000_000L
+      profileInfo = profileInfo {
+        emailUserInfo = userInfo {
+          userId = "xyz@mail.com"
+        }
+      }
+    })
+    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_freeze_time_01")
 
-    val exception =
-      assertFailsWith<IllegalArgumentException> { VidModelSelector(modelLine, listOf(modelRollout)) }
+  }
 
-    assertEquals(exception.message, "ModelRollouts must be parented by the provided ModelLine.")
+  @Test
+  fun `getModelRelease blocks rollout expansion when even is after rollout freeze time and reduceEventId is 0,75`() {
+
+    val modelLine =
+      parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
+    val modelRollout2 =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+    val modelRolloutFreeze =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(), modelRollout {})
+    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRolloutFreeze))
+    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
+      timestampUsec = 1_900_000_000_000_000L
+      profileInfo = profileInfo {
+        emailUserInfo = userInfo {
+          userId = "abc@mail.com"
+        }
+      }
+    })
+    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02")
+
+  }
+
+  @Test
+  fun `getModelRelease returns correct ModelRelease when rollouts stack is (R_Freeze(0,0 - 0,42), R2(0,42 - 1,1)) and reduceEventId is 0,75`() {
+
+    val modelLine =
+      parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
+    val modelRollout2 =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+    val modelRolloutFreeze =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(), modelRollout {})
+    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRolloutFreeze))
+    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
+      timestampUsec = 1_900_000_000_000_000L
+      profileInfo = profileInfo {
+        emailUserInfo = userInfo {
+          userId = "abc@mail.com"
+        }
+      }
+    })
+    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02")
+
+  }
+
+  @Test
+  fun `getModelRelease returns correct ModelRelease when rollouts stack is (R_Freeze(0,0 - 0,42), R2(0,42 - 1,1)) and reduceEventId is 0,36`() {
+
+    val modelLine =
+      parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
+    val modelRollout2 =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+    val modelRolloutFreeze =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(), modelRollout {})
+    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRolloutFreeze))
+    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
+      timestampUsec = 1_570_000_000_000_000L
+      profileInfo = profileInfo {
+        emailUserInfo = userInfo {
+          userId = "xyz@mail.com"
+        }
+      }
+    })
+    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_freeze_time_01")
+
+  }
+
+  @Test
+  fun `getModelRelease returns correct ModelRelease when ModelRollout without rollout period replaces ModelRollout with freeze time and reduceEventId is 0,36`() {
+
+    val modelLine =
+      parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
+    val modelRolloutWithoutRolloutPeriod3 =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_03.textproto").bufferedReader(), modelRollout {})
+    val modelRolloutFreeze =
+      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(), modelRollout {})
+    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRolloutWithoutRolloutPeriod3, modelRolloutFreeze))
+    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
+      timestampUsec = 1_600_000_000_000_000L
+      profileInfo = profileInfo {
+        emailUserInfo = userInfo {
+          userId = "xyz@mail.com"
+        }
+      }
+    })
+    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_03")
 
   }
 
