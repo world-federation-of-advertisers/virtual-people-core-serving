@@ -14,6 +14,7 @@
 
 package org.wfanet.virtualpeople.core.selector
 
+import java.lang.IllegalArgumentException
 import kotlin.math.abs
 import org.wfanet.measurement.api.v2alpha.ModelLine
 import org.wfanet.measurement.api.v2alpha.ModelRollout
@@ -24,19 +25,27 @@ const val CACHE_SIZE = 60
 
 class VidModelSelector(private val modelLine: ModelLine, private val rollouts: List<ModelRollout>) {
 
-  private val lruCache: LRUCache<Long, ArrayList<Triple<Double, Double, String>>> = LRUCache(CACHE_SIZE)
+  init {
+    val modelLineId = modelLine.name.split("/").drop(5).take(1).toString()
+      for (rollout in rollouts) {
+        val modelRolloutId = rollout.name.split("/").drop(5).take(1).toString()
+        require(modelLineId == modelRolloutId) { "ModelRollouts must be parented by the provided ModelLine." }
+      }
+  }
 
+  private val lruCache: LRUCache<Long, ArrayList<Triple<Double, Double, String>>> = LRUCache(CACHE_SIZE)
+// TODO consider freeze time
+  // TODO check that rollouts are own by the given model line
   fun getModelRelease(labelerInput: LabelerInput): String? {
     val eventTimestampSec = labelerInput.timestampUsec / 1_000_000L
     if (eventTimestampSec >= modelLine.activeStartTime.seconds && eventTimestampSec < modelLine.activeEndTime.seconds) {
       val eventFingerprint = getEventFingerprint(labelerInput)
+      println("eventFingerprint: ${eventFingerprint}")
       val reducedEventId = abs(eventFingerprint.toDouble() / Long.MAX_VALUE)
+      println("REduced event id: ${reducedEventId}")
       val eventDay: Long = eventTimestampSec / 86_400L
-      val ranges = lruCache[eventDay] ?: kotlin.run {
-        val adoption = calculateRanges(eventDay)
-        lruCache[eventDay] = adoption
-        adoption
-      }
+      val ranges = readFromCache(eventDay)
+      println(ranges)
       for(triple in ranges) {
         if (reducedEventId < triple.second) {
           return triple.third
@@ -46,17 +55,32 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     return null
   }
 
+  private fun readFromCache(eventDay: Long): ArrayList<Triple<Double, Double, String>> {
+    synchronized(this) {
+      if (lruCache.contains(eventDay)) {
+        return lruCache[eventDay]!!
+      } else {
+        val ranges = calculateRanges(eventDay)
+        lruCache[eventDay] = ranges
+        return ranges
+      }
+    }
+  }
+
   private fun calculateRanges(eventDay: Long): ArrayList<Triple<Double, Double, String>> {
     val activeRollouts = retrieveActiveRollouts(eventDay)
+    if (activeRollouts.size == 0) {
+      return arrayListOf()
+    }
     val ranges = arrayListOf<Triple<Double, Double, String>>()
     if (activeRollouts.size == 1) {
       ranges.add(Triple(0.0,1.1,activeRollouts.elementAt(0).modelRelease))
     } else {
       ranges.add(Triple(0.0, calculatePercentageAdoption(eventDay, activeRollouts.elementAt(0)), activeRollouts.elementAt(0).modelRelease))
       var taken = ranges.elementAt(0).second
-      for (i in 1 until activeRollouts.size - 1) {
-        val percentageAdoption = calculatePercentageAdoption(eventDay, activeRollouts.elementAt(i))
+      for (i in 1 until activeRollouts.size) {
         if (i < activeRollouts.size - 1) {
+          val percentageAdoption = calculatePercentageAdoption(eventDay, activeRollouts.elementAt(i))
           ranges.add(Triple(ranges[i-1].second, (percentageAdoption * (1 - taken)) + ranges[i-1].second, activeRollouts.elementAt(i).modelRelease))
         } else {
           ranges.add(Triple(ranges[i-1].second, 1.1, activeRollouts.elementAt(i).modelRelease))
@@ -88,15 +112,15 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     }
     val activeRollouts = arrayListOf<ModelRollout>()
     for (i in sortedRollouts.size - 1 downTo 0) {
-      val rolloutPeriodEndDay = rollouts.elementAt(i).rolloutPeriod.endTime.seconds / 86_400L
+      val rolloutPeriodEndDay = sortedRollouts.elementAt(i).rolloutPeriod.endTime.seconds / 86_400L
       if (eventDay >= rolloutPeriodEndDay) {
-        activeRollouts.add(rollouts.elementAt(i))
+        activeRollouts.add(sortedRollouts.elementAt(i))
         break
       }
-      val rolloutPeriodStartDay = rollouts.elementAt(i).rolloutPeriod.startTime.seconds / 86_400L
+      val rolloutPeriodStartDay = sortedRollouts.elementAt(i).rolloutPeriod.startTime.seconds / 86_400L
       if (eventDay >= rolloutPeriodStartDay) {
-        activeRollouts.add(rollouts.elementAt(i))
-        if (rollouts.elementAt(i).rolloutPeriod.startTime.seconds == rollouts.elementAt(i).rolloutPeriod.endTime.seconds) {
+        activeRollouts.add(sortedRollouts.elementAt(i))
+        if (sortedRollouts.elementAt(i).rolloutPeriod.startTime.seconds == sortedRollouts.elementAt(i).rolloutPeriod.endTime.seconds) {
           // No gradual rollout. The rollout immediately labels 100% of events
           break
         }

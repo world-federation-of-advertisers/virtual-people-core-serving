@@ -1,0 +1,13 @@
+name: "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelLines/AAAAAAAAAHs/modelRollouts/rollout_01"
+
+rollout_period: {
+  start_time: {
+    seconds: 1100000000
+  }
+  end_time: {
+    seconds: 1500000000
+  }
+}
+
+model_release: "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01"
+
