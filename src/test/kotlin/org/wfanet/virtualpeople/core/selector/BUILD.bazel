@@ -3,10 +3,10 @@ load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 kt_jvm_test(
     name = "VidModelSelectorTest",
     srcs = ["VidModelSelectorTest.kt"],
-    test_class = "org.wfanet.virtualpeople.core.selector.VidModelSelectorTest",
     data = [
-            "//src/test/proto/wfa/virtual_people/core/selector/test_data:selector_test_data",
-        ],
+        "//src/test/proto/wfa/virtual_people/core/selector/test_data:selector_test_data",
+    ],
+    test_class = "org.wfanet.virtualpeople.core.selector.VidModelSelectorTest",
     deps = [
         "//src/main/kotlin/org/wfanet/virtualpeople/core/selector",
         "@wfa_common_jvm//imports/java/org/junit",

@@ -28,7 +28,6 @@ import org.wfanet.virtualpeople.common.labelerInput
 import org.wfanet.virtualpeople.common.profileInfo
 import org.wfanet.virtualpeople.common.userInfo
 
-
 private const val TEXTPROTO_PATH = "src/test/proto/wfa/virtual_people/core/selector/test_data"
 
 @RunWith(JUnit4::class)
@@ -40,13 +39,17 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_02.textproto").bufferedReader(), modelLine {})
     val modelRollout =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
 
     val exception =
-      assertFailsWith<IllegalArgumentException> { VidModelSelector(modelLine, listOf(modelRollout)) }
+      assertFailsWith<IllegalArgumentException> {
+        VidModelSelector(modelLine, listOf(modelRollout))
+      }
 
     assertEquals(exception.message, "ModelRollouts must be parented by the provided ModelLine.")
-
   }
 
   @Test
@@ -54,9 +57,8 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val vidModelSelector = VidModelSelector(modelLine, listOf())
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 900_000_000_000_000L
-    })
+    val modelRelease =
+      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 900_000_000_000_000L })
     assertNull(modelRelease)
   }
 
@@ -65,9 +67,8 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val vidModelSelector = VidModelSelector(modelLine, listOf())
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 2_100_000_000_000_000L
-    })
+    val modelRelease =
+      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 2_100_000_000_000_000L })
     assertNull(modelRelease)
   }
 
@@ -76,9 +77,8 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val vidModelSelector = VidModelSelector(modelLine, listOf())
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_200_000_000_000_000L
-    })
+    val modelRelease =
+      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L })
     assertNull(modelRelease)
   }
 
@@ -87,11 +87,13 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_050_000_000_000_000L
-    })
+    val modelRelease =
+      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_050_000_000_000_000L })
     assertNull(modelRelease)
   }
 
@@ -100,12 +102,17 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_200_000_000_000_000L
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01")
+    val modelRelease =
+      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L })
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01"
+    )
   }
 
   @Test
@@ -113,14 +120,18 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRolloutWithoutRolloutPeriod2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRolloutWithoutRolloutPeriod2))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_200_000_000_000_000L
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_02")
+    val modelRelease =
+      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L })
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_02"
+    )
   }
-
 
   @Test
   fun `getModelRelease returns correct ModelRelease when rollouts stack is (R1, R2(0,0 - 1,1)) and event time is after R2 rollout period end time`() {
@@ -128,15 +139,22 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_800_000_000_000_000L
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02")
-
+    val modelRelease =
+      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_800_000_000_000_000L })
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
+    )
   }
 
   @Test
@@ -145,20 +163,27 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_620_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "abc@mail.com"
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_620_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
+    )
   }
 
   @Test
@@ -167,20 +192,27 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_500_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "abc@mail.com"
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_500_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01"
+    )
   }
 
   @Test
@@ -189,20 +221,27 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_500_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "xyz@mail.com"
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_500_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "xyz@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
+    )
   }
 
   @Test
@@ -211,20 +250,27 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_200_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "abc@mail.com"
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_200_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01"
+    )
   }
 
   @Test
@@ -233,30 +279,39 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
-    val modelRelease1 = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_500_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "xyz@mail.com"
+    val modelRelease1 =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_500_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "xyz@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease1, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02")
+      )
+    assertEquals(
+      modelRelease1,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
+    )
 
-    val modelRelease2 = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_500_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "xyz@mail.com"
+    val modelRelease2 =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_500_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "xyz@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease2, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02")
-
+      )
+    assertEquals(
+      modelRelease2,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
+    )
   }
 
   @Test
@@ -265,22 +320,33 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout3 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(), modelRollout {})
-    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1, modelRollout3))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_450_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "xyz@mail.com"
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(),
+        modelRollout {}
+      )
+    val vidModelSelector =
+      VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1, modelRollout3))
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_450_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "xyz@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
+    )
   }
 
   @Test
@@ -289,22 +355,33 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout3 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(), modelRollout {})
-    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1, modelRollout3))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_450_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "abc@mail.com"
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(),
+        modelRollout {}
+      )
+    val vidModelSelector =
+      VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1, modelRollout3))
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_450_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01"
+    )
   }
 
   @Test
@@ -313,24 +390,41 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRollout3 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRolloutWithoutRolloutPeriod1 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_01.textproto").bufferedReader(), modelRollout {})
-    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1, modelRollout3, modelRolloutWithoutRolloutPeriod1))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_450_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "abc@mail.com"
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
+    val vidModelSelector =
+      VidModelSelector(
+        modelLine,
+        listOf(modelRollout2, modelRollout1, modelRollout3, modelRolloutWithoutRolloutPeriod1)
+      )
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_450_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_01")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_01"
+    )
   }
 
   @Test
@@ -339,20 +433,27 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRolloutFreeze =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRolloutFreeze))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_900_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "xyz@mail.com"
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_900_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "xyz@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_freeze_time_01")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_freeze_time_01"
+    )
   }
 
   @Test
@@ -361,20 +462,27 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRolloutFreeze =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRolloutFreeze))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_900_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "abc@mail.com"
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_900_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
+    )
   }
 
   @Test
@@ -383,20 +491,27 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRolloutFreeze =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRolloutFreeze))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_900_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "abc@mail.com"
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_900_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
+    )
   }
 
   @Test
@@ -405,20 +520,27 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRollout2 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRolloutFreeze =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRolloutFreeze))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_570_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "xyz@mail.com"
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_570_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "xyz@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_freeze_time_01")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_freeze_time_01"
+    )
   }
 
   @Test
@@ -427,20 +549,27 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val modelRolloutWithoutRolloutPeriod3 =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_03.textproto").bufferedReader(), modelRollout {})
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_03.textproto").bufferedReader(),
+        modelRollout {}
+      )
     val modelRolloutFreeze =
-      parseTextProto(File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(), modelRollout {})
-    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRolloutWithoutRolloutPeriod3, modelRolloutFreeze))
-    val modelRelease = vidModelSelector.getModelRelease(labelerInput {
-      timestampUsec = 1_600_000_000_000_000L
-      profileInfo = profileInfo {
-        emailUserInfo = userInfo {
-          userId = "xyz@mail.com"
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
+    val vidModelSelector =
+      VidModelSelector(modelLine, listOf(modelRolloutWithoutRolloutPeriod3, modelRolloutFreeze))
+    val modelRelease =
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_600_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "xyz@mail.com" } }
         }
-      }
-    })
-    assertEquals(modelRelease, "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_03")
-
+      )
+    assertEquals(
+      modelRelease,
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_03"
+    )
   }
-
 }
