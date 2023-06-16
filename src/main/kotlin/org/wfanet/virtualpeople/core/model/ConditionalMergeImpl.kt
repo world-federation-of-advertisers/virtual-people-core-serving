@@ -24,7 +24,7 @@ internal class ConditionalMergeImpl
  * @param matcher matcher used to match input events to the conditions.
  * @param updates selected update will be merged to the input event.
  * @param passThroughNonMatches When calling Update, if no column matches, throws error if
- * [passThroughNonMatches] is [PassThroughNonMatches.NO].
+ *   [passThroughNonMatches] is [PassThroughNonMatches.NO].
  */
 private constructor(
   private val matcher: FieldFiltersMatcher,

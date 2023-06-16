@@ -16,6 +16,10 @@ package org.wfanet.virtualpeople.core.selector
 
 class LRUCache<K, V>(private val capacity: Int) : LinkedHashMap<K, V>(capacity) {
 
+  /**
+   * Each time a new element is added to the LinkedHashedMap, this method determines whether the
+   * eldest entry must be removed from the map or not based on the size of the map itself.
+   */
   override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean {
     return size > capacity
   }

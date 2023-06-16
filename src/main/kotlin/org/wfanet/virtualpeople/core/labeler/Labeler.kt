@@ -38,6 +38,7 @@ class Labeler private constructor(private val rootNode: ModelNode) {
     /**
      * Always use Labeler::Build to get a Labeler object. Users should never call the constructor
      * directly.
+     *
      * ```
      * There are 3 ways to represent a full model:
      * - Option 1:
@@ -76,6 +77,7 @@ class Labeler private constructor(private val rootNode: ModelNode) {
      *   node5: index = 5
      *   node6: index = 6
      * ```
+     *
      * Build the model with the @root node. Handles option 1 above.
      *
      * All the other nodes are referenced directly in branch_node.branches.node of the parent nodes.
@@ -133,17 +135,6 @@ class Labeler private constructor(private val rootNode: ModelNode) {
       /** root is guaranteed to be not null at this point. */
       return Labeler(root!!)
     }
-
-    /**
-     * The fingerprint is expected to be a ULong, however, in Kotlin proto, uint64 is read/writen as
-     * Long.
-     *
-     * We need to convert it to ULong whenever we need to consume it, and convert it back to Long
-     * when we write back to proto.
-     */
-    /*private fun getFingerprint64Long(seed: String): Long {
-      return Hashing.farmHashFingerprint64().hashString(seed, StandardCharsets.UTF_8).asLong()
-    }*/
 
     private fun setUserInfoFingerprint(userInfo: UserInfo.Builder) {
       if (userInfo.hasUserId()) {

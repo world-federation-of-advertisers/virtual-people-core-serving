@@ -14,6 +14,8 @@
 
 package org.wfanet.virtualpeople.core.selector
 
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.abs
 import org.wfanet.measurement.api.v2alpha.ModelLine
 import org.wfanet.measurement.api.v2alpha.ModelRollout
@@ -21,6 +23,8 @@ import org.wfanet.virtualpeople.common.*
 import org.wfanet.virtualpeople.core.common.getFingerprint64Long
 
 const val CACHE_SIZE = 60
+const val LOWER_BOUND_PERCENTAGE_ADOPTION = 0.0
+const val UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1
 
 class VidModelSelector(private val modelLine: ModelLine, private val rollouts: List<ModelRollout>) {
 
@@ -34,8 +38,18 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     }
   }
 
-  private val lruCache: LRUCache<Long, ArrayList<Triple<Double, Double, String>>> =
-    LRUCache(CACHE_SIZE)
+  /**
+   * The adoption percentage of models is calculated each day. It consists of an array of triples
+   * where each triple wraps the lower and upper percentage bound for a particular ModelRelease. All
+   * the triples together cover the totality of events for a given day.
+   *
+   * E.g. [<0.0,0.5,ModelRelease1>,<0.5,1.1,ModelRelease2>] means that if the reducedEventId is
+   * lower than 0.5, ModelRelease1 is returned, ModelRelease2 otherwise.
+   */
+  private val lruCache =
+    Collections.synchronizedMap(
+      LRUCache<Long, ArrayList<Triple<Double, Double, String>>>(CACHE_SIZE)
+    )
 
   fun getModelRelease(labelerInput: LabelerInput): String? {
     val eventTimestampSec = labelerInput.timestampUsec / 1_000_000L
@@ -57,17 +71,30 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   }
 
   private fun readFromCache(eventDay: Long): ArrayList<Triple<Double, Double, String>> {
-    synchronized(this) {
-      if (lruCache.contains(eventDay)) {
-        return lruCache[eventDay]!!
-      } else {
-        val ranges = calculateRanges(eventDay)
-        lruCache[eventDay] = ranges
-        return ranges
-      }
+    if (lruCache.containsKey(eventDay)) {
+      return lruCache[eventDay]!!
+    } else {
+      val ranges = calculateRanges(eventDay)
+      lruCache[eventDay] = ranges
+      return ranges
     }
   }
 
+  /**
+   * A single triple with range 0.0..1.1 is returned if there is a single active ModelRollout. In
+   * case there are multiple active ModelRollout(s), the function iterates through an ordered list
+   * of active ModelRollout(s). The list is ordered by rollout_period_start_time, from the most
+   * recent to the oldest.
+   *
+   * The adoption percentage of each ModelRollout is calculated as follows: ((EVENT_DAY
+   * - ROLLOUT_START_DAY) / (ROLLOUT_END_DAY - ROLLOUT_START_DAY) - (1 *
+   *   percentage_taken_by_previous_rollout))
+   *
+   * In case a ModelRollout has the `rollout_freeze_time` set and the event day is greater than
+   * rollout_freeze_time, the EVENT_DAY in the above formula is replaced by `rollout_freeze_time` to
+   * ensure that the rollout stops its expansion. ((ROLLOUT_FREEZE_TIME - ROLLOUT_START_DAY) /
+   * (ROLLOUT_END_DAY - ROLLOUT_START_DAY) - (1 * percentage_taken_by_previous_rollout))
+   */
   private fun calculateRanges(eventDay: Long): ArrayList<Triple<Double, Double, String>> {
     val activeRollouts = retrieveActiveRollouts(eventDay)
     if (activeRollouts.size == 0) {
@@ -75,11 +102,17 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     }
     val ranges = arrayListOf<Triple<Double, Double, String>>()
     if (activeRollouts.size == 1) {
-      ranges.add(Triple(0.0, 1.1, activeRollouts.elementAt(0).modelRelease))
+      ranges.add(
+        Triple(
+          LOWER_BOUND_PERCENTAGE_ADOPTION,
+          UPPER_BOUND_PERCENTAGE_ADOPTION,
+          activeRollouts.elementAt(0).modelRelease
+        )
+      )
     } else {
       ranges.add(
         Triple(
-          0.0,
+          LOWER_BOUND_PERCENTAGE_ADOPTION,
           calculatePercentageAdoption(eventDay, activeRollouts.elementAt(0)),
           activeRollouts.elementAt(0).modelRelease
         )
@@ -97,7 +130,13 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
             )
           )
         } else {
-          ranges.add(Triple(ranges[i - 1].second, 1.1, activeRollouts.elementAt(i).modelRelease))
+          ranges.add(
+            Triple(
+              ranges[i - 1].second,
+              UPPER_BOUND_PERCENTAGE_ADOPTION,
+              activeRollouts.elementAt(i).modelRelease
+            )
+          )
         }
         taken = ranges[i].second
       }
@@ -128,6 +167,13 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     }
   }
 
+  /**
+   * Iterates through all available ModelRollout(s) ordered by rollout_period_start_time from the
+   * most recent to the oldest. The function keeps adding ModelRollout(s) to the `activeRollouts`
+   * array unless one of the following conditions is met:
+   * 1. eventDay >= rolloutPeriodEndTime && !rollout.hasRolloutFreezeTime()
+   * 2. rolloutPeriodStartTime == rolloutPeriodEndTime. In this case there is no gradual rollout
+   */
   private fun retrieveActiveRollouts(eventDay: Long): List<ModelRollout> {
     if (rollouts.isEmpty()) {
       return rollouts

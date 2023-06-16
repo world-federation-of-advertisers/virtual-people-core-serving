@@ -29,13 +29,13 @@ import org.wfanet.virtualpeople.common.fieldfilter.utils.getValueFromProto
 class MultiplicityImpl
 /**
  * @param multiplicityExtractor extractor for expected multiplicity. Either a [Double] or a
- * [MultiplicityFromField].
+ *   [MultiplicityFromField].
  * @param capAtMax whether to cap multiplicity at [maxValue]
  * @param maxValue when expected multiplicity > [maxValue], cap at [maxValue] if [capAtMax] is YES,
- * else throw an error.
+ *   else throw an error.
  * @param personIndexField the field to set person index in.
  * @param randomSeed the random seed. It is used to compute multiplicity for a given event and
- * compute fingerprint for cloned event
+ *   compute fingerprint for cloned event
  */
 private constructor(
   private val multiplicityExtractor: Any,
@@ -48,11 +48,11 @@ private constructor(
   /**
    * Computes multiplicity for [eventOrBuilder].
    * 1. Extracts the expected_multiplicity. Throws an error if [capAtMax] = NO and
-   * expected_multiplicity > [maxValue].
+   *    expected_multiplicity > [maxValue].
    * 2. Pseudo-randomly generates an integer value that is either floor(expected_multiplicity) or
-   * floor(expected_multiplicity) + 1, with expectation = expected_multiplicity. For example, with
-   * expected_multiplicity = 1.4, this returns either 1 or 2, with 60% and 40% probabilities,
-   * respectively. This always returns the same result for the same event.
+   *    floor(expected_multiplicity) + 1, with expectation = expected_multiplicity. For example,
+   *    with expected_multiplicity = 1.4, this returns either 1 or 2, with 60% and 40%
+   *    probabilities, respectively. This always returns the same result for the same event.
    */
   fun computeEventMultiplicity(eventOrBuilder: LabelerEventOrBuilder): Int {
     var expectedMultiplicity =
@@ -169,9 +169,9 @@ private constructor(
      * Throws an error if any of the following happens:
      * 1. [config].multiplicity_ref is not set.
      * 2. [config].expected_multiplicity_field is set, but is not a valid field, or the field type
-     * is not one of int32/int64/uint32/uint64/float/double.
+     *    is not one of int32/int64/uint32/uint64/float/double.
      * 3. [config].person_index_field is not set, or is not a valid field, or the field type is not
-     * one of int32/int64/uint32/uint64.
+     *    one of int32/int64/uint32/uint64.
      * 4. [config].max_value is not set.
      * 5. [config].cap_at_max is not set.
      * 6. [config].random_seed is not set.
