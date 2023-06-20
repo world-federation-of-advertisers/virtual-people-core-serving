@@ -14,7 +14,13 @@
 
 package org.wfanet.virtualpeople.core.labeler
 
-import org.wfanet.virtualpeople.common.*
+import org.wfanet.virtualpeople.common.CompiledNode
+import org.wfanet.virtualpeople.common.LabelerEvent
+import org.wfanet.virtualpeople.common.LabelerInput
+import org.wfanet.virtualpeople.common.LabelerOutput
+import org.wfanet.virtualpeople.common.UserInfo
+import org.wfanet.virtualpeople.common.labelerEvent
+import org.wfanet.virtualpeople.common.labelerOutput
 import org.wfanet.virtualpeople.core.common.getFingerprint64Long
 import org.wfanet.virtualpeople.core.model.ModelNode
 

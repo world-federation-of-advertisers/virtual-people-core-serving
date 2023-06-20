@@ -14,12 +14,11 @@
 
 package org.wfanet.virtualpeople.core.selector
 
-import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs
 import org.wfanet.measurement.api.v2alpha.ModelLine
 import org.wfanet.measurement.api.v2alpha.ModelRollout
-import org.wfanet.virtualpeople.common.*
+import org.wfanet.virtualpeople.common.LabelerInput
 import org.wfanet.virtualpeople.core.common.getFingerprint64Long
 
 const val CACHE_SIZE = 60
@@ -46,10 +45,8 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
    * E.g. [<0.0,0.5,ModelRelease1>,<0.5,1.1,ModelRelease2>] means that if the reducedEventId is
    * lower than 0.5, ModelRelease1 is returned, ModelRelease2 otherwise.
    */
-  private val lruCache =
-    Collections.synchronizedMap(
-      LRUCache<Long, ArrayList<Triple<Double, Double, String>>>(CACHE_SIZE)
-    )
+  private val lruCache: LRUCache<Long, ArrayList<Triple<Double, Double, String>>> =
+    LRUCache(CACHE_SIZE)
 
   fun getModelRelease(labelerInput: LabelerInput): String? {
     val eventTimestampSec = labelerInput.timestampUsec / 1_000_000L
@@ -70,13 +67,19 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     return null
   }
 
+  /**
+   * Access to the cache is synchronized to prevent multiple threads calculating ranges in case of
+   * cache miss.
+   */
   private fun readFromCache(eventDay: Long): ArrayList<Triple<Double, Double, String>> {
-    if (lruCache.containsKey(eventDay)) {
-      return lruCache[eventDay]!!
-    } else {
-      val ranges = calculateRanges(eventDay)
-      lruCache[eventDay] = ranges
-      return ranges
+    synchronized(this) {
+      if (lruCache.containsKey(eventDay)) {
+        return lruCache[eventDay]!!
+      } else {
+        val ranges = calculateRanges(eventDay)
+        lruCache[eventDay] = ranges
+        return ranges
+      }
     }
   }
 
