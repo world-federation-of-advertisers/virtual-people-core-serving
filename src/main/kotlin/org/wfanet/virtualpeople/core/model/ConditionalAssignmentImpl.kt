@@ -76,9 +76,9 @@ private constructor(private val condition: FieldFilter, private val assignments:
      * 2. [config].assignments is empty.
      * 3. Fails to build a [FieldFilter] from [config].condition.
      * 4. In any entry of [config].assignments, sourceField or targetField is not set or does not
-     *    refer to a valid field.
+     * refer to a valid field.
      * 5. In any entry of [config].assignments, sourceField and targetField refer to different type
-     *    of fields. (like int32 vs int64)
+     * of fields. (like int32 vs int64)
      */
     internal fun build(config: ConditionalAssignment): ConditionalAssignmentImpl {
       if (!config.hasCondition()) {

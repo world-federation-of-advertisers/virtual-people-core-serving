@@ -127,8 +127,8 @@ private constructor(
      * Throws an error if any of the following happens:
      * 1. [nodeConfig].population_node is not set.
      * 2. The total population of the pools is 0 and the pools do not represent an empty population
-     *    pool. An empty population pool contains only 1 [VirtualPersonPool], and its
-     *    population_offset and total_population are 0.
+     * pool. An empty population pool contains only 1 [VirtualPersonPool], and its population_offset
+     * and total_population are 0.
      */
     fun build(nodeConfig: CompiledNode): PopulationNodeImpl {
       if (!nodeConfig.hasPopulationNode()) {
