@@ -19,7 +19,7 @@ import kotlin.math.abs
 import org.wfanet.measurement.api.v2alpha.ModelLine
 import org.wfanet.measurement.api.v2alpha.ModelRollout
 import org.wfanet.virtualpeople.common.LabelerInput
-import org.wfanet.virtualpeople.core.common.getFingerprint64Long
+import org.wfanet.virtualpeople.core.common.Hashing
 
 const val CACHE_SIZE = 60
 const val LOWER_BOUND_PERCENTAGE_ADOPTION = 0.0
@@ -45,8 +45,8 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
    * E.g. [<0.0,0.5,ModelRelease1>,<0.5,1.1,ModelRelease2>] means that if the reducedEventId is
    * lower than 0.5, ModelRelease1 is returned, ModelRelease2 otherwise.
    */
-  private val lruCache: LRUCache<Long, ArrayList<Triple<Double, Double, String>>> =
-    LRUCache(CACHE_SIZE)
+  private val lruCache: LruCache<Long, ArrayList<Triple<Double, Double, String>>> =
+    LruCache(CACHE_SIZE)
 
   fun getModelRelease(labelerInput: LabelerInput): String? {
     val eventTimestampSec = labelerInput.timestampUsec / 1_000_000L
@@ -220,79 +220,79 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     if (labelerInput.hasProfileInfo()) {
       val profileInfo = labelerInput.profileInfo
       if (profileInfo.hasEmailUserInfo() && profileInfo.emailUserInfo.hasUserId()) {
-        return getFingerprint64Long(profileInfo.emailUserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.emailUserInfo.userId)
       }
       if (profileInfo.hasPhoneUserInfo() && profileInfo.phoneUserInfo.hasUserId()) {
-        return getFingerprint64Long(profileInfo.phoneUserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.phoneUserInfo.userId)
       }
       if (profileInfo.hasLoggedInIdUserInfo() && profileInfo.loggedInIdUserInfo.hasUserId()) {
-        return getFingerprint64Long(profileInfo.loggedInIdUserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.loggedInIdUserInfo.userId)
       }
       if (profileInfo.hasLoggedOutIdUserInfo() && profileInfo.loggedOutIdUserInfo.hasUserId()) {
-        return getFingerprint64Long(profileInfo.loggedOutIdUserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.loggedOutIdUserInfo.userId)
       }
       if (
         profileInfo.hasProprietaryIdSpace1UserInfo() &&
           profileInfo.proprietaryIdSpace1UserInfo.hasUserId()
       ) {
-        return getFingerprint64Long(profileInfo.proprietaryIdSpace1UserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace1UserInfo.userId)
       }
       if (
         profileInfo.hasProprietaryIdSpace2UserInfo() &&
           profileInfo.proprietaryIdSpace2UserInfo.hasUserId()
       ) {
-        return getFingerprint64Long(profileInfo.proprietaryIdSpace2UserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace2UserInfo.userId)
       }
       if (
         profileInfo.hasProprietaryIdSpace3UserInfo() &&
           profileInfo.proprietaryIdSpace3UserInfo.hasUserId()
       ) {
-        return getFingerprint64Long(profileInfo.proprietaryIdSpace3UserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace3UserInfo.userId)
       }
       if (
         profileInfo.hasProprietaryIdSpace4UserInfo() &&
           profileInfo.proprietaryIdSpace4UserInfo.hasUserId()
       ) {
-        return getFingerprint64Long(profileInfo.proprietaryIdSpace4UserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace4UserInfo.userId)
       }
       if (
         profileInfo.hasProprietaryIdSpace5UserInfo() &&
           profileInfo.proprietaryIdSpace5UserInfo.hasUserId()
       ) {
-        return getFingerprint64Long(profileInfo.proprietaryIdSpace5UserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace5UserInfo.userId)
       }
       if (
         profileInfo.hasProprietaryIdSpace6UserInfo() &&
           profileInfo.proprietaryIdSpace6UserInfo.hasUserId()
       ) {
-        return getFingerprint64Long(profileInfo.proprietaryIdSpace6UserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace6UserInfo.userId)
       }
       if (
         profileInfo.hasProprietaryIdSpace7UserInfo() &&
           profileInfo.proprietaryIdSpace7UserInfo.hasUserId()
       ) {
-        return getFingerprint64Long(profileInfo.proprietaryIdSpace7UserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace7UserInfo.userId)
       }
       if (
         profileInfo.hasProprietaryIdSpace8UserInfo() &&
           profileInfo.proprietaryIdSpace8UserInfo.hasUserId()
       ) {
-        return getFingerprint64Long(profileInfo.proprietaryIdSpace8UserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace8UserInfo.userId)
       }
       if (
         profileInfo.hasProprietaryIdSpace9UserInfo() &&
           profileInfo.proprietaryIdSpace9UserInfo.hasUserId()
       ) {
-        return getFingerprint64Long(profileInfo.proprietaryIdSpace9UserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace9UserInfo.userId)
       }
       if (
         profileInfo.hasProprietaryIdSpace10UserInfo() &&
           profileInfo.proprietaryIdSpace10UserInfo.hasUserId()
       ) {
-        return getFingerprint64Long(profileInfo.proprietaryIdSpace10UserInfo.userId)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace10UserInfo.userId)
       }
     } else if (labelerInput.hasEventId() && labelerInput.eventId.hasId()) {
-      return getFingerprint64Long(labelerInput.eventId.id)
+      return Hashing.hashFingerprint64(labelerInput.eventId.id)
     }
     return (0..Long.MAX_VALUE).random()
   }

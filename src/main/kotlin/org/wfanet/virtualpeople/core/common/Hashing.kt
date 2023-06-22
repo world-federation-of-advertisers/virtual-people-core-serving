@@ -18,12 +18,18 @@ import com.google.common.hash.Hashing
 import java.nio.charset.StandardCharsets
 
 /**
+ * Returns the FarmHash Fingerprint64 digest of [input].
+ *
  * The fingerprint is expected to be a ULong, however, in Kotlin proto, uint64 is read/writen as
  * Long.
  *
  * We need to convert it to ULong whenever we need to consume it, and convert it back to Long when
  * we write back to proto.
  */
-fun getFingerprint64Long(seed: String): Long {
-  return Hashing.farmHashFingerprint64().hashString(seed, StandardCharsets.UTF_8).asLong()
+object Hashing {
+
+  fun hashFingerprint64(input: String): Long {
+    return Hashing.farmHashFingerprint64()
+      .hashString(input, StandardCharsets.UTF_8).asLong()
+  }
 }

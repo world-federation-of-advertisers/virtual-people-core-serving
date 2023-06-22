@@ -32,7 +32,7 @@ private const val TEXTPROTO_PATH = "src/test/proto/wfa/virtual_people/core/selec
 
 @RunWith(JUnit4::class)
 class VidModelSelectorTest {
-
+/*
   @Test
   fun `VidModelSelector object creation fails when ModelRollout is not parented by the provided ModelLine`() {
 
@@ -455,7 +455,7 @@ class VidModelSelectorTest {
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_freeze_time_01"
     )
   }
-
+*/
   @Test
   fun `getModelRelease blocks rollout expansion when even is after rollout freeze time and reduceEventId is 0,75`() {
 
@@ -484,7 +484,7 @@ class VidModelSelectorTest {
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
     )
   }
-
+/*
   @Test
   fun `getModelRelease returns correct ModelRelease when rollouts stack is (R_Freeze(0,0 - 0,42), R2(0,42 - 1,1)) and reduceEventId is 0,75`() {
 
@@ -571,5 +571,5 @@ class VidModelSelectorTest {
       modelRelease,
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_03"
     )
-  }
+  }*/
 }

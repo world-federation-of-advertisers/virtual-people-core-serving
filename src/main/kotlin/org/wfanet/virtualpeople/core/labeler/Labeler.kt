@@ -21,14 +21,14 @@ import org.wfanet.virtualpeople.common.LabelerOutput
 import org.wfanet.virtualpeople.common.UserInfo
 import org.wfanet.virtualpeople.common.labelerEvent
 import org.wfanet.virtualpeople.common.labelerOutput
-import org.wfanet.virtualpeople.core.common.getFingerprint64Long
+import org.wfanet.virtualpeople.core.common.Hashing
 import org.wfanet.virtualpeople.core.model.ModelNode
 
 class Labeler private constructor(private val rootNode: ModelNode) {
 
   /** Apply the model to generate the labels. Invalid inputs will result in an error. */
   fun label(input: LabelerInput): LabelerOutput {
-    /** Prepare labeler event. */
+    // Prepare labeler event.
     val eventBuilder = labelerEvent { labelerInput = input }.toBuilder()
     setFingerprints(eventBuilder)
 
@@ -123,11 +123,11 @@ class Labeler private constructor(private val rootNode: ModelNode) {
 
       if (root == null) {
         if (nodeRefs.isEmpty()) {
-          /** This should never happen. */
+          // This should never happen.
           error("Cannot find root node.")
         }
         if (nodeRefs.size > 1) {
-          /** We expect only 1 node in the node_refs map, which is the root node. */
+          // We expect only 1 node in the node_refs map, which is the root node.
           error("Only 1 root node is expected in the node_refs map")
         }
         val entry = nodeRefs.entries.first()
@@ -138,20 +138,20 @@ class Labeler private constructor(private val rootNode: ModelNode) {
         error("Some nodes are not in the model tree.")
       }
 
-      /** root is guaranteed to be not null at this point. */
+      // root is guaranteed to be not null at this point.
       return Labeler(root!!)
     }
 
     private fun setUserInfoFingerprint(userInfo: UserInfo.Builder) {
       if (userInfo.hasUserId()) {
-        userInfo.userIdFingerprint = getFingerprint64Long(userInfo.userId)
+        userInfo.userIdFingerprint = Hashing.hashFingerprint64(userInfo.userId)
       }
     }
 
     private fun setFingerprints(eventBuilder: LabelerEvent.Builder) {
       val labelerInputBuilder = eventBuilder.labelerInputBuilder
       if (labelerInputBuilder.hasEventId()) {
-        val eventIdFingerprint = getFingerprint64Long(labelerInputBuilder.eventId.id)
+        val eventIdFingerprint = Hashing.hashFingerprint64(labelerInputBuilder.eventId.id)
         labelerInputBuilder.eventIdBuilder.idFingerprint = eventIdFingerprint
         eventBuilder.actingFingerprint = eventIdFingerprint
       }
