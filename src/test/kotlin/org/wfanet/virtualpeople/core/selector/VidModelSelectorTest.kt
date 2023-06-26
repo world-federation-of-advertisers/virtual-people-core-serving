@@ -18,6 +18,7 @@ import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -32,7 +33,7 @@ private const val TEXTPROTO_PATH = "src/test/proto/wfa/virtual_people/core/selec
 
 @RunWith(JUnit4::class)
 class VidModelSelectorTest {
-/*
+
   @Test
   fun `VidModelSelector object creation fails when ModelRollout is not parented by the provided ModelLine`() {
 
@@ -77,9 +78,9 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val vidModelSelector = VidModelSelector(modelLine, listOf())
-    val modelRelease =
-      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L })
-    assertNull(modelRelease)
+    val exception = assertFailsWith<IllegalStateException> { vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L }) }
+    assertTrue(
+      exception.message!!.contains("No user_id available in the LabelerInput"))
   }
 
   @Test
@@ -93,7 +94,10 @@ class VidModelSelectorTest {
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
     val modelRelease =
-      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_050_000_000_000_000L })
+      vidModelSelector.getModelRelease(labelerInput {
+        timestampUsec = 1_050_000_000_000_000L
+        profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
+      })
     assertNull(modelRelease)
   }
 
@@ -108,7 +112,12 @@ class VidModelSelectorTest {
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
     val modelRelease =
-      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L })
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_200_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
+        }
+      )
     assertEquals(
       modelRelease,
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01"
@@ -126,7 +135,10 @@ class VidModelSelectorTest {
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRolloutWithoutRolloutPeriod2))
     val modelRelease =
-      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L })
+      vidModelSelector.getModelRelease(labelerInput {
+        timestampUsec = 1_200_000_000_000_000L
+        profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
+      })
     assertEquals(
       modelRelease,
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_02"
@@ -150,7 +162,10 @@ class VidModelSelectorTest {
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
     val modelRelease =
-      vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_800_000_000_000_000L })
+      vidModelSelector.getModelRelease(labelerInput {
+        timestampUsec = 1_800_000_000_000_000L
+        profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
+      })
     assertEquals(
       modelRelease,
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
@@ -455,7 +470,7 @@ class VidModelSelectorTest {
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_freeze_time_01"
     )
   }
-*/
+
   @Test
   fun `getModelRelease blocks rollout expansion when even is after rollout freeze time and reduceEventId is 0,75`() {
 
@@ -484,7 +499,7 @@ class VidModelSelectorTest {
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
     )
   }
-/*
+
   @Test
   fun `getModelRelease returns correct ModelRelease when rollouts stack is (R_Freeze(0,0 - 0,42), R2(0,42 - 1,1)) and reduceEventId is 0,75`() {
 
@@ -571,5 +586,5 @@ class VidModelSelectorTest {
       modelRelease,
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_03"
     )
-  }*/
+  }
 }

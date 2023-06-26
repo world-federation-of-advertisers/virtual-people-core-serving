@@ -15,21 +15,19 @@
 package org.wfanet.virtualpeople.core.common
 
 import com.google.common.hash.Hashing
+import com.google.protobuf.ByteString
+import com.google.protobuf.kotlin.toByteString
 import java.nio.charset.StandardCharsets
 
-/**
- * Returns the FarmHash Fingerprint64 digest of [input].
- *
- * The fingerprint is expected to be a ULong, however, in Kotlin proto, uint64 is read/writen as
- * Long.
- *
- * We need to convert it to ULong whenever we need to consume it, and convert it back to Long when
- * we write back to proto.
- */
 object Hashing {
 
-  fun hashFingerprint64(input: String): Long {
+  /**
+   * Returns a ByteString containing the Fingerprint64 digest of [input].
+   *
+   * Consumers can convert it to Long using the toLong() method specifying the desired byte order.
+   */
+  fun hashFingerprint64(input: String): ByteString {
     return Hashing.farmHashFingerprint64()
-      .hashString(input, StandardCharsets.UTF_8).asLong()
+      .hashString(input, StandardCharsets.UTF_8).asBytes().toByteString()
   }
 }

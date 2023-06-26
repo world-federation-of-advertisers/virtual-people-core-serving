@@ -29,9 +29,9 @@ def virtual_people_core_serving_repositories():
 
     http_archive(
         name = "wfa_common_jvm",
-        sha256 = "ad623ee3b1893b47fc6c86d6b1c90ea1f46a44bdf502a1847518f6769597c5cf",
-        strip_prefix = "common-jvm-0.45.0",
-        url = "https://github.com/world-federation-of-advertisers/common-jvm/archive/refs/tags/v0.45.0.tar.gz",
+        sha256 = "2b1a363e9ed5057437f3bcd90356f645f21aaa451a53ff487f688d0f668fa13b",
+        strip_prefix = "common-jvm-0.58.0",
+        url = "https://github.com/world-federation-of-advertisers/common-jvm/archive/refs/tags/v0.58.0.tar.gz",
     )
 
     http_archive(

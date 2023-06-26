@@ -9,5 +9,6 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "@wfa_common_jvm//imports/java/com/google/common:guava",
+        "@wfa_common_jvm//src/main/kotlin/org/wfanet/measurement/common",
     ],
 )
