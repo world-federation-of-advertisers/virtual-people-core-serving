@@ -28,6 +28,8 @@ object Hashing {
    */
   fun hashFingerprint64(input: String): ByteString {
     return Hashing.farmHashFingerprint64()
-      .hashString(input, StandardCharsets.UTF_8).asBytes().toByteString()
+      .hashString(input, StandardCharsets.UTF_8)
+      .asBytes()
+      .toByteString()
   }
 }

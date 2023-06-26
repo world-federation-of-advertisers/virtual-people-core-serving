@@ -146,14 +146,16 @@ class Labeler private constructor(private val rootNode: ModelNode) {
 
     private fun setUserInfoFingerprint(userInfo: UserInfo.Builder) {
       if (userInfo.hasUserId()) {
-        userInfo.userIdFingerprint = Hashing.hashFingerprint64(userInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        userInfo.userIdFingerprint =
+          Hashing.hashFingerprint64(userInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
       }
     }
 
     private fun setFingerprints(eventBuilder: LabelerEvent.Builder) {
       val labelerInputBuilder = eventBuilder.labelerInputBuilder
       if (labelerInputBuilder.hasEventId()) {
-        val eventIdFingerprint = Hashing.hashFingerprint64(labelerInputBuilder.eventId.id).toLong(ByteOrder.LITTLE_ENDIAN)
+        val eventIdFingerprint =
+          Hashing.hashFingerprint64(labelerInputBuilder.eventId.id).toLong(ByteOrder.LITTLE_ENDIAN)
         labelerInputBuilder.eventIdBuilder.idFingerprint = eventIdFingerprint
         eventBuilder.actingFingerprint = eventIdFingerprint
       }

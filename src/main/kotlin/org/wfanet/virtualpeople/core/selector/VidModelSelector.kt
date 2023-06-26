@@ -32,7 +32,8 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   init {
     /**
      * Drop the first 5 elements of the List<String> returned by split() method and take the sixth.
-     * ModelLine name has the following format: "modelProviders/{model_provider}/modelSuites/{model_suite}/modelLines/{model_line}"
+     * ModelLine name has the following format:
+     * "modelProviders/{model_provider}/modelSuites/{model_suite}/modelLines/{model_line}"
      */
     val modelLineId = modelLine.name.split("/").drop(5).take(1).toString()
     for (rollout in rollouts) {
@@ -46,9 +47,8 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   /**
    * The adoption percentage of models is calculated each day. It consists of an array of triples
    * where each triple wraps the lower and upper percentage bound for a particular ModelRelease. All
-   * the triples together cover the totality of events for a given day.
-   * The lower bound is inclusive.
-   * The upper bound is exclusive.
+   * the triples together cover the totality of events for a given day. The lower bound is
+   * inclusive. The upper bound is exclusive.
    *
    * E.g. [<0.0,0.5,ModelRelease1>,<0.5,1.1,ModelRelease2>] means that if the reducedEventId is
    * lower than 0.5, ModelRelease1 is returned, ModelRelease2 otherwise.
@@ -202,7 +202,8 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
         val rollout = sortedRollouts.elementAt(i)
         activeRollouts.add(rollout)
         if (!rollout.hasRolloutFreezeTime()) {
-          // Stop only if there is no Freeze time set, otherwise other rollouts are taken until one without rollout_freeze_time is found or no other rollouts are available
+          // Stop only if there is no Freeze time set, otherwise other rollouts are taken until one
+          // without rollout_freeze_time is found or no other rollouts are available
           break
         }
         continue
@@ -220,76 +221,90 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     if (labelerInput.hasProfileInfo()) {
       val profileInfo = labelerInput.profileInfo
       if (profileInfo.hasEmailUserInfo() && profileInfo.emailUserInfo.hasUserId()) {
-        return Hashing.hashFingerprint64(profileInfo.emailUserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.emailUserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (profileInfo.hasPhoneUserInfo() && profileInfo.phoneUserInfo.hasUserId()) {
-        return Hashing.hashFingerprint64(profileInfo.phoneUserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.phoneUserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (profileInfo.hasLoggedInIdUserInfo() && profileInfo.loggedInIdUserInfo.hasUserId()) {
-        return Hashing.hashFingerprint64(profileInfo.loggedInIdUserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.loggedInIdUserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (profileInfo.hasLoggedOutIdUserInfo() && profileInfo.loggedOutIdUserInfo.hasUserId()) {
-        return Hashing.hashFingerprint64(profileInfo.loggedOutIdUserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.loggedOutIdUserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (
         profileInfo.hasProprietaryIdSpace1UserInfo() &&
           profileInfo.proprietaryIdSpace1UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace1UserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace1UserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (
         profileInfo.hasProprietaryIdSpace2UserInfo() &&
           profileInfo.proprietaryIdSpace2UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace2UserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace2UserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (
         profileInfo.hasProprietaryIdSpace3UserInfo() &&
           profileInfo.proprietaryIdSpace3UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace3UserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace3UserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (
         profileInfo.hasProprietaryIdSpace4UserInfo() &&
           profileInfo.proprietaryIdSpace4UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace4UserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace4UserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (
         profileInfo.hasProprietaryIdSpace5UserInfo() &&
           profileInfo.proprietaryIdSpace5UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace5UserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace5UserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (
         profileInfo.hasProprietaryIdSpace6UserInfo() &&
           profileInfo.proprietaryIdSpace6UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace6UserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace6UserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (
         profileInfo.hasProprietaryIdSpace7UserInfo() &&
           profileInfo.proprietaryIdSpace7UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace7UserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace7UserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (
         profileInfo.hasProprietaryIdSpace8UserInfo() &&
           profileInfo.proprietaryIdSpace8UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace8UserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace8UserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (
         profileInfo.hasProprietaryIdSpace9UserInfo() &&
           profileInfo.proprietaryIdSpace9UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace9UserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace9UserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
       if (
         profileInfo.hasProprietaryIdSpace10UserInfo() &&
           profileInfo.proprietaryIdSpace10UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace10UserInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace10UserInfo.userId)
+          .toLong(ByteOrder.LITTLE_ENDIAN)
       }
     } else if (labelerInput.hasEventId() && labelerInput.eventId.hasId()) {
       return Hashing.hashFingerprint64(labelerInput.eventId.id).toLong(ByteOrder.LITTLE_ENDIAN)

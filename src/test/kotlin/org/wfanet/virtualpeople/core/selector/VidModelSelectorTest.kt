@@ -78,9 +78,11 @@ class VidModelSelectorTest {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
     val vidModelSelector = VidModelSelector(modelLine, listOf())
-    val exception = assertFailsWith<IllegalStateException> { vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L }) }
-    assertTrue(
-      exception.message!!.contains("No user_id available in the LabelerInput"))
+    val exception =
+      assertFailsWith<IllegalStateException> {
+        vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L })
+      }
+    assertTrue(exception.message!!.contains("No user_id available in the LabelerInput"))
   }
 
   @Test
@@ -94,10 +96,12 @@ class VidModelSelectorTest {
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
     val modelRelease =
-      vidModelSelector.getModelRelease(labelerInput {
-        timestampUsec = 1_050_000_000_000_000L
-        profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
-      })
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_050_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
+        }
+      )
     assertNull(modelRelease)
   }
 
@@ -135,10 +139,12 @@ class VidModelSelectorTest {
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRolloutWithoutRolloutPeriod2))
     val modelRelease =
-      vidModelSelector.getModelRelease(labelerInput {
-        timestampUsec = 1_200_000_000_000_000L
-        profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
-      })
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_200_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
+        }
+      )
     assertEquals(
       modelRelease,
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_02"
@@ -162,10 +168,12 @@ class VidModelSelectorTest {
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
     val modelRelease =
-      vidModelSelector.getModelRelease(labelerInput {
-        timestampUsec = 1_800_000_000_000_000L
-        profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
-      })
+      vidModelSelector.getModelRelease(
+        labelerInput {
+          timestampUsec = 1_800_000_000_000_000L
+          profileInfo = profileInfo { emailUserInfo = userInfo { userId = "abc@mail.com" } }
+        }
+      )
     assertEquals(
       modelRelease,
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02"
