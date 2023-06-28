@@ -24,7 +24,6 @@ import org.wfanet.virtualpeople.common.LabelerInput
 import org.wfanet.virtualpeople.core.common.Hashing
 
 const val CACHE_SIZE = 60
-const val LOWER_BOUND_PERCENTAGE_ADOPTION = 0.0
 const val UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1
 
 class VidModelSelector(private val modelLine: ModelLine, private val rollouts: List<ModelRollout>) {
@@ -45,16 +44,14 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   }
 
   /**
-   * The adoption percentage of models is calculated each day. It consists of an array of triples
-   * where each triple wraps the lower and upper percentage bound for a particular ModelRelease. All
-   * the triples together cover the totality of events for a given day. The lower bound is
-   * inclusive. The upper bound is exclusive.
+   * The adoption percentage of models is calculated each day. It consists of an array of Pairs
+   * where each Pair wraps the percentage of adoption of a particular ModelRelease and the
+   * ModelRelease itself.
    *
-   * E.g. [<0.0,0.5,ModelRelease1>,<0.5,1.1,ModelRelease2>] means that if the reducedEventId is
-   * lower than 0.5, ModelRelease1 is returned, ModelRelease2 otherwise.
+   * Elements in the ArrayList are sorted by ModelRollout rollout start time from the oldest to the
+   * most recent.
    */
-  private val lruCache: LruCache<Long, ArrayList<Triple<Double, Double, String>>> =
-    LruCache(CACHE_SIZE)
+  private val lruCache: LruCache<Long, ArrayList<Pair<Double, String>>> = LruCache(CACHE_SIZE)
 
   fun getModelRelease(labelerInput: LabelerInput): String? {
     val eventTimestampSec = labelerInput.timestampUsec / 1_000_000L
@@ -62,97 +59,74 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
       eventTimestampSec >= modelLine.activeStartTime.seconds &&
         eventTimestampSec < modelLine.activeEndTime.seconds
     ) {
-      val eventFingerprint = getEventFingerprint(labelerInput)
-      val reducedEventId = abs(eventFingerprint.toDouble() / Long.MAX_VALUE)
       val eventDay: Long = eventTimestampSec / 86_400L
-      val ranges = readFromCache(eventDay)
-      for (triple in ranges) {
-        if (reducedEventId < triple.second) {
-          return triple.third
+      val modelAdoptionPercentages = readFromCache(eventDay)
+
+      var selectedModelRelease =
+        if (!modelAdoptionPercentages.isEmpty()) {
+          modelAdoptionPercentages.get(0).second
+        } else {
+          null
+        }
+      for (percentage in modelAdoptionPercentages) {
+        val eventFingerprint =
+          Hashing.hashFingerprint64(
+              buildString {
+                append(percentage.second)
+                append(getEventId(labelerInput))
+              }
+            )
+            .toLong(ByteOrder.LITTLE_ENDIAN)
+        val reducedEventId = abs(eventFingerprint.toDouble() / Long.MAX_VALUE)
+        if (reducedEventId < percentage.first) {
+          selectedModelRelease = percentage.second
         }
       }
+      return selectedModelRelease
     }
     return null
   }
 
   /**
-   * Access to the cache is synchronized to prevent multiple threads calculating ranges in case of
-   * cache miss.
+   * Access to the cache is synchronized to prevent multiple threads calculating percentages in case
+   * of cache miss.
    */
-  private fun readFromCache(eventDay: Long): ArrayList<Triple<Double, Double, String>> {
+  private fun readFromCache(eventDay: Long): ArrayList<Pair<Double, String>> {
     synchronized(this) {
       if (lruCache.containsKey(eventDay)) {
         return lruCache[eventDay]!!
       } else {
-        val ranges = calculateRanges(eventDay)
-        lruCache[eventDay] = ranges
-        return ranges
+        val percentages = calculatePercentages(eventDay)
+        lruCache[eventDay] = percentages
+        return percentages
       }
     }
   }
 
   /**
-   * A single triple with range 0.0..1.1 is returned if there is a single active ModelRollout. In
-   * case there are multiple active ModelRollout(s), the function iterates through an ordered list
-   * of active ModelRollout(s). The list is ordered by rollout_period_start_time, from the most
-   * recent to the oldest.
+   * Return a list of Pairs. Each pair wraps the percentage of adoption of a particular ModelRelease
+   * and the ModelRelease itself. The list is sorted by rollout_period_start_time.
    *
-   * The adoption percentage of each ModelRollout is calculated as follows: ((EVENT_DAY
-   * - ROLLOUT_START_DAY) / (ROLLOUT_END_DAY - ROLLOUT_START_DAY) - (1 *
-   *   percentage_taken_by_previous_rollout))
+   * The adoption percentage of each ModelRollout is calculated as follows: (EVENT_DAY
+   * - ROLLOUT_START_DAY) / (ROLLOUT_END_DAY - ROLLOUT_START_DAY)
    *
    * In case a ModelRollout has the `rollout_freeze_time` set and the event day is greater than
    * rollout_freeze_time, the EVENT_DAY in the above formula is replaced by `rollout_freeze_time` to
-   * ensure that the rollout stops its expansion. ((ROLLOUT_FREEZE_TIME - ROLLOUT_START_DAY) /
-   * (ROLLOUT_END_DAY - ROLLOUT_START_DAY) - (1 * percentage_taken_by_previous_rollout))
+   * ensure that the rollout stops its expansion: (ROLLOUT_FREEZE_TIME - ROLLOUT_START_DAY) /
+   * (ROLLOUT_END_DAY - ROLLOUT_START_DAY)
    */
-  private fun calculateRanges(eventDay: Long): ArrayList<Triple<Double, Double, String>> {
+  private fun calculatePercentages(eventDay: Long): ArrayList<Pair<Double, String>> {
     val activeRollouts = retrieveActiveRollouts(eventDay)
-    if (activeRollouts.size == 0) {
-      return arrayListOf()
-    }
-    val ranges = arrayListOf<Triple<Double, Double, String>>()
-    if (activeRollouts.size == 1) {
-      ranges.add(
-        Triple(
-          LOWER_BOUND_PERCENTAGE_ADOPTION,
-          UPPER_BOUND_PERCENTAGE_ADOPTION,
-          activeRollouts.elementAt(0).modelRelease
+    val percentages = arrayListOf<Pair<Double, String>>()
+    for (i in 0 until activeRollouts.size) {
+      percentages.add(
+        Pair(
+          calculatePercentageAdoption(eventDay, activeRollouts.elementAt(i)),
+          activeRollouts.elementAt(i).modelRelease
         )
       )
-    } else {
-      ranges.add(
-        Triple(
-          LOWER_BOUND_PERCENTAGE_ADOPTION,
-          calculatePercentageAdoption(eventDay, activeRollouts.elementAt(0)),
-          activeRollouts.elementAt(0).modelRelease
-        )
-      )
-      var taken = ranges.elementAt(0).second
-      for (i in 1 until activeRollouts.size) {
-        if (i < activeRollouts.size - 1) {
-          val percentageAdoption =
-            calculatePercentageAdoption(eventDay, activeRollouts.elementAt(i))
-          ranges.add(
-            Triple(
-              ranges[i - 1].second,
-              (percentageAdoption * (1 - taken)) + ranges[i - 1].second,
-              activeRollouts.elementAt(i).modelRelease
-            )
-          )
-        } else {
-          ranges.add(
-            Triple(
-              ranges[i - 1].second,
-              UPPER_BOUND_PERCENTAGE_ADOPTION,
-              activeRollouts.elementAt(i).modelRelease
-            )
-          )
-        }
-        taken = ranges[i].second
-      }
     }
-    return ranges
+    return percentages
   }
 
   private fun calculatePercentageAdoption(eventDay: Long, modelRollout: ModelRollout): Double {
@@ -166,24 +140,21 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     val rolloutPeriodStartDay = (modelRollout.rolloutPeriod.startTime.seconds / 86_400L).toDouble()
     val rolloutPeriodEndDay = (modelRollout.rolloutPeriod.endTime.seconds / 86_400L).toDouble()
 
-    if (eventDay >= modelRolloutFreezeTimeDay) {
-      val percentage: Double =
-        (modelRolloutFreezeTimeDay - rolloutPeriodStartDay) /
-          (rolloutPeriodEndDay - rolloutPeriodStartDay)
-      return percentage
+    if (rolloutPeriodStartDay == rolloutPeriodEndDay) {
+      return UPPER_BOUND_PERCENTAGE_ADOPTION
+    } else if (eventDay >= modelRolloutFreezeTimeDay) {
+      return (modelRolloutFreezeTimeDay - rolloutPeriodStartDay) /
+        (rolloutPeriodEndDay - rolloutPeriodStartDay)
     } else {
-      val percentage: Double =
-        (eventDay - rolloutPeriodStartDay) / (rolloutPeriodEndDay - rolloutPeriodStartDay)
-      return percentage
+      return (eventDay - rolloutPeriodStartDay) / (rolloutPeriodEndDay - rolloutPeriodStartDay)
     }
   }
 
   /**
-   * Iterates through all available ModelRollout(s) ordered by rollout_period_start_time from the
+   * Iterates through all available ModelRollout(s) sorted by rollout_period_start_time from the
    * most recent to the oldest. The function keeps adding ModelRollout(s) to the `activeRollouts`
-   * array unless one of the following conditions is met:
-   * 1. eventDay >= rolloutPeriodEndTime && !rollout.hasRolloutFreezeTime()
-   * 2. rolloutPeriodStartTime == rolloutPeriodEndTime. In this case there is no gradual rollout
+   * array until the following condition is met: eventDay >= rolloutPeriodEndTime &&
+   * !rollout.hasRolloutFreezeTime()
    */
   private fun retrieveActiveRollouts(eventDay: Long): List<ModelRollout> {
     if (rollouts.isEmpty()) {
@@ -214,100 +185,87 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
         activeRollouts.add(sortedRollouts.elementAt(i))
       }
     }
+    activeRollouts.reverse()
     return activeRollouts
   }
 
-  private fun getEventFingerprint(labelerInput: LabelerInput): Long {
+  private fun getEventId(labelerInput: LabelerInput): String {
     if (labelerInput.hasProfileInfo()) {
       val profileInfo = labelerInput.profileInfo
       if (profileInfo.hasEmailUserInfo() && profileInfo.emailUserInfo.hasUserId()) {
-        return Hashing.hashFingerprint64(profileInfo.emailUserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.emailUserInfo.userId
       }
       if (profileInfo.hasPhoneUserInfo() && profileInfo.phoneUserInfo.hasUserId()) {
-        return Hashing.hashFingerprint64(profileInfo.phoneUserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.phoneUserInfo.userId
       }
       if (profileInfo.hasLoggedInIdUserInfo() && profileInfo.loggedInIdUserInfo.hasUserId()) {
-        return Hashing.hashFingerprint64(profileInfo.loggedInIdUserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.loggedInIdUserInfo.userId
       }
       if (profileInfo.hasLoggedOutIdUserInfo() && profileInfo.loggedOutIdUserInfo.hasUserId()) {
-        return Hashing.hashFingerprint64(profileInfo.loggedOutIdUserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.loggedOutIdUserInfo.userId
       }
       if (
         profileInfo.hasProprietaryIdSpace1UserInfo() &&
           profileInfo.proprietaryIdSpace1UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace1UserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.proprietaryIdSpace1UserInfo.userId
       }
       if (
         profileInfo.hasProprietaryIdSpace2UserInfo() &&
           profileInfo.proprietaryIdSpace2UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace2UserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.proprietaryIdSpace2UserInfo.userId
       }
       if (
         profileInfo.hasProprietaryIdSpace3UserInfo() &&
           profileInfo.proprietaryIdSpace3UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace3UserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.proprietaryIdSpace3UserInfo.userId
       }
       if (
         profileInfo.hasProprietaryIdSpace4UserInfo() &&
           profileInfo.proprietaryIdSpace4UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace4UserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.proprietaryIdSpace4UserInfo.userId
       }
       if (
         profileInfo.hasProprietaryIdSpace5UserInfo() &&
           profileInfo.proprietaryIdSpace5UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace5UserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.proprietaryIdSpace5UserInfo.userId
       }
       if (
         profileInfo.hasProprietaryIdSpace6UserInfo() &&
           profileInfo.proprietaryIdSpace6UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace6UserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.proprietaryIdSpace6UserInfo.userId
       }
       if (
         profileInfo.hasProprietaryIdSpace7UserInfo() &&
           profileInfo.proprietaryIdSpace7UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace7UserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.proprietaryIdSpace7UserInfo.userId
       }
       if (
         profileInfo.hasProprietaryIdSpace8UserInfo() &&
           profileInfo.proprietaryIdSpace8UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace8UserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.proprietaryIdSpace8UserInfo.userId
       }
       if (
         profileInfo.hasProprietaryIdSpace9UserInfo() &&
           profileInfo.proprietaryIdSpace9UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace9UserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.proprietaryIdSpace9UserInfo.userId
       }
       if (
         profileInfo.hasProprietaryIdSpace10UserInfo() &&
           profileInfo.proprietaryIdSpace10UserInfo.hasUserId()
       ) {
-        return Hashing.hashFingerprint64(profileInfo.proprietaryIdSpace10UserInfo.userId)
-          .toLong(ByteOrder.LITTLE_ENDIAN)
+        return profileInfo.proprietaryIdSpace10UserInfo.userId
       }
     } else if (labelerInput.hasEventId() && labelerInput.eventId.hasId()) {
-      return Hashing.hashFingerprint64(labelerInput.eventId.id).toLong(ByteOrder.LITTLE_ENDIAN)
+      return labelerInput.eventId.id
     }
     error("No user_id available in the LabelerInput")
   }
