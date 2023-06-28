@@ -267,6 +267,6 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     } else if (labelerInput.hasEventId() && labelerInput.eventId.hasId()) {
       return labelerInput.eventId.id
     }
-    error("No user_id available in the LabelerInput")
+    error("Neither user_id nor event_id was found in the LabelerInput.")
   }
 }

@@ -53,6 +53,26 @@ class VidModelSelectorTest {
   }
 
   @Test
+  fun `getModelRelease fails either user_id and event_id are not set`() {
+
+    val modelLine =
+      parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
+    val modelRollout1 =
+      parseTextProto(
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        modelRollout {}
+      )
+    val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
+
+    val exception =
+      assertFailsWith<IllegalStateException> {
+        vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L })
+      }
+
+    assertEquals(exception.message, "Neither user_id nor event_id was found in the LabelerInput.")
+  }
+
+  @Test
   fun `getModelRelease returns null when model line is not yet active`() {
     val modelLine =
       parseTextProto(File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(), modelLine {})
