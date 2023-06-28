@@ -25,6 +25,17 @@ cc_library(
 )
 
 cc_library(
+    name = "hash",
+    srcs = ["hash.cc"],
+    hdrs = ["hash.h"],
+    strip_include_prefix = _INCLUDE_PREFIX,
+    deps = [
+        "@com_google_absl//absl/strings",
+        "@farmhash",
+    ],
+)
+
+cc_library(
     name = "consistent_hash",
     srcs = ["consistent_hash.cc"],
     hdrs = ["consistent_hash.h"],
@@ -37,11 +48,11 @@ cc_library(
     hdrs = ["distributed_consistent_hashing.h"],
     strip_include_prefix = _INCLUDE_PREFIX,
     deps = [
+        ":hash",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@farmhash",
     ],
 )
 

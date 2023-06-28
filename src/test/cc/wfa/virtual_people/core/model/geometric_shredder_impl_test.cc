@@ -1,0 +1,294 @@
+// Copyright 2023 The Cross-Media Measurement Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "common_cpp/testing/common_matchers.h"
+#include "common_cpp/testing/status_macros.h"
+#include "common_cpp/testing/status_matchers.h"
+#include "gmock/gmock.h"
+#include "google/protobuf/text_format.h"
+#include "gtest/gtest.h"
+#include "wfa/virtual_people/common/demographic.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/core/model/attributes_updater.h"
+
+namespace wfa_virtual_people {
+namespace {
+
+using ::wfa::EqualsProto;
+using ::wfa::IsOk;
+using ::wfa::StatusIs;
+using ::testing::DoubleNear;
+
+// randomness_field value is from 1 to kRandomnessKeyNumber.
+constexpr int kRandomnessKeyNumber = 10000;
+// target_field value is from 0 to kTargetKeyNumber.
+constexpr int kTargetKeyNumber = 100;
+
+TEST(GeometricShredderImplTest, TestNegativePsi) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: -0.01
+          randomness_field: "labeler_input.event_id.id_fingerprint"
+          target_field: "acting_fingerprint"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(GeometricShredderImplTest, TestPsiLargerThanOne) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 1.01
+          randomness_field: "labeler_input.event_id.id_fingerprint"
+          target_field: "acting_fingerprint"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(GeometricShredderImplTest, TestInvalidRandomnessField) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 0.5
+          randomness_field: "labeler_input.event_id.__INVALID_FIELD__"
+          target_field: "acting_fingerprint"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(GeometricShredderImplTest, TestNonUint64RandomnessField) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 0.5
+          randomness_field: "labeler_input.event_id.id"
+          target_field: "acting_fingerprint"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(GeometricShredderImplTest, TestInvalidTargetField) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 0.5
+          randomness_field: "labeler_input.event_id.id_fingerprint"
+          target_field: "__INVALID_FIELD__"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(GeometricShredderImplTest, TestNonUint64TargetField) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 0.5
+          randomness_field: "labeler_input.event_id.id_fingerprint"
+          target_field: "acting_demo_id_space"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(GeometricShredderImplTest, TestRandomnessFieldNotSet) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 1
+          randomness_field: "labeler_input.event_id.id_fingerprint"
+          target_field: "acting_fingerprint"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  LabelerEvent event;
+  event.set_acting_fingerprint(1);
+  EXPECT_THAT(updater->Update(event),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(GeometricShredderImplTest, TestTargetFieldNotSet) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 1
+          randomness_field: "labeler_input.event_id.id_fingerprint"
+          target_field: "acting_fingerprint"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  LabelerEvent event;
+  event.mutable_labeler_input()->mutable_event_id()->set_id_fingerprint(1);
+  EXPECT_THAT(updater->Update(event),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(GeometricShredderImplTest, TestNoShredWithPsiAsZero) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 0
+          randomness_field: "labeler_input.event_id.id_fingerprint"
+          target_field: "acting_fingerprint"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  for (uint64_t acting_fp = 0; acting_fp < kTargetKeyNumber; ++acting_fp) {
+    for (uint64_t event_id_fp = 1; event_id_fp <= kRandomnessKeyNumber;
+         ++event_id_fp) {
+      LabelerEvent event;
+      event.mutable_labeler_input()->mutable_event_id()->set_id_fingerprint(
+          event_id_fp);
+      event.set_acting_fingerprint(acting_fp);
+      EXPECT_THAT(updater->Update(event), IsOk());
+      EXPECT_EQ(event.acting_fingerprint(), acting_fp);
+    }
+  }
+}
+
+TEST(GeometricShredderImplTest, TestAlwaysShredWithPsiAsOne) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 1
+          randomness_field: "labeler_input.event_id.id_fingerprint"
+          target_field: "acting_fingerprint"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  for (uint64_t acting_fp = 0; acting_fp < kTargetKeyNumber; ++acting_fp) {
+    for (uint64_t event_id_fp = 1; event_id_fp <= kRandomnessKeyNumber;
+         ++event_id_fp) {
+      LabelerEvent event;
+      event.mutable_labeler_input()->mutable_event_id()->set_id_fingerprint(
+          event_id_fp);
+      event.set_acting_fingerprint(acting_fp);
+      EXPECT_THAT(updater->Update(event), IsOk());
+      EXPECT_NE(event.acting_fingerprint(), acting_fp);
+    }
+  }
+}
+
+TEST(GeometricShredderImplTest, TestNoShredWithPsiAsOneRandomnessValueAsZero) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 1
+          randomness_field: "labeler_input.event_id.id_fingerprint"
+          target_field: "acting_fingerprint"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  for (uint64_t acting_fp = 0; acting_fp < kTargetKeyNumber; ++acting_fp) {
+    LabelerEvent event;
+    event.mutable_labeler_input()->mutable_event_id()->set_id_fingerprint(0);
+    event.set_acting_fingerprint(acting_fp);
+    EXPECT_THAT(updater->Update(event), IsOk());
+    EXPECT_EQ(event.acting_fingerprint(), acting_fp);
+  }
+}
+
+TEST(GeometricShredderImplTest, TestShredWithProbability) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        geometric_shredder {
+          psi: 0.65
+          randomness_field: "labeler_input.event_id.id_fingerprint"
+          target_field: "acting_fingerprint"
+          random_seed: "seed"
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  for (uint64_t acting_fp = 0; acting_fp < kTargetKeyNumber; ++acting_fp) {
+    int shred_count = 0;
+    for (uint64_t event_id_fp = 1; event_id_fp <= kRandomnessKeyNumber;
+         ++event_id_fp) {
+      LabelerEvent event;
+      event.mutable_labeler_input()->mutable_event_id()->set_id_fingerprint(
+          event_id_fp);
+      event.set_acting_fingerprint(acting_fp);
+      EXPECT_THAT(updater->Update(event), IsOk());
+      if (event.acting_fingerprint() != acting_fp) {
+        ++shred_count;
+      }
+    }
+    double shred_chance =
+        static_cast<double>(shred_count) /
+        static_cast<double>(kRandomnessKeyNumber);
+    EXPECT_THAT(shred_chance, DoubleNear(0.65, 0.01));
+  }
+}
+
+}  // namespace
+}  // namespace wfa_virtual_people

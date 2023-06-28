@@ -62,6 +62,8 @@ sealed interface AttributesUpdaterInterface {
         UpdateCase.CONDITIONAL_ASSIGNMENT ->
           ConditionalAssignmentImpl.build(config.conditionalAssignment)
         UpdateCase.UPDATE_TREE -> UpdateTreeImpl.build(config.updateTree, mutableMapOf())
+        // TODO(@tcsnfkx): Implement geometric_shredder.
+        UpdateCase.GEOMETRIC_SHREDDER -> error("geometric_shredder is not implemented.")
         UpdateCase.UPDATE_NOT_SET -> error("config.update is not set.")
       }
     }
