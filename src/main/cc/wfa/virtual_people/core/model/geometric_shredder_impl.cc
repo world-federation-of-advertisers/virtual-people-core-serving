@@ -108,7 +108,7 @@ absl::StatusOr<uint64_t> GeometricShredderImpl::ShredHash(
   }
   uint64_t randomness_value = randomness_field_value.value;
 
-  // Certain shredding.
+  // Certain shredding if randomness_value is not 0.
   if (psi_ == 1.0f) {
     return randomness_value;
   }
