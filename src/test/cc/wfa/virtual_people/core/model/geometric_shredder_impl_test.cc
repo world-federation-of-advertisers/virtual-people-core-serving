@@ -50,7 +50,8 @@ TEST(GeometricShredderImplTest, TestNegativePsi) {
       )pb",
       &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
-              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       "Psi is not in [0, 1] in GeometricShredder:"));
 }
 
 TEST(GeometricShredderImplTest, TestPsiLargerThanOne) {
@@ -66,7 +67,8 @@ TEST(GeometricShredderImplTest, TestPsiLargerThanOne) {
       )pb",
       &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
-              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       "Psi is not in [0, 1] in GeometricShredder:"));
 }
 
 TEST(GeometricShredderImplTest, TestInvalidRandomnessField) {
@@ -82,7 +84,8 @@ TEST(GeometricShredderImplTest, TestInvalidRandomnessField) {
       )pb",
       &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
-              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       "The field name is invalid:"));
 }
 
 TEST(GeometricShredderImplTest, TestNonUint64RandomnessField) {
@@ -98,7 +101,9 @@ TEST(GeometricShredderImplTest, TestNonUint64RandomnessField) {
       )pb",
       &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
-              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       "randomness_field type is not uint64 in "
+                       "GeometricShredder:"));
 }
 
 TEST(GeometricShredderImplTest, TestInvalidTargetField) {
@@ -114,7 +119,8 @@ TEST(GeometricShredderImplTest, TestInvalidTargetField) {
       )pb",
       &config));
   EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
-              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       "The field name is invalid:"));
 }
 
 TEST(GeometricShredderImplTest, TestNonUint64TargetField) {
@@ -129,8 +135,10 @@ TEST(GeometricShredderImplTest, TestNonUint64TargetField) {
         }
       )pb",
       &config));
-  EXPECT_THAT(AttributesUpdaterInterface::Build(config).status(),
-              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(
+      AttributesUpdaterInterface::Build(config).status(),
+      StatusIs(absl::StatusCode::kInvalidArgument,
+               "target_field type is not uint64 in GeometricShredder:"));
 }
 
 TEST(GeometricShredderImplTest, TestRandomnessFieldNotSet) {
@@ -151,7 +159,8 @@ TEST(GeometricShredderImplTest, TestRandomnessFieldNotSet) {
   LabelerEvent event;
   event.set_acting_fingerprint(1);
   EXPECT_THAT(updater->Update(event),
-              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       "The randomness field is not set in the event."));
 }
 
 TEST(GeometricShredderImplTest, TestTargetFieldNotSet) {
@@ -172,7 +181,8 @@ TEST(GeometricShredderImplTest, TestTargetFieldNotSet) {
   LabelerEvent event;
   event.mutable_labeler_input()->mutable_event_id()->set_id_fingerprint(1);
   EXPECT_THAT(updater->Update(event),
-              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       "The target field is not set in the event."));
 }
 
 TEST(GeometricShredderImplTest, TestNoShredWithPsiAsZero) {
