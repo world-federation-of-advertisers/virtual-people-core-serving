@@ -33,7 +33,7 @@ namespace wfa_virtual_people {
 // computed using the current target field value, the randomness field value,
 // the geometric shredding parameter psi, and the random seed.
 // The details can be found in the Colab
-// https://colab.sandbox.google.com/drive/11C3CWcldUCrkZxUKvTkzhoxkocgKoP6k
+// https://github.com/world-federation-of-advertisers/virtual_people_examples/blob/main/notebooks/Geometric_Shredding.ipynb
 class GeometricShredderImpl : public AttributesUpdaterInterface {
  public:
   // Always use AttributesUpdaterInterface::Build to get an
@@ -80,7 +80,7 @@ class GeometricShredderImpl : public AttributesUpdaterInterface {
   // The descriptors of the field in LabelerEvent, which is to be updated by
   // the shred value.
   std::vector<const google::protobuf::FieldDescriptor*> target_field_;
-  // The seed used in hashing during row selection after a column is matched.
+  // The seed used to generate the shred hash output.
   std::string random_seed_;
 };
 

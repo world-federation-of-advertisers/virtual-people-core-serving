@@ -24,7 +24,7 @@ namespace wfa_virtual_people {
 // Hash the seed to a float number. The output is in range [0, 1).
 double FloatHash(absl::string_view seed);
 
-// Exponentially distributed hash.
+// Exponentially distributed hash. The output is a positive double float number.
 double ExpHash(absl::string_view seed);
 
 }  // namespace wfa_virtual_people
