@@ -19,24 +19,23 @@ import kotlin.collections.ArrayList
 import kotlin.math.abs
 import org.wfanet.measurement.api.v2alpha.ModelLine
 import org.wfanet.measurement.api.v2alpha.ModelRollout
+import org.wfanet.measurement.api.v2alpha.ModelRolloutKey
 import org.wfanet.measurement.common.toLong
 import org.wfanet.virtualpeople.common.LabelerInput
 import org.wfanet.virtualpeople.core.common.Hashing
+import org.wfanet.virtualpeople.core.selector.resourcekey.ModelLineKey
 
 const val CACHE_SIZE = 60
 const val UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1
+const val SECONDS_IN_A_DAY = 86_400L
 
 class VidModelSelector(private val modelLine: ModelLine, private val rollouts: List<ModelRollout>) {
 
   init {
-    /**
-     * Drop the first 5 elements of the List<String> returned by split() method and take the sixth.
-     * ModelLine name has the following format:
-     * "modelProviders/{model_provider}/modelSuites/{model_suite}/modelLines/{model_line}"
-     */
-    val modelLineId = modelLine.name.split("/").drop(5).take(1).toString()
+    val modelLineId = ModelLineKey.fromName(modelLine.name)?.modelLineId
+    require(modelLineId != null) { "ModelLine resource name is either unspecified or invalid" }
     for (rollout in rollouts) {
-      val modelRolloutModelLineId = rollout.name.split("/").drop(5).take(1).toString()
+      val modelRolloutModelLineId = ModelRolloutKey.fromName(rollout.name)?.modelLineId
       require(modelLineId == modelRolloutModelLineId) {
         "ModelRollouts must be parented by the provided ModelLine."
       }
@@ -44,14 +43,14 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   }
 
   /**
-   * The adoption percentage of models is calculated each day. It consists of an array of Pairs
-   * where each Pair wraps the percentage of adoption of a particular ModelRelease and the
-   * ModelRelease itself.
+   * The adoption percentage of models is calculated each day. It consists of an array of
+   * ModelReleasePercentile where each ModelReleasePercentile wraps the percentage of adoption of a
+   * particular ModelRelease and the ModelRelease itself. LruCache keys represent days in UTC time.
    *
    * Elements in the ArrayList are sorted by ModelRollout rollout start time from the oldest to the
    * most recent.
    */
-  private val lruCache: LruCache<Long, ArrayList<Pair<Double, String>>> = LruCache(CACHE_SIZE)
+  private val lruCache: LruCache<UInt, ArrayList<ModelReleasePercentile>> = LruCache(CACHE_SIZE)
 
   fun getModelRelease(labelerInput: LabelerInput): String? {
     val eventTimestampSec = labelerInput.timestampUsec / 1_000_000L
@@ -59,27 +58,31 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
       eventTimestampSec >= modelLine.activeStartTime.seconds &&
         eventTimestampSec < modelLine.activeEndTime.seconds
     ) {
-      val eventDay: Long = eventTimestampSec / 86_400L
+      val eventDay: UInt = (eventTimestampSec / SECONDS_IN_A_DAY).toUInt()
       val modelAdoptionPercentages = readFromCache(eventDay)
-
       var selectedModelRelease =
         if (!modelAdoptionPercentages.isEmpty()) {
-          modelAdoptionPercentages.get(0).second
+          modelAdoptionPercentages.get(0).modelReleaseResourceKey
         } else {
-          null
+          return null
         }
+      for (ap in modelAdoptionPercentages) {
+        println("model adoption percentage: ${ap}")
+      }
+      val eventId = getEventId(labelerInput)
       for (percentage in modelAdoptionPercentages) {
         val eventFingerprint =
           Hashing.hashFingerprint64(
               buildString {
-                append(percentage.second)
-                append(getEventId(labelerInput))
+                append(percentage.modelReleaseResourceKey)
+                append(eventId)
               }
             )
             .toLong(ByteOrder.LITTLE_ENDIAN)
         val reducedEventId = abs(eventFingerprint.toDouble() / Long.MAX_VALUE)
-        if (reducedEventId < percentage.first) {
-          selectedModelRelease = percentage.second
+        println(reducedEventId)
+        if (reducedEventId < percentage.endPercentile) {
+          selectedModelRelease = percentage.modelReleaseResourceKey
         }
       }
       return selectedModelRelease
@@ -91,12 +94,12 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
    * Access to the cache is synchronized to prevent multiple threads calculating percentages in case
    * of cache miss.
    */
-  private fun readFromCache(eventDay: Long): ArrayList<Pair<Double, String>> {
+  private fun readFromCache(eventDay: UInt): ArrayList<ModelReleasePercentile> {
     synchronized(this) {
       if (lruCache.containsKey(eventDay)) {
         return lruCache[eventDay]!!
       } else {
-        val percentages = calculatePercentages(eventDay)
+        val percentages = calculatePercentages(eventDay.toLong())
         lruCache[eventDay] = percentages
         return percentages
       }
@@ -104,8 +107,9 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   }
 
   /**
-   * Return a list of Pairs. Each pair wraps the percentage of adoption of a particular ModelRelease
-   * and the ModelRelease itself. The list is sorted by rollout_period_start_time.
+   * Return a list of ModelReleasePercentile(s). Each ModelReleasePercentile wraps the percentage of
+   * adoption of a particular ModelRelease and the ModelRelease itself. The list is sorted by
+   * rollout_period_start_time.
    *
    * The adoption percentage of each ModelRollout is calculated as follows: (EVENT_DAY
    * - ROLLOUT_START_DAY) / (ROLLOUT_END_DAY - ROLLOUT_START_DAY)
@@ -115,12 +119,12 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
    * ensure that the rollout stops its expansion: (ROLLOUT_FREEZE_TIME - ROLLOUT_START_DAY) /
    * (ROLLOUT_END_DAY - ROLLOUT_START_DAY)
    */
-  private fun calculatePercentages(eventDay: Long): ArrayList<Pair<Double, String>> {
+  private fun calculatePercentages(eventDay: Long): ArrayList<ModelReleasePercentile> {
     val activeRollouts = retrieveActiveRollouts(eventDay)
-    val percentages = arrayListOf<Pair<Double, String>>()
+    val percentages = arrayListOf<ModelReleasePercentile>()
     for (i in 0 until activeRollouts.size) {
       percentages.add(
-        Pair(
+        ModelReleasePercentile(
           calculatePercentageAdoption(eventDay, activeRollouts.elementAt(i)),
           activeRollouts.elementAt(i).modelRelease
         )
@@ -132,13 +136,15 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   private fun calculatePercentageAdoption(eventDay: Long, modelRollout: ModelRollout): Double {
     val modelRolloutFreezeTimeDay =
       if (modelRollout.hasRolloutFreezeTime()) {
-        modelRollout.rolloutFreezeTime.seconds / 86_400L
+        modelRollout.rolloutFreezeTime.seconds / SECONDS_IN_A_DAY
       } else {
         Long.MAX_VALUE
       }
 
-    val rolloutPeriodStartDay = (modelRollout.rolloutPeriod.startTime.seconds / 86_400L).toDouble()
-    val rolloutPeriodEndDay = (modelRollout.rolloutPeriod.endTime.seconds / 86_400L).toDouble()
+    val rolloutPeriodStartDay =
+      (modelRollout.rolloutPeriod.startTime.seconds / SECONDS_IN_A_DAY).toDouble()
+    val rolloutPeriodEndDay =
+      (modelRollout.rolloutPeriod.endTime.seconds / SECONDS_IN_A_DAY).toDouble()
 
     if (rolloutPeriodStartDay == rolloutPeriodEndDay) {
       return UPPER_BOUND_PERCENTAGE_ADOPTION
@@ -162,13 +168,14 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     }
     val sortedRollouts = rollouts.sortedBy { it.rolloutPeriod.startTime.seconds }
     val firstRolloutPeriodStartDay =
-      sortedRollouts.elementAt(0).rolloutPeriod.startTime.seconds / 86_400L
+      sortedRollouts.elementAt(0).rolloutPeriod.startTime.seconds / SECONDS_IN_A_DAY
     if (eventDay < firstRolloutPeriodStartDay) {
       return arrayListOf()
     }
     val activeRollouts = arrayListOf<ModelRollout>()
     for (i in sortedRollouts.size - 1 downTo 0) {
-      val rolloutPeriodEndDay = sortedRollouts.elementAt(i).rolloutPeriod.endTime.seconds / 86_400L
+      val rolloutPeriodEndDay =
+        sortedRollouts.elementAt(i).rolloutPeriod.endTime.seconds / SECONDS_IN_A_DAY
       if (eventDay >= rolloutPeriodEndDay) {
         val rollout = sortedRollouts.elementAt(i)
         activeRollouts.add(rollout)
@@ -180,7 +187,7 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
         continue
       }
       val rolloutPeriodStartDay =
-        sortedRollouts.elementAt(i).rolloutPeriod.startTime.seconds / 86_400L
+        sortedRollouts.elementAt(i).rolloutPeriod.startTime.seconds / SECONDS_IN_A_DAY
       if (eventDay >= rolloutPeriodStartDay) {
         activeRollouts.add(sortedRollouts.elementAt(i))
       }
@@ -269,4 +276,9 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     }
     error("Neither user_id nor event_id was found in the LabelerInput.")
   }
+
+  private data class ModelReleasePercentile(
+    val endPercentile: Double,
+    val modelReleaseResourceKey: String,
+  )
 }
