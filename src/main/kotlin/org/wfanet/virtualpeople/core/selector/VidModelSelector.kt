@@ -107,8 +107,8 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
 
   /**
    * Return a list of ModelReleasePercentile(s). Each ModelReleasePercentile wraps the percentage of
-   * adoption of a particular ModelRelease and the ModelRelease itself. The list is sorted by
-   * either rollout_period_start_date or instant_rollout_date.
+   * adoption of a particular ModelRelease and the ModelRelease itself. The list is sorted by either
+   * rollout_period_start_date or instant_rollout_date.
    *
    * The adoption percentage of each ModelRollout is calculated as follows: (EVENT_DAY
    * - ROLLOUT_START_DAY) / (ROLLOUT_END_DAY - ROLLOUT_START_DAY).
@@ -142,16 +142,18 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
         Long.MAX_VALUE
       }
 
-    val rolloutPeriodStartDay = if (modelRollout.hasGradualRolloutPeriod()) {
-      (daysFromEpoch(modelRollout.gradualRolloutPeriod.startDate)).toDouble()
-    } else {
-      daysFromEpoch(modelRollout.instantRolloutDate).toDouble()
-    }
-    val rolloutPeriodEndDay = if (modelRollout.hasGradualRolloutPeriod()) {
-      (daysFromEpoch(modelRollout.gradualRolloutPeriod.endDate)).toDouble()
-    } else {
-      daysFromEpoch(modelRollout.instantRolloutDate).toDouble()
-    }
+    val rolloutPeriodStartDay =
+      if (modelRollout.hasGradualRolloutPeriod()) {
+        (daysFromEpoch(modelRollout.gradualRolloutPeriod.startDate)).toDouble()
+      } else {
+        daysFromEpoch(modelRollout.instantRolloutDate).toDouble()
+      }
+    val rolloutPeriodEndDay =
+      if (modelRollout.hasGradualRolloutPeriod()) {
+        (daysFromEpoch(modelRollout.gradualRolloutPeriod.endDate)).toDouble()
+      } else {
+        daysFromEpoch(modelRollout.instantRolloutDate).toDouble()
+      }
 
     if (rolloutPeriodStartDay == rolloutPeriodEndDay) {
       return UPPER_BOUND_PERCENTAGE_ADOPTION
@@ -173,28 +175,31 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     if (rollouts.isEmpty()) {
       return rollouts
     }
-    val sortedRollouts = rollouts.sortedBy {
-      if (it.hasGradualRolloutPeriod()) {
-        daysFromEpoch(it.gradualRolloutPeriod.startDate)
-      } else {
-        daysFromEpoch(it.instantRolloutDate)
+    val sortedRollouts =
+      rollouts.sortedBy {
+        if (it.hasGradualRolloutPeriod()) {
+          daysFromEpoch(it.gradualRolloutPeriod.startDate)
+        } else {
+          daysFromEpoch(it.instantRolloutDate)
+        }
       }
-    }
-    val firstRolloutPeriodStartDay = if (sortedRollouts.elementAt(0).hasGradualRolloutPeriod()) {
-      daysFromEpoch(sortedRollouts.elementAt(0).gradualRolloutPeriod.startDate)
-    } else {
-      daysFromEpoch(sortedRollouts.elementAt(0).instantRolloutDate)
-    }
+    val firstRolloutPeriodStartDay =
+      if (sortedRollouts.elementAt(0).hasGradualRolloutPeriod()) {
+        daysFromEpoch(sortedRollouts.elementAt(0).gradualRolloutPeriod.startDate)
+      } else {
+        daysFromEpoch(sortedRollouts.elementAt(0).instantRolloutDate)
+      }
     if (eventDay < firstRolloutPeriodStartDay) {
       return arrayListOf()
     }
     val activeRollouts = arrayListOf<ModelRollout>()
     for (i in sortedRollouts.size - 1 downTo 0) {
-      val rolloutPeriodEndDay = if (sortedRollouts.elementAt(i).hasGradualRolloutPeriod()) {
-        daysFromEpoch(sortedRollouts.elementAt(i).gradualRolloutPeriod.endDate)
-      } else {
-        daysFromEpoch(sortedRollouts.elementAt(i).instantRolloutDate)
-      }
+      val rolloutPeriodEndDay =
+        if (sortedRollouts.elementAt(i).hasGradualRolloutPeriod()) {
+          daysFromEpoch(sortedRollouts.elementAt(i).gradualRolloutPeriod.endDate)
+        } else {
+          daysFromEpoch(sortedRollouts.elementAt(i).instantRolloutDate)
+        }
       if (eventDay >= rolloutPeriodEndDay) {
         val rollout = sortedRollouts.elementAt(i)
         activeRollouts.add(rollout)
@@ -205,11 +210,12 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
         }
         continue
       }
-      val rolloutPeriodStartDay = if (sortedRollouts.elementAt(i).hasGradualRolloutPeriod()) {
-        daysFromEpoch(sortedRollouts.elementAt(i).gradualRolloutPeriod.startDate)
-      } else {
-        daysFromEpoch(sortedRollouts.elementAt(i).instantRolloutDate)
-      }
+      val rolloutPeriodStartDay =
+        if (sortedRollouts.elementAt(i).hasGradualRolloutPeriod()) {
+          daysFromEpoch(sortedRollouts.elementAt(i).gradualRolloutPeriod.startDate)
+        } else {
+          daysFromEpoch(sortedRollouts.elementAt(i).instantRolloutDate)
+        }
       if (eventDay >= rolloutPeriodStartDay) {
         activeRollouts.add(sortedRollouts.elementAt(i))
       }
@@ -299,8 +305,8 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     error("Neither user_id nor event_id was found in the LabelerInput.")
   }
 
-  private fun daysFromEpoch(date: Date) : Long {
-    val epochDate = LocalDate.of(1970,1,1)
+  private fun daysFromEpoch(date: Date): Long {
+    val epochDate = LocalDate.of(1970, 1, 1)
     val currentDate = LocalDate.of(date.year, date.month, date.day)
     return ChronoUnit.DAYS.between(epochDate, currentDate)
   }
