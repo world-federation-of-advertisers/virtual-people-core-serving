@@ -18,7 +18,7 @@ package org.wfanet.virtualpeople.core.selector
  * Implementation of LruCache. It supports the principle of least recently used. Items that haven't
  * been accessed or used for the longest are evicted first when the cache is full.
  */
-class LruCache<K, V>(private val capacity: Int) : LinkedHashMap<K, V>(capacity) {
+class LruCache<K, V>(private val capacity: Int) : LinkedHashMap<K, V>(capacity, 0.75f, true) {
 
   /**
    * Each time a new element is added to the LinkedHashedMap, this method determines whether the
