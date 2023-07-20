@@ -1,11 +1,15 @@
 name: "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelLines/AAAAAAAAAHs/modelRollouts/rollout_02"
 
-rollout_period: {
-  start_time: {
-    seconds: 1300000000
+gradual_rollout_period {
+  start_date: {
+    year: 2011
+    month: 3
+    day: 13
   }
-  end_time: {
-    seconds: 1700000000
+  end_date: {
+    year: 2023
+    month: 11
+    day: 14
   }
 }
 

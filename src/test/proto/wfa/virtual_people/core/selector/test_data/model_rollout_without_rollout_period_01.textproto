@@ -1,12 +1,9 @@
 name: "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelLines/AAAAAAAAAHs/modelRollouts/rollout_without_rollout_period_01"
 
-rollout_period: {
-  start_time: {
-    seconds: 1350000000
-  }
-  end_time: {
-    seconds: 1350000000
-  }
+instant_rollout_date: {
+  year: 2012
+  month: 10
+  day: 12
 }
 
 model_release: "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_01"

@@ -43,7 +43,7 @@ def virtual_people_core_serving_repositories():
 
     http_archive(
         name = "wfa_measurement_proto",
-        sha256 = "50934e930ab470ae0eb17b593616b79a9814a09fb24b1e51f4cd5d4dd7fbadcd",
-        strip_prefix = "cross-media-measurement-api-0.33.0",
-        url = "https://github.com/world-federation-of-advertisers/cross-media-measurement-api/archive/refs/tags/v0.33.0.tar.gz",
+        sha256 = "cc327047bc094768c46a45b6e7a1cde3d0dfc3a89585f316932f0abbf78d2612",
+        strip_prefix = "cross-media-measurement-api-0.39.0",
+        url = "https://github.com/world-federation-of-advertisers/cross-media-measurement-api/archive/refs/tags/v0.39.0.tar.gz",
     )

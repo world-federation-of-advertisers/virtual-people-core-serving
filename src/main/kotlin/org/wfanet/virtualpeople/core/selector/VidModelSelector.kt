@@ -14,7 +14,10 @@
 
 package org.wfanet.virtualpeople.core.selector
 
+import com.google.type.Date
 import java.nio.ByteOrder
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import kotlin.collections.ArrayList
 import kotlin.math.abs
 import org.wfanet.measurement.api.v2alpha.ModelLine
@@ -66,9 +69,6 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
         } else {
           return null
         }
-      for (ap in modelAdoptionPercentages) {
-        println("model adoption percentage: ${ap}")
-      }
       val eventId = getEventId(labelerInput)
       for (percentage in modelAdoptionPercentages) {
         val eventFingerprint =
@@ -80,7 +80,6 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
             )
             .toLong(ByteOrder.LITTLE_ENDIAN)
         val reducedEventId = abs(eventFingerprint.toDouble() / Long.MAX_VALUE)
-        println(reducedEventId)
         if (reducedEventId < percentage.endPercentile) {
           selectedModelRelease = percentage.modelReleaseResourceKey
         }
@@ -109,15 +108,17 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   /**
    * Return a list of ModelReleasePercentile(s). Each ModelReleasePercentile wraps the percentage of
    * adoption of a particular ModelRelease and the ModelRelease itself. The list is sorted by
-   * rollout_period_start_time.
+   * either rollout_period_start_date or instant_rollout_date.
    *
    * The adoption percentage of each ModelRollout is calculated as follows: (EVENT_DAY
-   * - ROLLOUT_START_DAY) / (ROLLOUT_END_DAY - ROLLOUT_START_DAY)
+   * - ROLLOUT_START_DAY) / (ROLLOUT_END_DAY - ROLLOUT_START_DAY).
    *
-   * In case a ModelRollout has the `rollout_freeze_time` set and the event day is greater than
-   * rollout_freeze_time, the EVENT_DAY in the above formula is replaced by `rollout_freeze_time` to
-   * ensure that the rollout stops its expansion: (ROLLOUT_FREEZE_TIME - ROLLOUT_START_DAY) /
-   * (ROLLOUT_END_DAY - ROLLOUT_START_DAY)
+   * In case a ModelRollout has the `rollout_freeze_date` set and the event day is greater than
+   * rollout_freeze_date, the EVENT_DAY in the above formula is replaced by `rollout_freeze_date` to
+   * ensure that the rollout stops its expansion: (ROLLOUT_FREEZE_DATE - ROLLOUT_START_DAY) /
+   * (ROLLOUT_END_DAY - ROLLOUT_START_DAY).
+   *
+   * In case of an instant rollout ROLLOUT_START_DATE is equal to ROLLOUT_END_DATE.
    */
   private fun calculatePercentages(eventDay: Long): ArrayList<ModelReleasePercentile> {
     val activeRollouts = retrieveActiveRollouts(eventDay)
@@ -135,16 +136,22 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
 
   private fun calculatePercentageAdoption(eventDay: Long, modelRollout: ModelRollout): Double {
     val modelRolloutFreezeTimeDay =
-      if (modelRollout.hasRolloutFreezeTime()) {
-        modelRollout.rolloutFreezeTime.seconds / SECONDS_IN_A_DAY
+      if (modelRollout.hasRolloutFreezeDate()) {
+        daysFromEpoch(modelRollout.rolloutFreezeDate)
       } else {
         Long.MAX_VALUE
       }
 
-    val rolloutPeriodStartDay =
-      (modelRollout.rolloutPeriod.startTime.seconds / SECONDS_IN_A_DAY).toDouble()
-    val rolloutPeriodEndDay =
-      (modelRollout.rolloutPeriod.endTime.seconds / SECONDS_IN_A_DAY).toDouble()
+    val rolloutPeriodStartDay = if (modelRollout.hasGradualRolloutPeriod()) {
+      (daysFromEpoch(modelRollout.gradualRolloutPeriod.startDate)).toDouble()
+    } else {
+      daysFromEpoch(modelRollout.instantRolloutDate).toDouble()
+    }
+    val rolloutPeriodEndDay = if (modelRollout.hasGradualRolloutPeriod()) {
+      (daysFromEpoch(modelRollout.gradualRolloutPeriod.endDate)).toDouble()
+    } else {
+      daysFromEpoch(modelRollout.instantRolloutDate).toDouble()
+    }
 
     if (rolloutPeriodStartDay == rolloutPeriodEndDay) {
       return UPPER_BOUND_PERCENTAGE_ADOPTION
@@ -166,28 +173,43 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
     if (rollouts.isEmpty()) {
       return rollouts
     }
-    val sortedRollouts = rollouts.sortedBy { it.rolloutPeriod.startTime.seconds }
-    val firstRolloutPeriodStartDay =
-      sortedRollouts.elementAt(0).rolloutPeriod.startTime.seconds / SECONDS_IN_A_DAY
+    val sortedRollouts = rollouts.sortedBy {
+      if (it.hasGradualRolloutPeriod()) {
+        daysFromEpoch(it.gradualRolloutPeriod.startDate)
+      } else {
+        daysFromEpoch(it.instantRolloutDate)
+      }
+    }
+    val firstRolloutPeriodStartDay = if (sortedRollouts.elementAt(0).hasGradualRolloutPeriod()) {
+      daysFromEpoch(sortedRollouts.elementAt(0).gradualRolloutPeriod.startDate)
+    } else {
+      daysFromEpoch(sortedRollouts.elementAt(0).instantRolloutDate)
+    }
     if (eventDay < firstRolloutPeriodStartDay) {
       return arrayListOf()
     }
     val activeRollouts = arrayListOf<ModelRollout>()
     for (i in sortedRollouts.size - 1 downTo 0) {
-      val rolloutPeriodEndDay =
-        sortedRollouts.elementAt(i).rolloutPeriod.endTime.seconds / SECONDS_IN_A_DAY
+      val rolloutPeriodEndDay = if (sortedRollouts.elementAt(i).hasGradualRolloutPeriod()) {
+        daysFromEpoch(sortedRollouts.elementAt(i).gradualRolloutPeriod.endDate)
+      } else {
+        daysFromEpoch(sortedRollouts.elementAt(i).instantRolloutDate)
+      }
       if (eventDay >= rolloutPeriodEndDay) {
         val rollout = sortedRollouts.elementAt(i)
         activeRollouts.add(rollout)
-        if (!rollout.hasRolloutFreezeTime()) {
+        if (!rollout.hasRolloutFreezeDate()) {
           // Stop only if there is no Freeze time set, otherwise other rollouts are taken until one
           // without rollout_freeze_time is found or no other rollouts are available
           break
         }
         continue
       }
-      val rolloutPeriodStartDay =
-        sortedRollouts.elementAt(i).rolloutPeriod.startTime.seconds / SECONDS_IN_A_DAY
+      val rolloutPeriodStartDay = if (sortedRollouts.elementAt(i).hasGradualRolloutPeriod()) {
+        daysFromEpoch(sortedRollouts.elementAt(i).gradualRolloutPeriod.startDate)
+      } else {
+        daysFromEpoch(sortedRollouts.elementAt(i).instantRolloutDate)
+      }
       if (eventDay >= rolloutPeriodStartDay) {
         activeRollouts.add(sortedRollouts.elementAt(i))
       }
@@ -275,6 +297,12 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
       return labelerInput.eventId.id
     }
     error("Neither user_id nor event_id was found in the LabelerInput.")
+  }
+
+  private fun daysFromEpoch(date: Date) : Long {
+    val epochDate = LocalDate.of(1970,1,1)
+    val currentDate = LocalDate.of(date.year, date.month, date.day)
+    return ChronoUnit.DAYS.between(epochDate, currentDate)
   }
 
   private data class ModelReleasePercentile(
