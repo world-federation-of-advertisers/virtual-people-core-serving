@@ -26,6 +26,7 @@ object Hashing {
    *
    * Consumers can convert it to Long using the toLong() method specifying the desired byte order.
    */
+  // TODO(@marcopremier): Move this function in common-jvm
   fun hashFingerprint64(input: String): ByteString {
     return Hashing.farmHashFingerprint64()
       .hashString(input, StandardCharsets.UTF_8)

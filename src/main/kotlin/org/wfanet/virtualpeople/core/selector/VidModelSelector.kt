@@ -33,7 +33,7 @@ const val UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1
 const val SECONDS_IN_A_DAY = 86_400L
 
 class VidModelSelector(private val modelLine: ModelLine, private val rollouts: List<ModelRollout>) {
-
+  private val epochDate = LocalDate.of(1970, 1, 1)
   init {
     val modelLineId = ModelLineKey.fromName(modelLine.name)?.modelLineId
     require(modelLineId != null) { "ModelLine resource name is either unspecified or invalid" }
@@ -306,7 +306,6 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   }
 
   private fun daysFromEpoch(date: Date): Long {
-    val epochDate = LocalDate.of(1970, 1, 1)
     val currentDate = LocalDate.of(date.year, date.month, date.day)
     return ChronoUnit.DAYS.between(epochDate, currentDate)
   }
