@@ -18,25 +18,13 @@ package org.wfanet.virtualpeople.core.selector.resourcekey
 
 import org.wfanet.measurement.common.ResourceNameParser
 
-private val parser =
-  ResourceNameParser(
-    "modelProviders/{model_provider}/modelSuites/{model_suite}/modelLines/{model_line}"
-  )
+internal enum class IdVariable {
+  MODEL_PROVIDER,
+  MODEL_SUITE,
+  MODEL_LINE,
+  MODEL_ROLLOUT
+}
 
-data class ModelLineKey(
-  val modelProviderId: String,
-  val modelSuiteId: String,
-  val modelLineId: String
-) {
-  companion object {
-    fun fromName(resourceName: String): ModelLineKey? {
-      return parser.parseIdVars(resourceName)?.let {
-        ModelLineKey(
-          it.getValue(IdVariable.MODEL_PROVIDER),
-          it.getValue(IdVariable.MODEL_SUITE),
-          it.getValue(IdVariable.MODEL_LINE)
-        )
-      }
-    }
-  }
+internal fun ResourceNameParser.parseIdVars(resourceName: String): Map<IdVariable, String>? {
+  return parseIdSegments(resourceName)?.mapKeys { IdVariable.valueOf(it.key.uppercase()) }
 }

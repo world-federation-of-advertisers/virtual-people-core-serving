@@ -14,6 +14,7 @@
 
 package org.wfanet.virtualpeople.core.selector
 
+import com.google.common.truth.Truth.assertThat
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -28,7 +29,8 @@ import org.wfanet.virtualpeople.common.labelerInput
 import org.wfanet.virtualpeople.common.profileInfo
 import org.wfanet.virtualpeople.common.userInfo
 
-private const val TEXTPROTO_PATH = "src/test/proto/wfa/virtual_people/core/selector/test_data"
+private const val TEXTPROTO_PATH =
+  "src/main/kotlin/org/wfanet/virtualpeople/core/selector/testing/testdata"
 
 @RunWith(JUnit4::class)
 class VidModelSelectorTest {
@@ -38,12 +40,12 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_02.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
 
@@ -52,7 +54,7 @@ class VidModelSelectorTest {
         VidModelSelector(modelLine, listOf(modelRollout))
       }
 
-    assertEquals(exception.message, "ModelRollouts must be parented by the provided ModelLine.")
+    assertThat(exception).hasMessageThat().contains("parented")
   }
 
   @Test
@@ -60,12 +62,12 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
@@ -75,14 +77,14 @@ class VidModelSelectorTest {
         vidModelSelector.getModelRelease(labelerInput { timestampUsec = 1_200_000_000_000_000L })
       }
 
-    assertEquals(exception.message, "Neither user_id nor event_id was found in the LabelerInput.")
+    assertThat(exception).hasMessageThat().contains("was found in the LabelerInput")
   }
 
   @Test
   fun `getModelRelease returns null when model line is not yet active`() {
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf())
@@ -95,7 +97,7 @@ class VidModelSelectorTest {
   fun `getModelRelease returns null when model line is no longer active`() {
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf())
@@ -108,7 +110,7 @@ class VidModelSelectorTest {
   fun `getModelRelease returns null when rollouts list is empty`() {
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf())
@@ -121,12 +123,12 @@ class VidModelSelectorTest {
   fun `getModelRelease returns null when event time precedes rollout period start time`() {
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
@@ -144,12 +146,12 @@ class VidModelSelectorTest {
   fun `getModelRelease returns correct ModelRelease with single ModelRollout with rollout period`() {
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout1))
@@ -170,12 +172,12 @@ class VidModelSelectorTest {
   fun `getModelRelease returns correct ModelRelease with single ModelRollout without rollout period`() {
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRolloutWithoutRolloutPeriod2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRolloutWithoutRolloutPeriod2))
@@ -197,17 +199,17 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
@@ -229,17 +231,17 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
@@ -261,17 +263,17 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
@@ -293,17 +295,17 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
@@ -325,17 +327,17 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
@@ -357,17 +359,17 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRollout1))
@@ -401,22 +403,22 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout3 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_03.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector =
@@ -439,22 +441,22 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout3 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_03.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector =
@@ -477,22 +479,22 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout3 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_03.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector =
@@ -515,27 +517,27 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRollout3 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_03.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_03.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRolloutWithoutRolloutPeriod1 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_without_rollout_period_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector =
@@ -561,17 +563,17 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRolloutFreeze =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRolloutFreeze))
@@ -593,17 +595,17 @@ class VidModelSelectorTest {
 
     val modelLine =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_line_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_line_01.textproto"),
         ModelLine.getDefaultInstance()
       )
     val modelRollout2 =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_02.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_02.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val modelRolloutFreeze =
       parseTextProto(
-        File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto").bufferedReader(),
+        File("$TEXTPROTO_PATH/model_rollout_freeze_time_01.textproto"),
         ModelRollout.getDefaultInstance()
       )
     val vidModelSelector = VidModelSelector(modelLine, listOf(modelRollout2, modelRolloutFreeze))

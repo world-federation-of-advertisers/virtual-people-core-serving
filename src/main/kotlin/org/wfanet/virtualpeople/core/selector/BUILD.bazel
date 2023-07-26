@@ -71,21 +71,6 @@ kt_jvm_library(
     ],
 )
 
-java_proto_library(
-    name = "date_java_proto",
-    deps = [
-        "@com_google_googleapis//google/type:date_proto",
-    ],
-)
-
-kt_jvm_proto_library(
-    name = "date_kt_jvm_proto",
-    srcs = [
-        "@com_google_googleapis//google/type:date_proto",
-    ],
-    deps = [":date_java_proto"],
-)
-
 kt_jvm_library(
     name = "selector",
     srcs = [
@@ -93,12 +78,12 @@ kt_jvm_library(
     ],
     deps = [
         ":cache",
-        ":date_kt_jvm_proto",
         ":model_line_kt_jvm_proto",
         ":model_release_kt_jvm_proto",
         ":model_rollout_kt_jvm_proto",
         "//src/main/kotlin/org/wfanet/virtualpeople/core/common",
         "//src/main/kotlin/org/wfanet/virtualpeople/core/selector/resourcekey:resource_key",
+        "@wfa_common_jvm//src/main/proto/google/type:date_kt_jvm_proto",
         "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:event_kt_jvm_proto",
     ],
 )

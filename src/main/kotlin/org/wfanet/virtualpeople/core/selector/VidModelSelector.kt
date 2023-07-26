@@ -22,11 +22,11 @@ import kotlin.collections.ArrayList
 import kotlin.math.abs
 import org.wfanet.measurement.api.v2alpha.ModelLine
 import org.wfanet.measurement.api.v2alpha.ModelRollout
-import org.wfanet.measurement.api.v2alpha.ModelRolloutKey
 import org.wfanet.measurement.common.toLong
 import org.wfanet.virtualpeople.common.LabelerInput
 import org.wfanet.virtualpeople.core.common.Hashing
 import org.wfanet.virtualpeople.core.selector.resourcekey.ModelLineKey
+import org.wfanet.virtualpeople.core.selector.resourcekey.ModelRolloutKey
 
 const val CACHE_SIZE = 60
 const val UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1

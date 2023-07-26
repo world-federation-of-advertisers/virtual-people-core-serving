@@ -1,0 +1,11 @@
+package(
+    default_testonly = True,
+    default_visibility = [
+        "//src/test/kotlin/org/wfanet/virtualpeople/core/selector:__subpackages__",
+    ],
+)
+
+filegroup(
+    name = "selector_test_data",
+    srcs = glob(["*.textproto"]),
+)

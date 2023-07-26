@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-package org.wfanet.measurement.api.v2alpha
+package org.wfanet.virtualpeople.core.selector.resourcekey
 
 import org.wfanet.measurement.common.ResourceNameParser
-
-const val MODEL_PROVIDER = "model_provider"
-const val MODEL_SUITE = "model_suite"
-const val MODEL_LINE = "model_line"
-const val MODEL_ROLLOUT = "model_rollout"
 
 private val parser =
   ResourceNameParser(
@@ -36,12 +31,12 @@ data class ModelRolloutKey(
 ) {
   companion object {
     fun fromName(resourceName: String): ModelRolloutKey? {
-      return parser.parseIdSegments(resourceName)?.let {
+      return parser.parseIdVars(resourceName)?.let {
         ModelRolloutKey(
-          it.getValue(MODEL_PROVIDER),
-          it.getValue(MODEL_SUITE),
-          it.getValue(MODEL_LINE),
-          it.getValue(MODEL_ROLLOUT)
+          it.getValue(IdVariable.MODEL_PROVIDER),
+          it.getValue(IdVariable.MODEL_SUITE),
+          it.getValue(IdVariable.MODEL_LINE),
+          it.getValue(IdVariable.MODEL_ROLLOUT)
         )
       }
     }
