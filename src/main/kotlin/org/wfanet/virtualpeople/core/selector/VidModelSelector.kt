@@ -14,14 +14,17 @@
 
 package org.wfanet.virtualpeople.core.selector
 
-import com.google.type.Date
 import java.nio.ByteOrder
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 import org.wfanet.measurement.api.v2alpha.ModelLine
 import org.wfanet.measurement.api.v2alpha.ModelRollout
+import org.wfanet.measurement.common.OpenEndTimeRange
+import org.wfanet.measurement.common.toInstant
+import org.wfanet.measurement.common.toLocalDate
 import org.wfanet.measurement.common.toLong
 import org.wfanet.virtualpeople.common.LabelerInput
 import org.wfanet.virtualpeople.core.common.Hashing
@@ -30,8 +33,17 @@ import org.wfanet.virtualpeople.core.selector.resourcekey.ModelRolloutKey
 
 const val CACHE_SIZE = 60
 const val UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1
-const val SECONDS_IN_A_DAY = 86_400L
 
+/**
+ * A utility class to determine what VID Model must be used to label events.
+ *
+ * Each ModelLine uses a different instance of this class. In case either the ModelLine or the list
+ * of ModelRollouts change, a new instance must be created.
+ *
+ * @property modelLine the ModelLine used to determine what ModelRelease must be used to label
+ *   events
+ * @property rollouts the list of rollouts contained in the modelLine
+ */
 class VidModelSelector(private val modelLine: ModelLine, private val rollouts: List<ModelRollout>) {
   private val epochDate = LocalDate.of(1970, 1, 1)
   init {
@@ -48,21 +60,22 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
   /**
    * The adoption percentage of models is calculated each day. It consists of an array of
    * ModelReleasePercentile where each ModelReleasePercentile wraps the percentage of adoption of a
-   * particular ModelRelease and the ModelRelease itself. LruCache keys represent days in UTC time.
+   * particular ModelRelease and the ModelRelease itself. LruCache keys are LocalDate objects
+   * expressed in UTC time.
    *
    * Elements in the ArrayList are sorted by ModelRollout rollout start time from the oldest to the
    * most recent.
    */
-  private val lruCache: LruCache<UInt, ArrayList<ModelReleasePercentile>> = LruCache(CACHE_SIZE)
+  private val lruCache: LruCache<LocalDate, List<ModelReleasePercentile>> = LruCache(CACHE_SIZE)
 
   fun getModelRelease(labelerInput: LabelerInput): String? {
     val eventTimestampSec = labelerInput.timestampUsec / 1_000_000L
-    if (
-      eventTimestampSec >= modelLine.activeStartTime.seconds &&
-        eventTimestampSec < modelLine.activeEndTime.seconds
-    ) {
-      val eventDay: UInt = (eventTimestampSec / SECONDS_IN_A_DAY).toUInt()
-      val modelAdoptionPercentages = readFromCache(eventDay)
+    val eventInstant = Instant.ofEpochSecond(eventTimestampSec)
+    val modelLineActiveRange =
+      OpenEndTimeRange(modelLine.activeStartTime.toInstant(), modelLine.activeEndTime.toInstant())
+    if (eventInstant in modelLineActiveRange) {
+      val eventDateUtc = eventInstant.atZone(ZoneOffset.UTC).toLocalDate()
+      val modelAdoptionPercentages = readFromCache(eventDateUtc)
       var selectedModelRelease =
         if (!modelAdoptionPercentages.isEmpty()) {
           modelAdoptionPercentages.get(0).modelReleaseResourceKey
@@ -73,11 +86,11 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
       for (percentage in modelAdoptionPercentages) {
         val eventFingerprint =
           Hashing.hashFingerprint64(
-              buildString {
-                append(percentage.modelReleaseResourceKey)
-                append(eventId)
-              }
-            )
+            buildString {
+              append(percentage.modelReleaseResourceKey)
+              append(eventId)
+            }
+          )
             .toLong(ByteOrder.LITTLE_ENDIAN)
         val reducedEventId = abs(eventFingerprint.toDouble() / Long.MAX_VALUE)
         if (reducedEventId < percentage.endPercentile) {
@@ -93,13 +106,13 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
    * Access to the cache is synchronized to prevent multiple threads calculating percentages in case
    * of cache miss.
    */
-  private fun readFromCache(eventDay: UInt): ArrayList<ModelReleasePercentile> {
+  private fun readFromCache(eventDateUtc: LocalDate): List<ModelReleasePercentile> {
     synchronized(this) {
-      if (lruCache.containsKey(eventDay)) {
-        return lruCache[eventDay]!!
+      if (lruCache.containsKey(eventDateUtc)) {
+        return lruCache[eventDateUtc]!!
       } else {
-        val percentages = calculatePercentages(eventDay.toLong())
-        lruCache[eventDay] = percentages
+        val percentages = calculatePercentages(eventDateUtc)
+        lruCache[eventDateUtc] = percentages
         return percentages
       }
     }
@@ -120,48 +133,51 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
    *
    * In case of an instant rollout ROLLOUT_START_DATE is equal to ROLLOUT_END_DATE.
    */
-  private fun calculatePercentages(eventDay: Long): ArrayList<ModelReleasePercentile> {
-    val activeRollouts = retrieveActiveRollouts(eventDay)
-    val percentages = arrayListOf<ModelReleasePercentile>()
-    for (i in 0 until activeRollouts.size) {
-      percentages.add(
-        ModelReleasePercentile(
-          calculatePercentageAdoption(eventDay, activeRollouts.elementAt(i)),
-          activeRollouts.elementAt(i).modelRelease
-        )
+  private fun calculatePercentages(eventDateUtc: LocalDate): List<ModelReleasePercentile> {
+    val activeRollouts: List<ModelRollout> = retrieveActiveRollouts(eventDateUtc)
+    return activeRollouts.map { activeRollout ->
+      ModelReleasePercentile(
+        calculatePercentageAdoption(eventDateUtc, activeRollout),
+        activeRollout.modelRelease
       )
     }
-    return percentages
   }
 
-  private fun calculatePercentageAdoption(eventDay: Long, modelRollout: ModelRollout): Double {
-    val modelRolloutFreezeTimeDay =
+  /**
+   * Returns the percentage of events that this ModelRollout must label for the given `eventDateUtc`
+   */
+  private fun calculatePercentageAdoption(
+    eventDateUtc: LocalDate,
+    modelRollout: ModelRollout
+  ): Double {
+    val modelRolloutFreezeDate =
       if (modelRollout.hasRolloutFreezeDate()) {
-        daysFromEpoch(modelRollout.rolloutFreezeDate)
+        modelRollout.rolloutFreezeDate.toLocalDate()
       } else {
-        Long.MAX_VALUE
+        LocalDate.MAX
       }
 
-    val rolloutPeriodStartDay =
+    val rolloutPeriodStartDate =
       if (modelRollout.hasGradualRolloutPeriod()) {
-        (daysFromEpoch(modelRollout.gradualRolloutPeriod.startDate)).toDouble()
+        modelRollout.gradualRolloutPeriod.startDate.toLocalDate()
       } else {
-        daysFromEpoch(modelRollout.instantRolloutDate).toDouble()
+        modelRollout.instantRolloutDate.toLocalDate()
       }
-    val rolloutPeriodEndDay =
+    val rolloutPeriodEndDate =
       if (modelRollout.hasGradualRolloutPeriod()) {
-        (daysFromEpoch(modelRollout.gradualRolloutPeriod.endDate)).toDouble()
+        modelRollout.gradualRolloutPeriod.endDate.toLocalDate()
       } else {
-        daysFromEpoch(modelRollout.instantRolloutDate).toDouble()
+        modelRollout.instantRolloutDate.toLocalDate()
       }
 
-    if (rolloutPeriodStartDay == rolloutPeriodEndDay) {
-      return UPPER_BOUND_PERCENTAGE_ADOPTION
-    } else if (eventDay >= modelRolloutFreezeTimeDay) {
-      return (modelRolloutFreezeTimeDay - rolloutPeriodStartDay) /
-        (rolloutPeriodEndDay - rolloutPeriodStartDay)
+    return if (rolloutPeriodStartDate == rolloutPeriodEndDate) {
+      UPPER_BOUND_PERCENTAGE_ADOPTION
+    } else if (eventDateUtc >= modelRolloutFreezeDate) {
+      (ChronoUnit.DAYS.between(rolloutPeriodStartDate, modelRolloutFreezeDate).toDouble()) /
+        (ChronoUnit.DAYS.between(rolloutPeriodStartDate, rolloutPeriodEndDate).toDouble())
     } else {
-      return (eventDay - rolloutPeriodStartDay) / (rolloutPeriodEndDay - rolloutPeriodStartDay)
+      (ChronoUnit.DAYS.between(rolloutPeriodStartDate, eventDateUtc).toDouble()) /
+        (ChronoUnit.DAYS.between(rolloutPeriodStartDate, rolloutPeriodEndDate).toDouble())
     }
   }
 
@@ -171,37 +187,36 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
    * array until the following condition is met: eventDay >= rolloutPeriodEndTime &&
    * !rollout.hasRolloutFreezeTime()
    */
-  private fun retrieveActiveRollouts(eventDay: Long): List<ModelRollout> {
+  private fun retrieveActiveRollouts(eventDateUtc: LocalDate): List<ModelRollout> {
     if (rollouts.isEmpty()) {
       return rollouts
     }
-    val sortedRollouts =
+    val sortedRollouts: List<ModelRollout> =
       rollouts.sortedBy {
         if (it.hasGradualRolloutPeriod()) {
-          daysFromEpoch(it.gradualRolloutPeriod.startDate)
+          it.gradualRolloutPeriod.startDate.toLocalDate()
         } else {
-          daysFromEpoch(it.instantRolloutDate)
+          it.instantRolloutDate.toLocalDate()
         }
       }
-    val firstRolloutPeriodStartDay =
-      if (sortedRollouts.elementAt(0).hasGradualRolloutPeriod()) {
-        daysFromEpoch(sortedRollouts.elementAt(0).gradualRolloutPeriod.startDate)
+    val firstRolloutPeriodStartDate =
+      if (sortedRollouts.first().hasGradualRolloutPeriod()) {
+        sortedRollouts.first().gradualRolloutPeriod.startDate
       } else {
-        daysFromEpoch(sortedRollouts.elementAt(0).instantRolloutDate)
+        sortedRollouts.first().instantRolloutDate
       }
-    if (eventDay < firstRolloutPeriodStartDay) {
-      return arrayListOf()
+    if (eventDateUtc < firstRolloutPeriodStartDate.toLocalDate()) {
+      return emptyList()
     }
-    val activeRollouts = arrayListOf<ModelRollout>()
-    for (i in sortedRollouts.size - 1 downTo 0) {
-      val rolloutPeriodEndDay =
-        if (sortedRollouts.elementAt(i).hasGradualRolloutPeriod()) {
-          daysFromEpoch(sortedRollouts.elementAt(i).gradualRolloutPeriod.endDate)
+    val activeRollouts = mutableListOf<ModelRollout>()
+    for (rollout in sortedRollouts.asReversed()) {
+      val rolloutPeriodEndDate =
+        if (rollout.hasGradualRolloutPeriod()) {
+          rollout.gradualRolloutPeriod.endDate.toLocalDate()
         } else {
-          daysFromEpoch(sortedRollouts.elementAt(i).instantRolloutDate)
+          rollout.instantRolloutDate.toLocalDate()
         }
-      if (eventDay >= rolloutPeriodEndDay) {
-        val rollout = sortedRollouts.elementAt(i)
+      if (eventDateUtc >= rolloutPeriodEndDate) {
         activeRollouts.add(rollout)
         if (!rollout.hasRolloutFreezeDate()) {
           // Stop only if there is no Freeze time set, otherwise other rollouts are taken until one
@@ -210,104 +225,68 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
         }
         continue
       }
-      val rolloutPeriodStartDay =
-        if (sortedRollouts.elementAt(i).hasGradualRolloutPeriod()) {
-          daysFromEpoch(sortedRollouts.elementAt(i).gradualRolloutPeriod.startDate)
+      val rolloutPeriodStartDate =
+        if (rollout.hasGradualRolloutPeriod()) {
+          rollout.gradualRolloutPeriod.startDate.toLocalDate()
         } else {
-          daysFromEpoch(sortedRollouts.elementAt(i).instantRolloutDate)
+          rollout.instantRolloutDate.toLocalDate()
         }
-      if (eventDay >= rolloutPeriodStartDay) {
-        activeRollouts.add(sortedRollouts.elementAt(i))
+      if (eventDateUtc >= rolloutPeriodStartDate) {
+        activeRollouts.add(rollout)
       }
     }
-    activeRollouts.reverse()
-    return activeRollouts
+    return activeRollouts.asReversed()
   }
 
   private fun getEventId(labelerInput: LabelerInput): String {
     if (labelerInput.hasProfileInfo()) {
       val profileInfo = labelerInput.profileInfo
-      if (profileInfo.hasEmailUserInfo() && profileInfo.emailUserInfo.hasUserId()) {
+      if (profileInfo.emailUserInfo.hasUserId()) {
         return profileInfo.emailUserInfo.userId
       }
-      if (profileInfo.hasPhoneUserInfo() && profileInfo.phoneUserInfo.hasUserId()) {
+      if (profileInfo.phoneUserInfo.hasUserId()) {
         return profileInfo.phoneUserInfo.userId
       }
-      if (profileInfo.hasLoggedInIdUserInfo() && profileInfo.loggedInIdUserInfo.hasUserId()) {
+      if (profileInfo.loggedInIdUserInfo.hasUserId()) {
         return profileInfo.loggedInIdUserInfo.userId
       }
-      if (profileInfo.hasLoggedOutIdUserInfo() && profileInfo.loggedOutIdUserInfo.hasUserId()) {
+      if (profileInfo.loggedOutIdUserInfo.hasUserId()) {
         return profileInfo.loggedOutIdUserInfo.userId
       }
-      if (
-        profileInfo.hasProprietaryIdSpace1UserInfo() &&
-          profileInfo.proprietaryIdSpace1UserInfo.hasUserId()
-      ) {
+      if (profileInfo.proprietaryIdSpace1UserInfo.hasUserId()) {
         return profileInfo.proprietaryIdSpace1UserInfo.userId
       }
-      if (
-        profileInfo.hasProprietaryIdSpace2UserInfo() &&
-          profileInfo.proprietaryIdSpace2UserInfo.hasUserId()
-      ) {
+      if (profileInfo.proprietaryIdSpace2UserInfo.hasUserId()) {
         return profileInfo.proprietaryIdSpace2UserInfo.userId
       }
-      if (
-        profileInfo.hasProprietaryIdSpace3UserInfo() &&
-          profileInfo.proprietaryIdSpace3UserInfo.hasUserId()
-      ) {
+      if (profileInfo.proprietaryIdSpace3UserInfo.hasUserId()) {
         return profileInfo.proprietaryIdSpace3UserInfo.userId
       }
-      if (
-        profileInfo.hasProprietaryIdSpace4UserInfo() &&
-          profileInfo.proprietaryIdSpace4UserInfo.hasUserId()
-      ) {
+      if (profileInfo.proprietaryIdSpace4UserInfo.hasUserId()) {
         return profileInfo.proprietaryIdSpace4UserInfo.userId
       }
-      if (
-        profileInfo.hasProprietaryIdSpace5UserInfo() &&
-          profileInfo.proprietaryIdSpace5UserInfo.hasUserId()
-      ) {
+      if (profileInfo.proprietaryIdSpace5UserInfo.hasUserId()) {
         return profileInfo.proprietaryIdSpace5UserInfo.userId
       }
-      if (
-        profileInfo.hasProprietaryIdSpace6UserInfo() &&
-          profileInfo.proprietaryIdSpace6UserInfo.hasUserId()
-      ) {
+      if (profileInfo.proprietaryIdSpace6UserInfo.hasUserId()) {
         return profileInfo.proprietaryIdSpace6UserInfo.userId
       }
-      if (
-        profileInfo.hasProprietaryIdSpace7UserInfo() &&
-          profileInfo.proprietaryIdSpace7UserInfo.hasUserId()
-      ) {
+      if (profileInfo.proprietaryIdSpace7UserInfo.hasUserId()) {
         return profileInfo.proprietaryIdSpace7UserInfo.userId
       }
-      if (
-        profileInfo.hasProprietaryIdSpace8UserInfo() &&
-          profileInfo.proprietaryIdSpace8UserInfo.hasUserId()
-      ) {
+      if (profileInfo.proprietaryIdSpace8UserInfo.hasUserId()) {
         return profileInfo.proprietaryIdSpace8UserInfo.userId
       }
-      if (
-        profileInfo.hasProprietaryIdSpace9UserInfo() &&
-          profileInfo.proprietaryIdSpace9UserInfo.hasUserId()
-      ) {
+      if (profileInfo.proprietaryIdSpace9UserInfo.hasUserId()) {
         return profileInfo.proprietaryIdSpace9UserInfo.userId
       }
-      if (
-        profileInfo.hasProprietaryIdSpace10UserInfo() &&
-          profileInfo.proprietaryIdSpace10UserInfo.hasUserId()
-      ) {
+      if (profileInfo.proprietaryIdSpace10UserInfo.hasUserId()) {
         return profileInfo.proprietaryIdSpace10UserInfo.userId
       }
-    } else if (labelerInput.hasEventId() && labelerInput.eventId.hasId()) {
+    } else if (labelerInput.eventId.hasId()) {
       return labelerInput.eventId.id
     }
     error("Neither user_id nor event_id was found in the LabelerInput.")
-  }
-
-  private fun daysFromEpoch(date: Date): Long {
-    val currentDate = LocalDate.of(date.year, date.month, date.day)
-    return ChronoUnit.DAYS.between(epochDate, currentDate)
   }
 
   private data class ModelReleasePercentile(
