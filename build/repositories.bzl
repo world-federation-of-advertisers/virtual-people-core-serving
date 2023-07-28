@@ -36,9 +36,9 @@ def virtual_people_core_serving_repositories():
 
     http_archive(
         name = "wfa_virtual_people_common",
-        sha256 = "0302c92075d991e89ed29a19c946abb3abc634430bb3cde9b77774b49079354e",
-        strip_prefix = "virtual-people-common-0.2.2",
-        url = "https://github.com/world-federation-of-advertisers/virtual-people-common/archive/refs/tags/v0.2.2.tar.gz",
+        sha256 = "9cd92c85a86c86c7228e860969bc31148049ece3c6ce9f1ce2047e907c3187ff",
+        strip_prefix = "virtual-people-common-0.2.4",
+        url = "https://github.com/world-federation-of-advertisers/virtual-people-common/archive/refs/tags/v0.2.4.tar.gz",
     )
 
     http_archive(

@@ -22,6 +22,7 @@
 #include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/conditional_assignment_impl.h"
 #include "wfa/virtual_people/core/model/conditional_merge_impl.h"
+#include "wfa/virtual_people/core/model/geometric_shredder_impl.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/sparse_update_matrix_impl.h"
 #include "wfa/virtual_people/core/model/update_matrix_impl.h"
@@ -55,6 +56,8 @@ AttributesUpdaterInterface::Build(const BranchNode::AttributesUpdater& config) {
     }
     case BranchNode::AttributesUpdater::UpdateCase::kConditionalAssignment:
       return ConditionalAssignmentImpl::Build(config.conditional_assignment());
+    case BranchNode::AttributesUpdater::UpdateCase::kGeometricShredder:
+      return GeometricShredderImpl::Build(config.geometric_shredder());
     default:
       return absl::InvalidArgumentError("config.update is not set.");
   }
