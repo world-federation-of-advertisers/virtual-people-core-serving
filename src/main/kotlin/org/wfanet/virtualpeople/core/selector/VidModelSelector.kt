@@ -86,11 +86,11 @@ class VidModelSelector(private val modelLine: ModelLine, private val rollouts: L
       for (percentage in modelAdoptionPercentages) {
         val eventFingerprint =
           Hashing.hashFingerprint64(
-            buildString {
-              append(percentage.modelReleaseResourceKey)
-              append(eventId)
-            }
-          )
+              buildString {
+                append(percentage.modelReleaseResourceKey)
+                append(eventId)
+              }
+            )
             .toLong(ByteOrder.LITTLE_ENDIAN)
         val reducedEventId = abs(eventFingerprint.toDouble() / Long.MAX_VALUE)
         if (reducedEventId < percentage.endPercentile) {
