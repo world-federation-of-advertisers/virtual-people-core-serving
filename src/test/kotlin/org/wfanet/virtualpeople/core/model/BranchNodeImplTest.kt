@@ -538,11 +538,13 @@ class BranchNodeImplTest {
   fun `apply update matrix`() {
     /**
      * The branch node has 1 attributes updater and 2 branches. The update matrix is
+     *
      * ```
      *                    "RAW_COUNTRY_1" "RAW_COUNTRY_2"
      * "country_code_1"         0.8             0.2
      * "country_code_2"         0.2             0.8
      * ```
+     *
      * One branch is selected if person_country_code is "country_code_1", which is a population node
      * always assigns virtual person id 10. The other branch is selected if person_country_code is
      * "country_code_2", which is a population node always assigns virtual person id 20.
@@ -634,11 +636,13 @@ class BranchNodeImplTest {
 
     /**
      * The selected column is
+     *
      * ```
      *                    "RAW_COUNTRY_1"
      * "country_code_1"         0.8
      * "country_code_2"         0.2
      * ```
+     *
      * Compare to the exact result to make sure C++ and Kotlin implementations behave the same.
      */
     assertEquals(2, idCounts1.size)
@@ -668,11 +672,13 @@ class BranchNodeImplTest {
 
     /**
      * The selected column is
+     *
      * ```
      *                    "RAW_COUNTRY_2"
      * "country_code_1"         0.2
      * "country_code_2"         0.8
      * ```
+     *
      * Compare to the exact result to make sure C++ and Kotlin implementations behave the same.
      */
     assertEquals(2, idCounts2.size)
@@ -1136,6 +1142,7 @@ class BranchNodeImplTest {
      * independently, so they have the same probability to go to each pool.
      *
      * Expected values are
+     *
      * ```
      *   idCountsIndex0[10UL] ~= FINGERPRINT_NUMBER * 0.8 = 8000
      *   idCountsIndex0[20UL] ~= FINGERPRINT_NUMBER * 0.2 = 2000
@@ -1233,6 +1240,7 @@ class BranchNodeImplTest {
      * Compare to the exact result to make sure C++ and Kotlin implementations behave the same.
      *
      * Expect ~70% events have 0 virtual person, ~30% events have 1.
+     *
      * ```
      * Expected values are
      *   idCountsIndex[10UL] ~= FINGERPRINT_NUMBER * 0.3 * 0.2 = 600
@@ -1333,6 +1341,7 @@ class BranchNodeImplTest {
      * independently, so they have the same probability to go to each pool.
      *
      * Expected values are
+     *
      * ```
      *   idCountsIndex0[10UL] ~= FINGERPRINT_NUMBER * 0.8 = 8000
      *   idCountsIndex0[20UL] ~= FINGERPRINT_NUMBER * 0.2 = 2000
@@ -1442,6 +1451,7 @@ class BranchNodeImplTest {
      * Compare to the exact result to make sure C++ and Kotlin implementations behave the same.
      *
      * All events have person_index 0. ~30% events have person_index 1.
+     *
      * ```
      * Expected values are
      *   idCountsIndex[10UL] ~= FINGERPRINT_NUMBER = 10000

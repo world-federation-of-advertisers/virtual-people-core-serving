@@ -14,16 +14,23 @@
 
 package org.wfanet.virtualpeople.core.labeler
 
-import com.google.common.hash.Hashing
-import java.nio.charset.StandardCharsets
-import org.wfanet.virtualpeople.common.*
+import java.nio.ByteOrder
+import org.wfanet.measurement.common.toLong
+import org.wfanet.virtualpeople.common.CompiledNode
+import org.wfanet.virtualpeople.common.LabelerEvent
+import org.wfanet.virtualpeople.common.LabelerInput
+import org.wfanet.virtualpeople.common.LabelerOutput
+import org.wfanet.virtualpeople.common.UserInfo
+import org.wfanet.virtualpeople.common.labelerEvent
+import org.wfanet.virtualpeople.common.labelerOutput
+import org.wfanet.virtualpeople.core.common.Hashing
 import org.wfanet.virtualpeople.core.model.ModelNode
 
 class Labeler private constructor(private val rootNode: ModelNode) {
 
   /** Apply the model to generate the labels. Invalid inputs will result in an error. */
   fun label(input: LabelerInput): LabelerOutput {
-    /** Prepare labeler event. */
+    // Prepare labeler event.
     val eventBuilder = labelerEvent { labelerInput = input }.toBuilder()
     setFingerprints(eventBuilder)
 
@@ -39,6 +46,7 @@ class Labeler private constructor(private val rootNode: ModelNode) {
     /**
      * Always use Labeler::Build to get a Labeler object. Users should never call the constructor
      * directly.
+     *
      * ```
      * There are 3 ways to represent a full model:
      * - Option 1:
@@ -77,6 +85,7 @@ class Labeler private constructor(private val rootNode: ModelNode) {
      *   node5: index = 5
      *   node6: index = 6
      * ```
+     *
      * Build the model with the @root node. Handles option 1 above.
      *
      * All the other nodes are referenced directly in branch_node.branches.node of the parent nodes.
@@ -116,11 +125,11 @@ class Labeler private constructor(private val rootNode: ModelNode) {
 
       if (root == null) {
         if (nodeRefs.isEmpty()) {
-          /** This should never happen. */
+          // This should never happen.
           error("Cannot find root node.")
         }
         if (nodeRefs.size > 1) {
-          /** We expect only 1 node in the node_refs map, which is the root node. */
+          // We expect only 1 node in the node_refs map, which is the root node.
           error("Only 1 root node is expected in the node_refs map")
         }
         val entry = nodeRefs.entries.first()
@@ -131,31 +140,22 @@ class Labeler private constructor(private val rootNode: ModelNode) {
         error("Some nodes are not in the model tree.")
       }
 
-      /** root is guaranteed to be not null at this point. */
+      // root is guaranteed to be not null at this point.
       return Labeler(root!!)
-    }
-
-    /**
-     * The fingerprint is expected to be a ULong, however, in Kotlin proto, uint64 is read/writen as
-     * Long.
-     *
-     * We need to convert it to ULong whenever we need to consume it, and convert it back to Long
-     * when we write back to proto.
-     */
-    private fun getFingerprint64Long(seed: String): Long {
-      return Hashing.farmHashFingerprint64().hashString(seed, StandardCharsets.UTF_8).asLong()
     }
 
     private fun setUserInfoFingerprint(userInfo: UserInfo.Builder) {
       if (userInfo.hasUserId()) {
-        userInfo.userIdFingerprint = getFingerprint64Long(userInfo.userId)
+        userInfo.userIdFingerprint =
+          Hashing.hashFingerprint64(userInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
       }
     }
 
     private fun setFingerprints(eventBuilder: LabelerEvent.Builder) {
       val labelerInputBuilder = eventBuilder.labelerInputBuilder
       if (labelerInputBuilder.hasEventId()) {
-        val eventIdFingerprint = getFingerprint64Long(labelerInputBuilder.eventId.id)
+        val eventIdFingerprint =
+          Hashing.hashFingerprint64(labelerInputBuilder.eventId.id).toLong(ByteOrder.LITTLE_ENDIAN)
         labelerInputBuilder.eventIdBuilder.idFingerprint = eventIdFingerprint
         eventBuilder.actingFingerprint = eventIdFingerprint
       }
