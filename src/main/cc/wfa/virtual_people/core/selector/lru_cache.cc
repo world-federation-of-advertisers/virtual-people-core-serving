@@ -16,24 +16,35 @@
 
 namespace wfa_virtual_people {
 
-LruCache::LruCache(int n) : csize(n) {}
+LruCache::LruCache(int n) : cache_size(n) {}
 
-ModelReleasePercentile LruCache::get(int x){
-  if(cache_data.find(x) == cache_data.end()) {
-    if(dq.size() == csize) {
-      int last = dq.back();
-      dq.pop_back();
-      cache_data.erase(last);
+void LruCache::add(const std::tm& key, const std::list<ModelReleasePercentile>& data){
+  if (cache_data.size() == cache_size) {
+    auto oldest = access_order.begin();
+    for (auto idx = access_order.begin(); idx != access_order.end(); ++idx) {
+      if (TmComparator()(idx->first, oldest->first)) {
+        oldest = idx;
+      }
     }
-  } else {
-    dq.erase(cache_data[x].first);
+    cache_data.erase(oldest->first);
+    access_order.erase(oldest);
   }
 
-  dq.push_front(x);
-  cache_data[x] = {dq.begin(), cache_data[x].second};
+  cache_data[key] = data;
+  access_order.emplace_front(key);
 
-  return cache_data[x].second;
+}
 
+const std::optional<std::list<ModelReleasePercentile>> LruCache::get(const std::tm& key){
+  auto idx = cache_data.find(key);
+  if (idx != cache_data.end()) {
+    if (access_order.front() != key) {
+      access_order.remove(key);
+      access_order.emplace_front(key);
+    }
+    return idx->second;
+  }
+  return std::nullopt;
 }
 
 } // namespace wfa_virtual_people
