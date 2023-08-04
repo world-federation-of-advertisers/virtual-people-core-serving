@@ -16,6 +16,7 @@
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_VID_MODEL_SELECTOR_H_
 
 #include <list>
+#include <mutex>
 #include <string>
 
 #include "wfa/measurement/api/v2alpha/model_line.pb.h"
@@ -37,10 +38,11 @@ class VidModelSelector {
   ModelLine model_line;
   std::list<ModelRollout> model_rollouts;
   LruCache lru_cache;
+  std::mutex mtx;
 
-  std::list<ModelReleasePercentile> readFromCache(const std::tm& key);
+  std::list<ModelReleasePercentile> readFromCache(const std::tm& eventDateUtc);
   std::list<ModelReleasePercentile> calculatePercentages(const std::tm& key);
-  double calculatePercentageAdoption(const std::tm& key, const &ModelRollout model_rollout);
+  double calculatePercentageAdoption(const std::tm& key, const ModelRollout& model_rollout);
   std::list<ModelRollout> retrieveActiveRollouts(const std::tm& key);
   std::string GetEventId(LabelerInput& labeler_input) ;
 };

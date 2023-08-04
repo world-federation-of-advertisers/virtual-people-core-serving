@@ -18,15 +18,15 @@ namespace wfa_virtual_people {
 
 LruCache::LruCache(int n) : cache_size(n) {}
 
-void LruCache::add(const std::tm& key, const std::list<ModelReleasePercentile>& data){
-  if (cache_data.size() == cache_size) {
+void LruCache::Add(const std::tm& key, const std::list<ModelReleasePercentile>& data){
+  if (cache_data.size() >= cache_size) {
     auto oldest = access_order.begin();
     for (auto idx = access_order.begin(); idx != access_order.end(); ++idx) {
-      if (TmComparator()(idx->first, oldest->first)) {
+      if (TmComparator()(*idx, *oldest)) {
         oldest = idx;
       }
     }
-    cache_data.erase(oldest->first);
+    cache_data.erase(*oldest);
     access_order.erase(oldest);
   }
 
@@ -35,12 +35,15 @@ void LruCache::add(const std::tm& key, const std::list<ModelReleasePercentile>& 
 
 }
 
-const std::optional<std::list<ModelReleasePercentile>> LruCache::get(const std::tm& key){
+std::optional<std::list<ModelReleasePercentile>> LruCache::Get(const std::tm& key){
   auto idx = cache_data.find(key);
   if (idx != cache_data.end()) {
-    if (access_order.front() != key) {
-      access_order.remove(key);
-      access_order.emplace_front(key);
+    for (auto it = access_order.begin(); it != access_order.end(); ++it) {
+        if (TmComparator()(*it, key) || TmComparator()(key, *it)) {
+            access_order.erase(it);
+            access_order.push_front(key);
+            break;
+        }
     }
     return idx->second;
   }
