@@ -20,35 +20,168 @@ namespace wfa_virtual_people {
 
 const int CACHE_SIZE = 60;
 
-VidModelSelector::VidModelSelector(const ModelLine& model_line, const std::list<ModelRollout>& model_rollouts) : model_line(model_line), model_rollouts(model_rollouts), lru_cache(CACHE_SIZE) {}
+const std::tm MAX_DATE = {
+    9999 - 1900,
+    11,
+    31
+};
 
-std::list<ModelReleasePercentile> VidModelSelector::readFromCache(const std::tm& eventDateUtc) {
+const double UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1;
+
+std::tm VidModelSelector::TimestampUsecToTm(std::int64_t timestamp_usec) {
+  const std::time_t timestamp_sec = static_cast<std::time_t>(timestamp_usec / 1000000);
+  const std::tm* utc_tm = std::gmtime(&timestamp_sec);
+  std::tm result = {};
+  result.tm_year = utc_tm->tm_year;
+  result.tm_mon = utc_tm->tm_mon;
+  result.tm_mday = utc_tm->tm_mday;
+  return result;
+}
+
+std::tm VidModelSelector::DateToTm(const google::type::Date& date) {
+    std::tm tmDate = {};
+    tmDate.tm_year = date.year() - 1900;
+    tmDate.tm_mon = date.month() - 1;
+    tmDate.tm_mday = date.day();
+    return tmDate;
+}
+
+bool VidModelSelector::IsSameDate(const std::tm& date1, const std::tm& date2) const  {
+    return std::tie(date1.tm_year, date1.tm_mon, date1.tm_mday) ==
+           std::tie(date2.tm_year, date2.tm_mon, date2.tm_mday);
+}
+
+bool VidModelSelector::IsOlderDate(const std::tm& date1, const std::tm& date2) const {
+    return std::tie(date1.tm_year, date1.tm_mon, date1.tm_mday) <
+           std::tie(date2.tm_year, date2.tm_mon, date2.tm_mday);
+}
+
+VidModelSelector::VidModelSelector(const ModelLine& model_line, const std::vector<ModelRollout>& model_rollouts) : model_line(model_line), model_rollouts(model_rollouts), lru_cache(CACHE_SIZE) {}
+
+std::string VidModelSelector::GetModelRelease(const LabelerInput* labelerInput) {
+
+}
+
+std::vector<ModelReleasePercentile> VidModelSelector::ReadFromCache(std::tm& event_date_utc) {
   std::lock_guard<std::mutex> lock(mtx);
 
-  std::optional<std::list<ModelReleasePercentile>> cache_value = lru_cache.Get(eventDateUtc);
+  std::optional<std::vector<ModelReleasePercentile>> cache_value = lru_cache.Get(event_date_utc);
   if (cache_value.has_value()) {
     return cache_value.value();
   } else {
-    std::list<ModelReleasePercentile> percentages = calculatePercentages(eventDateUtc);
-    lru_cache.Add(eventDateUtc, percentages);
+    std::vector<ModelReleasePercentile> percentages = CalculatePercentages(event_date_utc);
+    lru_cache.Add(event_date_utc, percentages);
     return percentages;
   }
 }
 
-std::list<ModelReleasePercentile> VidModelSelector::calculatePercentages(const std::tm& eventDateUtc) {
-  std::list<ModelRollout> activeRollouts = retrieveActiveRollouts(eventDateUtc);
-  std::list<ModelReleasePercentile> result;
+std::vector<ModelReleasePercentile> VidModelSelector::CalculatePercentages(std::tm& event_date_utc) {
+  std::vector<ModelRollout> active_rollouts = RetrieveActiveRollouts(event_date_utc);
+  std::vector<ModelReleasePercentile> result;
 
-  for (const ModelRollout& activeRollout : activeRollouts) {
-      double percentage = calculatePercentageAdoption(eventDateUtc, activeRollout);
-      ModelReleasePercentile releasePercentile{percentage, activeRollout.model_release()};
-      result.push_back(releasePercentile);
+  for (const ModelRollout& active_rollout : active_rollouts) {
+      double percentage = CalculatePercentageAdoption(event_date_utc, active_rollout);
+      ModelReleasePercentile release_percentile{percentage, active_rollout.model_release()};
+      result.push_back(release_percentile);
   }
 
   return result;
 }
 
-std::string GetEventId(LabelerInput& labeler_input) {
+double VidModelSelector::CalculatePercentageAdoption(
+    std::tm& event_date_utc,
+    const ModelRollout& model_rollout
+) {
+
+    std::tm model_rollout_freeze_date = model_rollout.has_rollout_freeze_date() ?
+        DateToTm(model_rollout.rollout_freeze_date()) : MAX_DATE;
+
+    std::tm rollout_period_start_date = model_rollout.has_gradual_rollout_period() ?
+        DateToTm(model_rollout.gradual_rollout_period().start_date()) : DateToTm(model_rollout.instant_rollout_date());
+
+    std::tm rollout_period_end_date = model_rollout.has_gradual_rollout_period() ?
+        DateToTm(model_rollout.gradual_rollout_period().end_date()) : DateToTm(model_rollout.instant_rollout_date());
+
+    if (IsSameDate(rollout_period_start_date, rollout_period_end_date)) {
+        return UPPER_BOUND_PERCENTAGE_ADOPTION;
+    } else if (!IsOlderDate(event_date_utc, model_rollout_freeze_date)) {
+        return ((difftime(std::mktime(&model_rollout_freeze_date), std::mktime(&rollout_period_start_date))) /
+            (difftime(std::mktime(&rollout_period_end_date), std::mktime(&rollout_period_start_date))) / 86400);
+    } else {
+        return ((difftime(std::mktime(&event_date_utc), std::mktime(&rollout_period_start_date))) /
+            (difftime(std::mktime(&rollout_period_end_date), std::mktime(&rollout_period_start_date))) / 86400);
+    }
+}
+
+
+bool VidModelSelector::CompareModelRollouts(const ModelRollout& lhs, const ModelRollout& rhs) {
+    const std::tm lhsDate = lhs.has_gradual_rollout_period() ? DateToTm(lhs.gradual_rollout_period().start_date()) : DateToTm(lhs.instant_rollout_date());
+    const std::tm rhsDate = rhs.has_gradual_rollout_period() ? DateToTm(rhs.gradual_rollout_period().start_date()) : DateToTm(rhs.instant_rollout_date());
+    return std::tie(lhsDate.tm_year, lhsDate.tm_mon, lhsDate.tm_mday) <
+        std::tie(rhsDate.tm_year, rhsDate.tm_mon, rhsDate.tm_mday);
+}
+
+std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(std::tm& event_date_utc) {
+
+    if (model_rollouts.empty()) {
+        return model_rollouts;
+    }
+
+    std::vector<ModelRollout> sorted_rollouts = model_rollouts;
+    std::sort(sorted_rollouts.begin(), sorted_rollouts.end(),  [this](const ModelRollout& lhs, const ModelRollout& rhs) {
+        return CompareModelRollouts(lhs, rhs);
+    });
+
+    const ModelRollout& first_rollout = sorted_rollouts.front();
+    std::tm first_rollout_period_start_date;
+    if (first_rollout.has_gradual_rollout_period()) {
+        first_rollout_period_start_date = DateToTm(first_rollout.gradual_rollout_period().start_date());
+    } else {
+        first_rollout_period_start_date = DateToTm(first_rollout.instant_rollout_date());
+    }
+
+    if (IsOlderDate(event_date_utc, first_rollout_period_start_date)) {
+        return {};
+    }
+
+    std::vector<ModelRollout> active_rollouts;
+
+    for (auto rollout_idx = sorted_rollouts.rbegin(); rollout_idx != sorted_rollouts.rend(); ++rollout_idx) {
+        const ModelRollout& rollout = *rollout_idx;
+
+        std::tm rollout_period_end_date;
+        if (rollout.has_gradual_rollout_period()) {
+            rollout_period_end_date = DateToTm(rollout.gradual_rollout_period().end_date());
+        } else {
+            rollout_period_end_date = DateToTm(rollout.instant_rollout_date());
+        }
+
+        if (!IsOlderDate(event_date_utc, rollout_period_end_date)) {
+            active_rollouts.push_back(rollout);
+            if (!rollout.has_rollout_freeze_date()) {
+                break;
+            }
+            continue;
+        }
+
+        std::tm rollout_period_start_date;
+        if (rollout.has_gradual_rollout_period()) {
+            rollout_period_start_date = DateToTm(rollout.gradual_rollout_period().start_date());
+        } else {
+            rollout_period_start_date = DateToTm(rollout.instant_rollout_date());
+        }
+
+        if (!IsOlderDate(event_date_utc, rollout_period_start_date)) {
+            active_rollouts.push_back(rollout);
+        }
+    }
+
+    std::reverse(active_rollouts.begin(), active_rollouts.end());
+    return active_rollouts;
+
+}
+
+std::string VidModelSelector::GetEventId(LabelerInput& labeler_input) {
 
   if (labeler_input.has_profile_info()) {
     const ProfileInfo* profile_info = &labeler_input.profile_info();

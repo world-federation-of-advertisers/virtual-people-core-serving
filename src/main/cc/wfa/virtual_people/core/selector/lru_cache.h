@@ -19,8 +19,6 @@
 #include "src/farmhash.h"
 
 #include <ctime>
-#include <list>
-#include <string>
 
 namespace wfa_virtual_people {
 
@@ -49,12 +47,12 @@ class LruCache {
  public:
   LruCache(int n);
 
-  void Add(const std::tm& key, const std::list<ModelReleasePercentile>& data);
+  void Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data);
 
-  std::optional<std::list<ModelReleasePercentile>> Get(const std::tm& key);
+  std::optional<std::vector<ModelReleasePercentile>> Get(const std::tm& key);
 
  private:
-  absl::flat_hash_map<std::tm, std::list<ModelReleasePercentile>, TmHash, TmComparator> cache_data;
+  absl::flat_hash_map<std::tm, std::vector<ModelReleasePercentile>, TmHash, TmComparator> cache_data;
   std::list<std::tm> access_order;
   int cache_size;
 };

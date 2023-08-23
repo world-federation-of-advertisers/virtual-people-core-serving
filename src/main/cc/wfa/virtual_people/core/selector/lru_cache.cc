@@ -18,7 +18,7 @@ namespace wfa_virtual_people {
 
 LruCache::LruCache(int n) : cache_size(n) {}
 
-void LruCache::Add(const std::tm& key, const std::list<ModelReleasePercentile>& data){
+void LruCache::Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data){
   if (cache_data.size() >= cache_size) {
     auto oldest = access_order.begin();
     for (auto idx = access_order.begin(); idx != access_order.end(); ++idx) {
@@ -35,7 +35,7 @@ void LruCache::Add(const std::tm& key, const std::list<ModelReleasePercentile>& 
 
 }
 
-std::optional<std::list<ModelReleasePercentile>> LruCache::Get(const std::tm& key){
+std::optional<std::vector<ModelReleasePercentile>> LruCache::Get(const std::tm& key){
   auto idx = cache_data.find(key);
   if (idx != cache_data.end()) {
     for (auto it = access_order.begin(); it != access_order.end(); ++it) {
