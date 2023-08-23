@@ -45,7 +45,6 @@ const val UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1
  * @property rollouts the list of rollouts contained in the modelLine
  */
 class VidModelSelector(private val modelLine: ModelLine, private val rollouts: List<ModelRollout>) {
-  private val epochDate = LocalDate.of(1970, 1, 1)
   init {
     val modelLineId = ModelLineKey.fromName(modelLine.name)?.modelLineId
     require(modelLineId != null) { "ModelLine resource name is either unspecified or invalid" }
