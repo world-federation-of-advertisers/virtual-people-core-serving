@@ -14,9 +14,10 @@
 
 #include "wfa/virtual_people/core/selector/vid_model_selector.h"
 
+#include <iostream>
+#include <regex>
 #include <cmath>
 #include <google/protobuf/util/time_util.h>
-#include <stdexcept>
 
 namespace wfa_virtual_people {
 
@@ -29,6 +30,16 @@ const std::tm MAX_DATE = {
 };
 
 const double UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1;
+
+std::string VidModelSelector::ExtractModelLine(const std::string& input) {
+    std::regex pattern(R"(\bmodelLines/([^/]+)\b)");
+    std::smatch match;
+    if (std::regex_search(input, match, pattern)) {
+        return match[1];
+    } else {
+        return "";
+    }
+}
 
 std::tm VidModelSelector::TimestampUsecToTm(std::int64_t timestamp_usec) {
   const std::time_t timestamp_sec = static_cast<std::time_t>(timestamp_usec / 1000000);
@@ -58,7 +69,22 @@ bool VidModelSelector::IsOlderDate(const std::tm& date1, const std::tm& date2) c
            std::tie(date2.tm_year, date2.tm_mon, date2.tm_mday);
 }
 
-VidModelSelector::VidModelSelector(const ModelLine& model_line, const std::vector<ModelRollout>& model_rollouts) : model_line(model_line), model_rollouts(model_rollouts), lru_cache(CACHE_SIZE) {}
+VidModelSelector::VidModelSelector(const ModelLine& model_line, const std::vector<ModelRollout>& model_rollouts)
+    : lru_cache(CACHE_SIZE) {
+
+    std::string model_line_id = ExtractModelLine(model_line.name());
+    if (model_line_id == "") {
+            throw std::invalid_argument("ModelLine resource name is either unspecified or invalid");
+        }
+    for (auto model_rollout = model_rollouts.begin(); model_rollout != model_rollouts.end(); ++model_rollout) {
+        if(ExtractModelLine(model_rollout->name()) != model_line_id){
+            throw std::invalid_argument("ModelRollouts must be parented by the provided ModelLine");
+        }
+    }
+
+    this->model_line = model_line;
+    this->model_rollouts = model_rollouts;
+}
 
 std::optional<std::string> VidModelSelector::GetModelRelease(const LabelerInput* labeler_input) {
     std::int64_t event_timestamp_usec = labeler_input->timestamp_usec();

@@ -47,6 +47,8 @@ class VidModelSelector {
   bool IsSameDate(const std::tm& date1, const std::tm& date2) const;
   bool IsOlderDate(const std::tm& date1, const std::tm& date2) const;
   bool CompareModelRollouts(const ModelRollout& lhs, const ModelRollout& rhs);
+  std::string ExtractModelLine(const std::string& input);
+
 };
 
 }  // namespace wfa_virtual_people
