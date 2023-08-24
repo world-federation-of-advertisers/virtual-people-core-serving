@@ -29,7 +29,7 @@ using ::wfa::measurement::api::v2alpha::ModelRollout;
 class VidModelSelector {
  public:
   VidModelSelector(const ModelLine& model_line, const std::vector<ModelRollout>& model_rollouts);
-  std::string GetModelRelease(const LabelerInput* labelerInput);
+  std::optional<std::string> GetModelRelease(const LabelerInput* labeler_input);
 
  private:
   ModelLine model_line;
@@ -41,7 +41,7 @@ class VidModelSelector {
   std::vector<ModelReleasePercentile> CalculatePercentages(std::tm& event_date_utc);
   double CalculatePercentageAdoption(std::tm& event_date_utc, const ModelRollout& model_rollout);
   std::vector<ModelRollout> RetrieveActiveRollouts(std::tm& event_date_utc);
-  std::string GetEventId(LabelerInput& labeler_input);
+  std::string GetEventId(const LabelerInput& labeler_input);
   std::tm TimestampUsecToTm(std::int64_t timestamp_usec);
   std::tm DateToTm(const google::type::Date& date);
   bool IsSameDate(const std::tm& date1, const std::tm& date2) const;

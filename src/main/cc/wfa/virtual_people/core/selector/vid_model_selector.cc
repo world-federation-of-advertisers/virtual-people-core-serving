@@ -14,6 +14,8 @@
 
 #include "wfa/virtual_people/core/selector/vid_model_selector.h"
 
+#include <cmath>
+#include <google/protobuf/util/time_util.h>
 #include <stdexcept>
 
 namespace wfa_virtual_people {
@@ -58,8 +60,36 @@ bool VidModelSelector::IsOlderDate(const std::tm& date1, const std::tm& date2) c
 
 VidModelSelector::VidModelSelector(const ModelLine& model_line, const std::vector<ModelRollout>& model_rollouts) : model_line(model_line), model_rollouts(model_rollouts), lru_cache(CACHE_SIZE) {}
 
-std::string VidModelSelector::GetModelRelease(const LabelerInput* labelerInput) {
-
+std::optional<std::string> VidModelSelector::GetModelRelease(const LabelerInput* labeler_input) {
+    std::int64_t event_timestamp_usec = labeler_input->timestamp_usec();
+    std::int64_t model_line_active_start_time = google::protobuf::util::TimeUtil::TimestampToMicroseconds(model_line.active_start_time());
+    std::int64_t model_line_active_end_time = model_line.has_active_end_time() ?
+        google::protobuf::util::TimeUtil::TimestampToMicroseconds(model_line.active_end_time()) :
+        ((1LL << 63) - 1);
+    if (event_timestamp_usec >= model_line_active_start_time && event_timestamp_usec < model_line_active_end_time) {
+        std::tm event_date_utc = TimestampUsecToTm(event_timestamp_usec);
+        std::vector<ModelReleasePercentile> model_adoption_percentages = ReadFromCache(event_date_utc);
+        std::string selected_model_release;
+        if (model_adoption_percentages.empty()) {
+            return std::nullopt;
+        } else {
+            selected_model_release = model_adoption_percentages[0].model_release_resource_key;
+        }
+        std::string event_id = GetEventId(*labeler_input);
+        for (auto percentage = model_adoption_percentages.begin(); percentage != model_adoption_percentages.end(); ++percentage) {
+            std::string string_to_hash;
+            string_to_hash += percentage->model_release_resource_key;
+            string_to_hash += event_id;
+            uint64_t event_fingerprint = util::Fingerprint64(string_to_hash);
+            double reduced_event_id = std::abs(static_cast<double>(event_fingerprint) / std::numeric_limits<long long>::max());
+            if (reduced_event_id < percentage->end_percentile) {
+                selected_model_release = percentage->model_release_resource_key;
+            }
+        }
+        return selected_model_release;
+    } else {
+        return std::nullopt;
+    }
 }
 
 std::vector<ModelReleasePercentile> VidModelSelector::ReadFromCache(std::tm& event_date_utc) {
@@ -133,12 +163,9 @@ std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(std::tm& even
     });
 
     const ModelRollout& first_rollout = sorted_rollouts.front();
-    std::tm first_rollout_period_start_date;
-    if (first_rollout.has_gradual_rollout_period()) {
-        first_rollout_period_start_date = DateToTm(first_rollout.gradual_rollout_period().start_date());
-    } else {
-        first_rollout_period_start_date = DateToTm(first_rollout.instant_rollout_date());
-    }
+    std::tm first_rollout_period_start_date = first_rollout.has_gradual_rollout_period() ?
+        DateToTm(first_rollout.gradual_rollout_period().start_date()) :
+        DateToTm(first_rollout.instant_rollout_date());
 
     if (IsOlderDate(event_date_utc, first_rollout_period_start_date)) {
         return {};
@@ -149,12 +176,9 @@ std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(std::tm& even
     for (auto rollout_idx = sorted_rollouts.rbegin(); rollout_idx != sorted_rollouts.rend(); ++rollout_idx) {
         const ModelRollout& rollout = *rollout_idx;
 
-        std::tm rollout_period_end_date;
-        if (rollout.has_gradual_rollout_period()) {
-            rollout_period_end_date = DateToTm(rollout.gradual_rollout_period().end_date());
-        } else {
-            rollout_period_end_date = DateToTm(rollout.instant_rollout_date());
-        }
+        std::tm rollout_period_end_date = rollout.has_gradual_rollout_period() ?
+            DateToTm(rollout.gradual_rollout_period().end_date()) :
+            DateToTm(rollout.instant_rollout_date());
 
         if (!IsOlderDate(event_date_utc, rollout_period_end_date)) {
             active_rollouts.push_back(rollout);
@@ -164,12 +188,9 @@ std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(std::tm& even
             continue;
         }
 
-        std::tm rollout_period_start_date;
-        if (rollout.has_gradual_rollout_period()) {
-            rollout_period_start_date = DateToTm(rollout.gradual_rollout_period().start_date());
-        } else {
-            rollout_period_start_date = DateToTm(rollout.instant_rollout_date());
-        }
+        std::tm rollout_period_start_date = rollout.has_gradual_rollout_period() ?
+            DateToTm(rollout.gradual_rollout_period().start_date()) :
+            DateToTm(rollout.instant_rollout_date());
 
         if (!IsOlderDate(event_date_utc, rollout_period_start_date)) {
             active_rollouts.push_back(rollout);
@@ -181,7 +202,7 @@ std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(std::tm& even
 
 }
 
-std::string VidModelSelector::GetEventId(LabelerInput& labeler_input) {
+std::string VidModelSelector::GetEventId(const LabelerInput& labeler_input) {
 
   if (labeler_input.has_profile_info()) {
     const ProfileInfo* profile_info = &labeler_input.profile_info();
