@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "wfa/virtual_people/core/selector/vid_model_selector.h"
+
 #include "common_cpp/protobuf_util/textproto_io.h"
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"
@@ -21,464 +22,654 @@
 namespace wfa_virtual_people {
 namespace {
 
-using ::wfa::ReadTextProtoFile;
 using ::wfa::IsOk;
+using ::wfa::ReadTextProtoFile;
 
 const char kTestDataDir[] =
     "src/main/cc/wfa/virtual_people/core/selector/testing/testdata/";
 
-TEST(VidModelSelectorTest, TestBuildVidSelectorObjectWithoutParamsThrowsException) {
-    EXPECT_THROW(
-            VidModelSelector vid_model_selector(
-                ModelLine{}, std::vector<ModelRollout>{}),
-            std::invalid_argument);
+TEST(VidModelSelectorTest,
+     TestBuildVidSelectorObjectWithoutParamsThrowsException) {
+  EXPECT_THROW(VidModelSelector vid_model_selector(ModelLine{},
+                                                   std::vector<ModelRollout>{}),
+               std::invalid_argument);
 }
 
-TEST(VidModelSelectorTest, TestBuildVidSelectorObjectWithWrongModelRolloutThrowsException) {
-    const std::string model_line_path = "model_line_02.textproto";
-    const std::string model_rollout_path = "model_rollout_01.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path), model_rollout),
-                    IsOk());
+TEST(VidModelSelectorTest,
+     TestBuildVidSelectorObjectWithWrongModelRolloutThrowsException) {
+  const std::string model_line_path = "model_line_02.textproto";
+  const std::string model_rollout_path = "model_rollout_01.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path),
+                                model_rollout),
+              IsOk());
 
-    EXPECT_THROW(
-            VidModelSelector vid_model_selector(
-                model_line, std::vector<ModelRollout>{model_rollout}),
-            std::invalid_argument);
+  EXPECT_THROW(VidModelSelector vid_model_selector(
+                   model_line, std::vector<ModelRollout>{model_rollout}),
+               std::invalid_argument);
 }
 
 TEST(VidModelSelectorTest, TestMissingLabelerIputIdsThrowsException) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path = "model_rollout_01.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path), model_rollout),
-                        IsOk());
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path = "model_rollout_01.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path),
+                                model_rollout),
+              IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.set_timestamp_usec(1200000000000000LL);
+  LabelerInput labeler_input;
+  labeler_input.set_timestamp_usec(1200000000000000LL);
 
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
-    EXPECT_THROW(
-            vid_model_selector.GetModelRelease(&labeler_input),
-            std::runtime_error);
+  VidModelSelector vid_model_selector =
+      VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
+  EXPECT_THROW(vid_model_selector.GetModelRelease(&labeler_input),
+               std::runtime_error);
 }
 
 TEST(VidModelSelectorTest, TestReturnsNullWhenModelLineIsNotYetActive) {
-    const std::string model_line_path = "model_line_01.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
+  const std::string model_line_path = "model_line_01.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
 
+  LabelerInput labeler_input;
+  labeler_input.set_timestamp_usec(900000000000000LL);
 
-    LabelerInput labeler_input;
-    labeler_input.set_timestamp_usec(900000000000000LL);
-
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{});
-    EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
+  VidModelSelector vid_model_selector =
+      VidModelSelector(model_line, std::vector<ModelRollout>{});
+  EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
 }
 
 TEST(VidModelSelectorTest, TestReturnsNullWhenModelLineIsNoLongerActive) {
-    const std::string model_line_path = "model_line_01.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
+  const std::string model_line_path = "model_line_01.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
 
+  LabelerInput labeler_input;
+  labeler_input.set_timestamp_usec(2100000000000000LL);
 
-    LabelerInput labeler_input;
-    labeler_input.set_timestamp_usec(2100000000000000LL);
-
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{});
-    EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
+  VidModelSelector vid_model_selector =
+      VidModelSelector(model_line, std::vector<ModelRollout>{});
+  EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
 }
 
 TEST(VidModelSelectorTest, TestReturnsNullWhenModelRolloutsIsEmptyList) {
-    const std::string model_line_path = "model_line_01.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
+  const std::string model_line_path = "model_line_01.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
 
+  LabelerInput labeler_input;
+  labeler_input.set_timestamp_usec(1200000000000000LL);
 
-    LabelerInput labeler_input;
-    labeler_input.set_timestamp_usec(1200000000000000LL);
-
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{});
-    EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
+  VidModelSelector vid_model_selector =
+      VidModelSelector(model_line, std::vector<ModelRollout>{});
+  EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
 }
 
-TEST(VidModelSelectorTest, TestReturnsNullWhenEventTimePrecedesRolloutPeriodStartTime) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path = "model_rollout_01.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path), model_rollout),
-                    IsOk());
+TEST(VidModelSelectorTest,
+     TestReturnsNullWhenEventTimePrecedesRolloutPeriodStartTime) {
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path = "model_rollout_01.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path),
+                                model_rollout),
+              IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("abc@mail.com");
-    labeler_input.set_timestamp_usec(1050000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
-    EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "abc@mail.com");
+  labeler_input.set_timestamp_usec(1050000000000000LL);
+  VidModelSelector vid_model_selector =
+      VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
+  EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
 }
 
-TEST(VidModelSelectorTest, TestReturnsModelReleaseWhenModelRolloutHasRolloutPeriod) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path = "model_rollout_01.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path), model_rollout),
-                    IsOk());
+TEST(VidModelSelectorTest,
+     TestReturnsModelReleaseWhenModelRolloutHasRolloutPeriod) {
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path = "model_rollout_01.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path),
+                                model_rollout),
+              IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("abc@mail.com");
-    labeler_input.set_timestamp_usec(1200000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "abc@mail.com");
+  labeler_input.set_timestamp_usec(1200000000000000LL);
+  VidModelSelector vid_model_selector =
+      VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01", model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_01",
+      model_release);
 }
 
-TEST(VidModelSelectorTest, TestReturnsModelReleaseWhenModelRolloutHasInstantRollout) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path = "model_rollout_without_rollout_period_02.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path), model_rollout),
-                    IsOk());
+TEST(VidModelSelectorTest,
+     TestReturnsModelReleaseWhenModelRolloutHasInstantRollout) {
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path =
+      "model_rollout_without_rollout_period_02.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path),
+                                model_rollout),
+              IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("abc@mail.com");
-    labeler_input.set_timestamp_usec(1200000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "abc@mail.com");
+  labeler_input.set_timestamp_usec(1200000000000000LL);
+  VidModelSelector vid_model_selector =
+      VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_02", model_release);
-
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_without_rollout_period_02",
+      model_release);
 }
 
-TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventAfterR2) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
+TEST(VidModelSelectorTest,
+     TestReturnsModelReleaseWithTwoRolloutsAndEventAfterR2) {
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("abc@mail.com");
-    labeler_input.set_timestamp_usec(1800000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_1, model_rollout_2});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "abc@mail.com");
+  labeler_input.set_timestamp_usec(1800000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_1, model_rollout_2});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02", model_release);
-
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release);
 }
 
 TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR2) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("abc@mail.com");
-    labeler_input.set_timestamp_usec(1620000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "abc@mail.com");
+  labeler_input.set_timestamp_usec(1620000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02", model_release);
-
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release);
 }
 
-TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
+TEST(VidModelSelectorTest,
+     TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1) {
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("abc@mail.com");
-    labeler_input.set_timestamp_usec(1500000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "abc@mail.com");
+  labeler_input.set_timestamp_usec(1500000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01", model_release);
-
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_01",
+      model_release);
 }
 
-TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1AndR2) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
+TEST(VidModelSelectorTest,
+     TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1AndR2) {
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("xyz@mail.com");
-    labeler_input.set_timestamp_usec(1500000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "xyz@mail.com");
+  labeler_input.set_timestamp_usec(1500000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02", model_release);
-
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release);
 }
 
 TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR1) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("abc@mail.com");
-    labeler_input.set_timestamp_usec(1200000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "abc@mail.com");
+  labeler_input.set_timestamp_usec(1200000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01", model_release);
-
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_01",
+      model_release);
 }
 
 TEST(VidModelSelectorTest, TestReturnsSameModelReleaseWithMultipleInvocation) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("xyz@mail.com");
-    labeler_input.set_timestamp_usec(1500000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
-    std::string model_release_1 = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "xyz@mail.com");
+  labeler_input.set_timestamp_usec(1500000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
+  std::string model_release_1 =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02", model_release_1);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release_1);
 
-    std::string model_release_2 = vid_model_selector.GetModelRelease(&labeler_input).value();
+  std::string model_release_2 =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02", model_release_2);
-
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release_2);
 }
 
-TEST(VidModelSelectorTest, TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR2) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    const std::string model_rollout_path_3 = "model_rollout_03.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
-    ModelRollout model_rollout_3;
-        EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3), model_rollout_3),
-                        IsOk());
+TEST(VidModelSelectorTest,
+     TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR2) {
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  const std::string model_rollout_path_3 = "model_rollout_03.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
+  ModelRollout model_rollout_3;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3),
+                        model_rollout_3),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("xyz@mail.com");
-    labeler_input.set_timestamp_usec(1450000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "xyz@mail.com");
+  labeler_input.set_timestamp_usec(1450000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
+                                            model_rollout_3});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02", model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release);
 }
 
-TEST(VidModelSelectorTest, TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR3) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    const std::string model_rollout_path_3 = "model_rollout_03.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
-    ModelRollout model_rollout_3;
-        EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3), model_rollout_3),
-                        IsOk());
+TEST(VidModelSelectorTest,
+     TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR3) {
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  const std::string model_rollout_path_3 = "model_rollout_03.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
+  ModelRollout model_rollout_3;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3),
+                        model_rollout_3),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("cba@mail.com");
-    labeler_input.set_timestamp_usec(1580000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "cba@mail.com");
+  labeler_input.set_timestamp_usec(1580000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
+                                            model_rollout_3});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_03", model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_03",
+      model_release);
 }
 
-TEST(VidModelSelectorTest, TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    const std::string model_rollout_path_3 = "model_rollout_03.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
-    ModelRollout model_rollout_3;
-        EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3), model_rollout_3),
-                        IsOk());
+TEST(VidModelSelectorTest,
+     TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1) {
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  const std::string model_rollout_path_3 = "model_rollout_03.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
+  ModelRollout model_rollout_3;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3),
+                        model_rollout_3),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("abc@mail.com");
-    labeler_input.set_timestamp_usec(1450000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "abc@mail.com");
+  labeler_input.set_timestamp_usec(1450000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
+                                            model_rollout_3});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_01", model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_01",
+      model_release);
 }
 
-TEST(VidModelSelectorTest, TestExcludeRolloutsPriorToRolloutWithInstantRollout) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    const std::string model_rollout_path_3 = "model_rollout_03.textproto";
-    const std::string model_rollout_path_4 = "model_rollout_without_rollout_period_01.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
-    ModelRollout model_rollout_3;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3), model_rollout_3),
-                    IsOk());
-    ModelRollout model_rollout_4;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_4), model_rollout_4),
-                    IsOk());
+TEST(VidModelSelectorTest,
+     TestExcludeRolloutsPriorToRolloutWithInstantRollout) {
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  const std::string model_rollout_path_3 = "model_rollout_03.textproto";
+  const std::string model_rollout_path_4 =
+      "model_rollout_without_rollout_period_01.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
+  ModelRollout model_rollout_3;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3),
+                        model_rollout_3),
+      IsOk());
+  ModelRollout model_rollout_4;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_4),
+                        model_rollout_4),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("abc@mail.com");
-    labeler_input.set_timestamp_usec(1450000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3, model_rollout_4});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "abc@mail.com");
+  labeler_input.set_timestamp_usec(1450000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
+                                            model_rollout_3, model_rollout_4});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_without_rollout_period_01", model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_without_rollout_period_01",
+      model_release);
 }
 
 TEST(VidModelSelectorTest, TestBlockRolloutWhenFreezeTimeIsSet) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    const std::string model_rollout_path_3 = "model_rollout_freeze_time_01.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
-    ModelRollout model_rollout_3;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3), model_rollout_3),
-                    IsOk());
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  const std::string model_rollout_path_3 =
+      "model_rollout_freeze_time_01.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
+  ModelRollout model_rollout_3;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3),
+                        model_rollout_3),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("xyz@mail.com");
-    labeler_input.set_timestamp_usec(1900000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "xyz@mail.com");
+  labeler_input.set_timestamp_usec(1900000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
+                                            model_rollout_3});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_02", model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release);
 }
 
 TEST(VidModelSelectorTest, TestRolloutWithFreezeTimeIsCorrectlySelected) {
-    const std::string model_line_path = "model_line_01.textproto";
-    const std::string model_rollout_path_1 = "model_rollout_01.textproto";
-    const std::string model_rollout_path_2 = "model_rollout_02.textproto";
-    const std::string model_rollout_path_3 = "model_rollout_freeze_time_01.textproto";
-    ModelLine model_line;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path), model_line),
-                    IsOk());
-    ModelRollout model_rollout_1;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1), model_rollout_1),
-                    IsOk());
-    ModelRollout model_rollout_2;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2), model_rollout_2),
-                    IsOk());
-    ModelRollout model_rollout_3;
-    EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3), model_rollout_3),
-                    IsOk());
+  const std::string model_line_path = "model_line_01.textproto";
+  const std::string model_rollout_path_1 = "model_rollout_01.textproto";
+  const std::string model_rollout_path_2 = "model_rollout_02.textproto";
+  const std::string model_rollout_path_3 =
+      "model_rollout_freeze_time_01.textproto";
+  ModelLine model_line;
+  EXPECT_THAT(ReadTextProtoFile(absl::StrCat(kTestDataDir, model_line_path),
+                                model_line),
+              IsOk());
+  ModelRollout model_rollout_1;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_1),
+                        model_rollout_1),
+      IsOk());
+  ModelRollout model_rollout_2;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_2),
+                        model_rollout_2),
+      IsOk());
+  ModelRollout model_rollout_3;
+  EXPECT_THAT(
+      ReadTextProtoFile(absl::StrCat(kTestDataDir, model_rollout_path_3),
+                        model_rollout_3),
+      IsOk());
 
-    LabelerInput labeler_input;
-    labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id("abc@mail.com");
-    labeler_input.set_timestamp_usec(1900000000000000LL);
-    VidModelSelector vid_model_selector = VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3});
-    std::string model_release = vid_model_selector.GetModelRelease(&labeler_input).value();
+  LabelerInput labeler_input;
+  labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
+      "abc@mail.com");
+  labeler_input.set_timestamp_usec(1900000000000000LL);
+  VidModelSelector vid_model_selector = VidModelSelector(
+      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
+                                            model_rollout_3});
+  std::string model_release =
+      vid_model_selector.GetModelRelease(&labeler_input).value();
 
-    ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/rollout_freeze_time_01", model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_freeze_time_01",
+      model_release);
 }
 
 }  // namespace

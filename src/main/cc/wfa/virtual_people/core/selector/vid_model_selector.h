@@ -15,6 +15,9 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_VID_MODEL_SELECTOR_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_VID_MODEL_SELECTOR_H_
 
+#include <string>
+#include <vector>
+
 #include "google/type/date.pb.h"
 #include "wfa/measurement/api/v2alpha/model_line.pb.h"
 #include "wfa/measurement/api/v2alpha/model_rollout.pb.h"

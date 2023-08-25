@@ -16,8 +16,10 @@
 
 #include <google/protobuf/util/time_util.h>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <regex>
 
 namespace wfa_virtual_people {
@@ -123,7 +125,7 @@ std::optional<std::string> VidModelSelector::GetModelRelease(
 
       double reduced_event_id =
           std::abs(static_cast<double>(event_fingerprint) /
-                   std::numeric_limits<long long>::max());
+                   std::numeric_limits<int64_t>::max());
       if (reduced_event_id < percentage->end_percentile) {
         selected_model_release = percentage->model_release_resource_key;
       }

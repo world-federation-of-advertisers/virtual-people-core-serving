@@ -16,6 +16,9 @@
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_LRU_CACHE_H_
 
 #include <ctime>
+#include <list>
+#include <string>
+#include <vector>
 
 #include "absl/container/flat_hash_map.h"
 #include "src/farmhash.h"
@@ -29,7 +32,7 @@ struct ModelReleasePercentile {
 
 class LruCache {
  public:
-  LruCache(int n);
+  explicit LruCache(int n);
 
   void Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data);
 
