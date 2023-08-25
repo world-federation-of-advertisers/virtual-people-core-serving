@@ -27,22 +27,6 @@ struct ModelReleasePercentile {
   std::string model_release_resource_key;
 };
 
-struct TmComparator {
-  bool operator()(const std::tm& left_date, const std::tm& right_date) const {
-    return std::tie(left_date.tm_year, left_date.tm_mon, left_date.tm_mday) <
-           std::tie(right_date.tm_year, right_date.tm_mon, right_date.tm_mday);
-  }
-};
-
-struct TmHash {
-  std::size_t operator()(const std::tm& tm) const {
-    return util::Hash128to64(util::Uint128(
-                               static_cast<uint64_t>(tm.tm_year),
-                               static_cast<uint64_t>(tm.tm_mon) << 32 | static_cast<uint64_t>(tm.tm_mday) << 32
-                             ));
-  }
-};
-
 class LruCache {
  public:
   LruCache(int n);
@@ -52,9 +36,11 @@ class LruCache {
   std::optional<std::vector<ModelReleasePercentile>> Get(const std::tm& key);
 
  private:
-  absl::flat_hash_map<std::tm, std::vector<ModelReleasePercentile>, TmHash, TmComparator> cache_data;
-  std::list<std::tm> access_order;
+  absl::flat_hash_map<std::string, std::vector<ModelReleasePercentile>> cache_data;
+  std::list<std::string> access_order;
   int cache_size;
+
+  std::string TmToString(const std:: tm& tm);
 };
 
 }  // namespace wfa_virtual_people

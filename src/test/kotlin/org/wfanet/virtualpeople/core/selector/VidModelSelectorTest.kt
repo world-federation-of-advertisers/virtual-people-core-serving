@@ -591,7 +591,7 @@ class VidModelSelectorTest {
   }
 
   @Test
-  fun `rollout with freeze time is choosen when reducedEventId is smaller than rollout percentage`() {
+  fun `rollout with freeze time is chosen when reducedEventId is smaller than rollout percentage`() {
 
     val modelLine =
       parseTextProto(

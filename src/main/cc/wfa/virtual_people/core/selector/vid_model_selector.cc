@@ -23,12 +23,6 @@ namespace wfa_virtual_people {
 
 const int CACHE_SIZE = 60;
 
-const std::tm MAX_DATE = {
-    9999 - 1900,
-    11,
-    31
-};
-
 const double UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1;
 
 std::string VidModelSelector::ExtractModelLine(const std::string& input) {
@@ -45,16 +39,16 @@ std::tm VidModelSelector::TimestampUsecToTm(std::int64_t timestamp_usec) {
   const std::time_t timestamp_sec = static_cast<std::time_t>(timestamp_usec / 1000000);
   const std::tm* utc_tm = std::gmtime(&timestamp_sec);
   std::tm result = {};
-  result.tm_year = utc_tm->tm_year;
-  result.tm_mon = utc_tm->tm_mon;
+  result.tm_year = utc_tm->tm_year + 1900;
+  result.tm_mon = utc_tm->tm_mon + 1;
   result.tm_mday = utc_tm->tm_mday;
   return result;
 }
 
 std::tm VidModelSelector::DateToTm(const google::type::Date& date) {
     std::tm tmDate = {};
-    tmDate.tm_year = date.year() - 1900;
-    tmDate.tm_mon = date.month() - 1;
+    tmDate.tm_year = date.year();
+    tmDate.tm_mon = date.month();
     tmDate.tm_mday = date.day();
     return tmDate;
 }
@@ -92,6 +86,7 @@ std::optional<std::string> VidModelSelector::GetModelRelease(const LabelerInput*
     std::int64_t model_line_active_end_time = model_line.has_active_end_time() ?
         google::protobuf::util::TimeUtil::TimestampToMicroseconds(model_line.active_end_time()) :
         ((1LL << 63) - 1);
+
     if (event_timestamp_usec >= model_line_active_start_time && event_timestamp_usec < model_line_active_end_time) {
         std::tm event_date_utc = TimestampUsecToTm(event_timestamp_usec);
         std::vector<ModelReleasePercentile> model_adoption_percentages = ReadFromCache(event_date_utc);
@@ -106,7 +101,8 @@ std::optional<std::string> VidModelSelector::GetModelRelease(const LabelerInput*
             std::string string_to_hash;
             string_to_hash += percentage->model_release_resource_key;
             string_to_hash += event_id;
-            uint64_t event_fingerprint = util::Fingerprint64(string_to_hash);
+            int64_t event_fingerprint = static_cast<int64_t>(util::Fingerprint64(string_to_hash));
+
             double reduced_event_id = std::abs(static_cast<double>(event_fingerprint) / std::numeric_limits<long long>::max());
             if (reduced_event_id < percentage->end_percentile) {
                 selected_model_release = percentage->model_release_resource_key;
@@ -150,7 +146,15 @@ double VidModelSelector::CalculatePercentageAdoption(
 ) {
 
     std::tm model_rollout_freeze_date = model_rollout.has_rollout_freeze_date() ?
-        DateToTm(model_rollout.rollout_freeze_date()) : MAX_DATE;
+        DateToTm(model_rollout.rollout_freeze_date()) :
+        [] {
+            std::tm max_date_tm = {};
+            max_date_tm.tm_year = 9999 - 1900;
+            max_date_tm.tm_mon = 11;
+            max_date_tm.tm_mday = 31;
+            return max_date_tm;
+            }();
+        ;
 
     std::tm rollout_period_start_date = model_rollout.has_gradual_rollout_period() ?
         DateToTm(model_rollout.gradual_rollout_period().start_date()) : DateToTm(model_rollout.instant_rollout_date());
@@ -161,11 +165,11 @@ double VidModelSelector::CalculatePercentageAdoption(
     if (IsSameDate(rollout_period_start_date, rollout_period_end_date)) {
         return UPPER_BOUND_PERCENTAGE_ADOPTION;
     } else if (!IsOlderDate(event_date_utc, model_rollout_freeze_date)) {
-        return ((difftime(std::mktime(&model_rollout_freeze_date), std::mktime(&rollout_period_start_date))) /
-            (difftime(std::mktime(&rollout_period_end_date), std::mktime(&rollout_period_start_date))) / 86400);
+        return (difftime(std::mktime(&model_rollout_freeze_date), std::mktime(&rollout_period_start_date))) /
+            (difftime(std::mktime(&rollout_period_end_date), std::mktime(&rollout_period_start_date)));
     } else {
-        return ((difftime(std::mktime(&event_date_utc), std::mktime(&rollout_period_start_date))) /
-            (difftime(std::mktime(&rollout_period_end_date), std::mktime(&rollout_period_start_date))) / 86400);
+        return (difftime(std::mktime(&event_date_utc), std::mktime(&rollout_period_start_date))) /
+            (difftime(std::mktime(&rollout_period_end_date), std::mktime(&rollout_period_start_date)));
     }
 }
 
