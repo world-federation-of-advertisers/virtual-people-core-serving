@@ -68,8 +68,8 @@ VidModelSelector::VidModelSelector(const ModelLine& model_line, const std::vecto
 
     std::string model_line_id = ExtractModelLine(model_line.name());
     if (model_line_id == "") {
-            throw std::invalid_argument("ModelLine resource name is either unspecified or invalid");
-        }
+        throw std::invalid_argument("ModelLine resource name is either unspecified or invalid");
+    }
     for (auto model_rollout = model_rollouts.begin(); model_rollout != model_rollouts.end(); ++model_rollout) {
         if(ExtractModelLine(model_rollout->name()) != model_line_id){
             throw std::invalid_argument("ModelRollouts must be parented by the provided ModelLine");
@@ -154,7 +154,6 @@ double VidModelSelector::CalculatePercentageAdoption(
             max_date_tm.tm_mday = 31;
             return max_date_tm;
             }();
-        ;
 
     std::tm rollout_period_start_date = model_rollout.has_gradual_rollout_period() ?
         DateToTm(model_rollout.gradual_rollout_period().start_date()) : DateToTm(model_rollout.instant_rollout_date());
