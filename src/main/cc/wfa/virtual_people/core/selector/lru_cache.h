@@ -15,10 +15,10 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_LRU_CACHE_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_LRU_CACHE_H_
 
+#include <ctime>
+
 #include "absl/container/flat_hash_map.h"
 #include "src/farmhash.h"
-
-#include <ctime>
 
 namespace wfa_virtual_people {
 
@@ -36,11 +36,12 @@ class LruCache {
   std::optional<std::vector<ModelReleasePercentile>> Get(const std::tm& key);
 
  private:
-  absl::flat_hash_map<std::string, std::vector<ModelReleasePercentile>> cache_data;
+  absl::flat_hash_map<std::string, std::vector<ModelReleasePercentile>>
+      cache_data;
   std::list<std::string> access_order;
   int cache_size;
 
-  std::string TmToString(const std:: tm& tm);
+  std::string TmToString(const std::tm& tm);
 };
 
 }  // namespace wfa_virtual_people

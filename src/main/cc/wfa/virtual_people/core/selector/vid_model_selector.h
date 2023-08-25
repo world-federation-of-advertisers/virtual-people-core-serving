@@ -15,11 +15,11 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_VID_MODEL_SELECTOR_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_VID_MODEL_SELECTOR_H_
 
+#include "google/type/date.pb.h"
 #include "wfa/measurement/api/v2alpha/model_line.pb.h"
 #include "wfa/measurement/api/v2alpha/model_rollout.pb.h"
 #include "wfa/virtual_people/common/event.pb.h"
 #include "wfa/virtual_people/core/selector/lru_cache.h"
-#include "google/type/date.pb.h"
 
 namespace wfa_virtual_people {
 
@@ -28,7 +28,8 @@ using ::wfa::measurement::api::v2alpha::ModelRollout;
 
 class VidModelSelector {
  public:
-  VidModelSelector(const ModelLine& model_line, const std::vector<ModelRollout>& model_rollouts);
+  VidModelSelector(const ModelLine& model_line,
+                   const std::vector<ModelRollout>& model_rollouts);
   std::optional<std::string> GetModelRelease(const LabelerInput* labeler_input);
 
  private:
@@ -38,8 +39,10 @@ class VidModelSelector {
   std::mutex mtx;
 
   std::vector<ModelReleasePercentile> ReadFromCache(std::tm& event_date_utc);
-  std::vector<ModelReleasePercentile> CalculatePercentages(std::tm& event_date_utc);
-  double CalculatePercentageAdoption(std::tm& event_date_utc, const ModelRollout& model_rollout);
+  std::vector<ModelReleasePercentile> CalculatePercentages(
+      std::tm& event_date_utc);
+  double CalculatePercentageAdoption(std::tm& event_date_utc,
+                                     const ModelRollout& model_rollout);
   std::vector<ModelRollout> RetrieveActiveRollouts(std::tm& event_date_utc);
   std::string GetEventId(const LabelerInput& labeler_input);
   std::tm TimestampUsecToTm(std::int64_t timestamp_usec);
@@ -48,7 +51,6 @@ class VidModelSelector {
   bool IsOlderDate(const std::tm& date1, const std::tm& date2) const;
   bool CompareModelRollouts(const ModelRollout& lhs, const ModelRollout& rhs);
   std::string ExtractModelLine(const std::string& input);
-
 };
 
 }  // namespace wfa_virtual_people

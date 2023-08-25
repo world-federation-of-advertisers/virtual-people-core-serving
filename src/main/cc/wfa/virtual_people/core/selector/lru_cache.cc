@@ -19,10 +19,12 @@ namespace wfa_virtual_people {
 LruCache::LruCache(int n) : cache_size(n) {}
 
 std::string LruCache::TmToString(const std::tm& tm) {
-  return std::to_string(tm.tm_year) + "-" + std::to_string(tm.tm_mon) + "-" + std::to_string(tm.tm_mday);
+  return std::to_string(tm.tm_year) + "-" + std::to_string(tm.tm_mon) + "-" +
+         std::to_string(tm.tm_mday);
 }
 
-void LruCache::Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data){
+void LruCache::Add(const std::tm& key,
+                   const std::vector<ModelReleasePercentile>& data) {
   if (cache_data.size() >= cache_size) {
     auto oldest = access_order.begin();
     for (auto idx = access_order.begin(); idx != access_order.end(); ++idx) {
@@ -37,19 +39,20 @@ void LruCache::Add(const std::tm& key, const std::vector<ModelReleasePercentile>
   access_order.emplace_front(TmToString(key));
 }
 
-std::optional<std::vector<ModelReleasePercentile>> LruCache::Get(const std::tm& key){
+std::optional<std::vector<ModelReleasePercentile>> LruCache::Get(
+    const std::tm& key) {
   auto idx = cache_data.find(TmToString(key));
   if (idx != cache_data.end()) {
     for (auto it = access_order.begin(); it != access_order.end(); ++it) {
-        if (*it == TmToString(key)) {
-            access_order.erase(it);
-            access_order.push_front(TmToString(key));
-            break;
-        }
+      if (*it == TmToString(key)) {
+        access_order.erase(it);
+        access_order.push_front(TmToString(key));
+        break;
+      }
     }
     return idx->second;
   }
   return std::nullopt;
 }
 
-} // namespace wfa_virtual_people
+}  // namespace wfa_virtual_people
