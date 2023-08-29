@@ -26,7 +26,7 @@ using ::wfa::IsOk;
 using ::wfa::ReadTextProtoFile;
 
 const char kTestDataDir[] =
-    "src/main/cc/wfa/virtual_people/core/selector/testing/testdata/";
+    "src/test/proto/wfa/virtual_people/core/labeler/test_data/selector/";
 
 TEST(VidModelSelectorTest,
      TestBuildVidSelectorObjectWithoutParamsThrowsException) {

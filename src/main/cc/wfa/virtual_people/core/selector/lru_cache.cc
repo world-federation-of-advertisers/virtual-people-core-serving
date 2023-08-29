@@ -18,11 +18,15 @@ namespace wfa_virtual_people {
 
 LruCache::LruCache(int n) : cache_size(n) {}
 
+// Converts a std:tm object into a string used as key in the LRU cache
+// implementation.
 std::string LruCache::TmToString(const std::tm& tm) {
   return std::to_string(tm.tm_year) + "-" + std::to_string(tm.tm_mon) + "-" +
          std::to_string(tm.tm_mday);
 }
 
+// Add a new entry into the cache. If the cache is full, the oldest element is
+// removed.
 void LruCache::Add(const std::tm& key,
                    const std::vector<ModelReleasePercentile>& data) {
   if (cache_data.size() >= cache_size) {
@@ -39,6 +43,7 @@ void LruCache::Add(const std::tm& key,
   access_order.emplace_front(TmToString(key));
 }
 
+// Returns an element by its key, or nullopt if the key is not found.
 std::optional<std::vector<ModelReleasePercentile>> LruCache::Get(
     const std::tm& key) {
   auto idx = cache_data.find(TmToString(key));
