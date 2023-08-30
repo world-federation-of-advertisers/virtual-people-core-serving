@@ -31,41 +31,45 @@ struct ModelReleasePercentile {
 };
 
 struct TmHash {
-    std::size_t operator()(const std::tm& tm) const {
-        std::size_t seed = 0;
-        seed ^= std::hash<int>{}(tm.tm_year) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        seed ^= std::hash<int>{}(tm.tm_mon) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        seed ^= std::hash<int>{}(tm.tm_mday) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        return seed;
-    }
+  std::size_t operator()(const std::tm& tm) const {
+    std::size_t seed = 0;
+    seed ^=
+        std::hash<int>{}(tm.tm_year) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    seed ^=
+        std::hash<int>{}(tm.tm_mon) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    seed ^=
+        std::hash<int>{}(tm.tm_mday) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    return seed;
+  }
 };
 
 struct TmEqual {
-    bool operator()(const std::tm& lhs, const std::tm& rhs) const {
-        return lhs.tm_year == rhs.tm_year &&
-               lhs.tm_mon == rhs.tm_mon &&
-               lhs.tm_mday == rhs.tm_mday;
-    }
+  bool operator()(const std::tm& lhs, const std::tm& rhs) const {
+    return lhs.tm_year == rhs.tm_year && lhs.tm_mon == rhs.tm_mon &&
+           lhs.tm_mday == rhs.tm_mday;
+  }
 };
 
 // TODO(@marcopremier): Move this class in common-cpp
-// Definition of a least recently used (LRU) cache with a fixed maximum number of elements.
+// Definition of a least recently used (LRU) cache with a fixed maximum number
+// of elements.
 class LruCache {
  public:
-   explicit LruCache(int max_elements);
+  explicit LruCache(int max_elements);
 
-   // Add a new entry into the cache. If the cache is full, the oldest element is
-   // removed.
-   void Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data);
+  // Add a new entry into the cache. If the cache is full, the oldest element is
+  // removed.
+  void Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data);
 
-   // Returns an element by its key, or nullopt if the key is not found.
-   std::optional<std::vector<ModelReleasePercentile>> Get(const std::tm& key);
+  // Returns an element by its key, or nullopt if the key is not found.
+  std::optional<std::vector<ModelReleasePercentile>> Get(const std::tm& key);
 
-  private:
-   absl::flat_hash_map<std::tm, std::vector<ModelReleasePercentile>, TmHash, TmEqual>
-       cache_data;
-   std::list<std::tm> access_order;
-   int cache_size;
+ private:
+  absl::flat_hash_map<std::tm, std::vector<ModelReleasePercentile>, TmHash,
+                      TmEqual>
+      cache_data;
+  std::list<std::tm> access_order;
+  int cache_size;
 };
 
 }  // namespace wfa_virtual_people

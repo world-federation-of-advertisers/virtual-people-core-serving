@@ -15,6 +15,7 @@
 #ifndef SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_VID_MODEL_SELECTOR_H_
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_VID_MODEL_SELECTOR_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -33,16 +34,16 @@ using ::wfa::measurement::api::v2alpha::ModelRollout;
 
 class VidModelSelector {
  public:
-
   // Factory method to create an instance of `VidModelSelector`.
   //
   // Returns an error if model_line name is unspecified or invalid and if
   // model_rollout is parented by a different model_line.
   static absl::StatusOr<std::unique_ptr<VidModelSelector>> Build(
-          const ModelLine& model_line,
-          const std::vector<ModelRollout>& model_rollouts);
+      const ModelLine& model_line,
+      const std::vector<ModelRollout>& model_rollouts);
 
-  absl::StatusOr<std::unique_ptr<std::string>> GetModelRelease(const LabelerInput& labeler_input);
+  absl::StatusOr<std::unique_ptr<std::string>> GetModelRelease(
+      const LabelerInput& labeler_input);
 
   // Class constructor. Never call the constructor directly.
   // Instances of this class must be built using the factory method `Build`.
@@ -59,16 +60,16 @@ class VidModelSelector {
   // percentages in case of cache miss.
   std::vector<ModelReleasePercentile> ReadFromCache(std::tm& event_date_utc);
 
-  // Return a list of ModelReleasePercentile(s). Each ModelReleasePercentile wraps
-  // the percentage of adoption of a particular ModelRelease and the ModelRelease
-  // itself. The list is sorted by either rollout_period_start_date or
-  // instant_rollout_date.
+  // Return a list of ModelReleasePercentile(s). Each ModelReleasePercentile
+  // wraps the percentage of adoption of a particular ModelRelease and the
+  // ModelRelease itself. The list is sorted by either rollout_period_start_date
+  // or instant_rollout_date.
   //
   // The adoption percentage of each ModelRollout is calculated as follows:
   // (EVENT_DAY - ROLLOUT_START_DAY) / (ROLLOUT_END_DAY - ROLLOUT_START_DAY).
   //
-  // In case a ModelRollout has the `rollout_freeze_date` set and the event day is
-  // greater than rollout_freeze_date, the EVENT_DAY in the above formula is
+  // In case a ModelRollout has the `rollout_freeze_date` set and the event day
+  // is greater than rollout_freeze_date, the EVENT_DAY in the above formula is
   // replaced by `rollout_freeze_date` to ensure that the rollout stops its
   // expansion: (ROLLOUT_FREEZE_DATE - ROLLOUT_START_DAY) / (ROLLOUT_END_DAY -
   // ROLLOUT_START_DAY).
@@ -84,12 +85,14 @@ class VidModelSelector {
                                      const ModelRollout& model_rollout);
 
   // Iterates through all available ModelRollout(s) sorted by either
-  // `rollout_period_start_date` or `instant_rollout_date` from the most recent to
-  // the oldest. The function keeps adding ModelRollout(s) to the
-  // `active_rollouts` vector until the following condition is met: event_date_utc
+  // `rollout_period_start_date` or `instant_rollout_date` from the most recent
+  // to the oldest. The function keeps adding ModelRollout(s) to the
+  // `active_rollouts` vector until the following condition is met:
+  // event_date_utc
   // >= rollout_period_end_date && !rollout.has_rollout_freeze_date()
   std::vector<ModelRollout> RetrieveActiveRollouts(std::tm& event_date_utc);
-  absl::StatusOr<std::unique_ptr<std::string>> GetEventId(const LabelerInput& labeler_input);
+  absl::StatusOr<std::unique_ptr<std::string>> GetEventId(
+      const LabelerInput& labeler_input);
 
   // Converts a given TimestampUsec into a std::tm object
   // std::tm is used to compare date in UTC time.

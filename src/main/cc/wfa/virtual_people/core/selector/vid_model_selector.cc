@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common_cpp/macros/macros.h"
 #include "wfa/virtual_people/core/selector/vid_model_selector.h"
 
 #include <google/protobuf/util/time_util.h>
@@ -21,6 +20,8 @@
 #include <cmath>
 #include <iostream>
 #include <limits>
+
+#include "common_cpp/macros/macros.h"
 
 namespace wfa_virtual_people {
 
@@ -80,27 +81,29 @@ bool VidModelSelector::IsOlderDate(const std::tm& date1,
 absl::StatusOr<std::unique_ptr<VidModelSelector>> VidModelSelector::Build(
     const ModelLine& model_line,
     const std::vector<ModelRollout>& model_rollouts) {
-    std::string model_line_id = ReadModelLine(model_line.name());
-    if (model_line_id == "") {
-        return absl::InvalidArgumentError(
-            "ModelLine resource name is either unspecified or invalid");
+  std::string model_line_id = ReadModelLine(model_line.name());
+  if (model_line_id == "") {
+    return absl::InvalidArgumentError(
+        "ModelLine resource name is either unspecified or invalid");
+  }
+  for (const ModelRollout& model_rollout : model_rollouts) {
+    if (ReadModelLine(model_rollout.name()) != model_line_id) {
+      return absl::InvalidArgumentError(
+          "ModelRollouts must be parented by the provided ModelLine");
     }
-    for (const ModelRollout& model_rollout : model_rollouts) {
-        if (ReadModelLine(model_rollout.name()) != model_line_id) {
-            return absl::InvalidArgumentError(
-                "ModelRollouts must be parented by the provided ModelLine");
-        }
-    }
+  }
 
-    auto selector = absl::make_unique<VidModelSelector>(
-        model_line, model_rollouts);
-    return std::move(selector);
+  auto selector =
+      absl::make_unique<VidModelSelector>(model_line, model_rollouts);
+  return std::move(selector);
 }
 
 VidModelSelector::VidModelSelector(
     const ModelLine& model_line,
     const std::vector<ModelRollout>& model_rollouts)
-    : model_line(model_line), model_rollouts(model_rollouts), lru_cache(kCacheSize) {}
+    : model_line(model_line),
+      model_rollouts(model_rollouts),
+      lru_cache(kCacheSize) {}
 
 absl::StatusOr<std::unique_ptr<std::string>> VidModelSelector::GetModelRelease(
     const LabelerInput& labeler_input) {
@@ -292,71 +295,87 @@ std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(
   return active_rollouts;
 }
 
-absl::StatusOr<std::unique_ptr<std::string>> VidModelSelector::GetEventId(const LabelerInput& labeler_input) {
+absl::StatusOr<std::unique_ptr<std::string>> VidModelSelector::GetEventId(
+    const LabelerInput& labeler_input) {
   if (labeler_input.has_profile_info()) {
     const ProfileInfo* profile_info = &labeler_input.profile_info();
 
     if (profile_info->has_email_user_info() &&
         profile_info->email_user_info().has_user_id()) {
-       return std::make_unique<std::string>(std::move(profile_info->email_user_info().user_id()));
+      return std::make_unique<std::string>(
+          std::move(profile_info->email_user_info().user_id()));
     }
     if (profile_info->has_phone_user_info() &&
         profile_info->phone_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->phone_user_info().user_id()));
+      return std::make_unique<std::string>(
+          std::move(profile_info->phone_user_info().user_id()));
     }
     if (profile_info->has_logged_in_id_user_info() &&
         profile_info->logged_in_id_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->logged_in_id_user_info().user_id()));
+      return std::make_unique<std::string>(
+          std::move(profile_info->logged_in_id_user_info().user_id()));
     }
     if (profile_info->has_logged_out_id_user_info() &&
         profile_info->logged_out_id_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->logged_out_id_user_info().user_id()));
+      return std::make_unique<std::string>(
+          std::move(profile_info->logged_out_id_user_info().user_id()));
     }
     if (profile_info->has_proprietary_id_space_1_user_info() &&
         profile_info->proprietary_id_space_1_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->proprietary_id_space_1_user_info().user_id()));
+      return std::make_unique<std::string>(std::move(
+          profile_info->proprietary_id_space_1_user_info().user_id()));
     }
     if (profile_info->has_proprietary_id_space_2_user_info() &&
         profile_info->proprietary_id_space_2_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->proprietary_id_space_2_user_info().user_id()));
+      return std::make_unique<std::string>(std::move(
+          profile_info->proprietary_id_space_2_user_info().user_id()));
     }
     if (profile_info->has_proprietary_id_space_3_user_info() &&
         profile_info->proprietary_id_space_3_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->proprietary_id_space_3_user_info().user_id()));
+      return std::make_unique<std::string>(std::move(
+          profile_info->proprietary_id_space_3_user_info().user_id()));
     }
     if (profile_info->has_proprietary_id_space_4_user_info() &&
         profile_info->proprietary_id_space_4_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->proprietary_id_space_4_user_info().user_id()));
+      return std::make_unique<std::string>(std::move(
+          profile_info->proprietary_id_space_4_user_info().user_id()));
     }
     if (profile_info->has_proprietary_id_space_5_user_info() &&
         profile_info->proprietary_id_space_5_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->proprietary_id_space_5_user_info().user_id()));
+      return std::make_unique<std::string>(std::move(
+          profile_info->proprietary_id_space_5_user_info().user_id()));
     }
     if (profile_info->has_proprietary_id_space_6_user_info() &&
         profile_info->proprietary_id_space_6_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->proprietary_id_space_6_user_info().user_id()));
+      return std::make_unique<std::string>(std::move(
+          profile_info->proprietary_id_space_6_user_info().user_id()));
     }
     if (profile_info->has_proprietary_id_space_7_user_info() &&
         profile_info->proprietary_id_space_7_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->proprietary_id_space_7_user_info().user_id()));
+      return std::make_unique<std::string>(std::move(
+          profile_info->proprietary_id_space_7_user_info().user_id()));
     }
     if (profile_info->has_proprietary_id_space_8_user_info() &&
         profile_info->proprietary_id_space_8_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->proprietary_id_space_8_user_info().user_id()));
+      return std::make_unique<std::string>(std::move(
+          profile_info->proprietary_id_space_8_user_info().user_id()));
     }
     if (profile_info->has_proprietary_id_space_9_user_info() &&
         profile_info->proprietary_id_space_9_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->proprietary_id_space_9_user_info().user_id()));
+      return std::make_unique<std::string>(std::move(
+          profile_info->proprietary_id_space_9_user_info().user_id()));
     }
     if (profile_info->has_proprietary_id_space_10_user_info() &&
         profile_info->proprietary_id_space_10_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(profile_info->proprietary_id_space_10_user_info().user_id()));
+      return std::make_unique<std::string>(std::move(
+          profile_info->proprietary_id_space_10_user_info().user_id()));
     }
   } else if (labeler_input.has_event_id()) {
-    return std::make_unique<std::string>(std::move(labeler_input.event_id().id()));
+    return std::make_unique<std::string>(
+        std::move(labeler_input.event_id().id()));
   }
   return absl::InvalidArgumentError(
-            "Neither user_id nor event_id was found in the LabelerInput.");
+      "Neither user_id nor event_id was found in the LabelerInput.");
 }
 
 }  // namespace wfa_virtual_people
