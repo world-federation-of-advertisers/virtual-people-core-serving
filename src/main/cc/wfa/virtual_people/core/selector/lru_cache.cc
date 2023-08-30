@@ -16,7 +16,7 @@
 
 namespace wfa_virtual_people {
 
-LruCache::LruCache(int n) : cache_size(n) {}
+LruCache::LruCache(int max_elements) : cache_size(max_elements) {}
 
 // Converts a std:tm object into a string used as key in the LRU cache
 // implementation.

@@ -30,7 +30,7 @@ import org.wfanet.virtualpeople.common.profileInfo
 import org.wfanet.virtualpeople.common.userInfo
 
 private const val TEXTPROTO_PATH =
-  "src/test/proto/wfa/virtual_people/core/labeler/test_data/selector/"
+  "src/main/resources/selector/"
 
 @RunWith(JUnit4::class)
 class VidModelSelectorTest {

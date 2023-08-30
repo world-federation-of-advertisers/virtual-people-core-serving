@@ -26,7 +26,7 @@ using ::wfa::IsOk;
 using ::wfa::ReadTextProtoFile;
 
 const char kTestDataDir[] =
-    "src/test/proto/wfa/virtual_people/core/labeler/test_data/selector/";
+    "src/main/resources/selector/";
 
 TEST(VidModelSelectorTest,
      TestBuildVidSelectorObjectWithoutParamsThrowsException) {
@@ -70,7 +70,7 @@ TEST(VidModelSelectorTest, TestMissingLabelerIputIdsThrowsException) {
 
   VidModelSelector vid_model_selector =
       VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
-  EXPECT_THROW(vid_model_selector.GetModelRelease(&labeler_input),
+  EXPECT_THROW(vid_model_selector.GetModelRelease(labeler_input),
                std::runtime_error);
 }
 
@@ -86,7 +86,7 @@ TEST(VidModelSelectorTest, TestReturnsNullWhenModelLineIsNotYetActive) {
 
   VidModelSelector vid_model_selector =
       VidModelSelector(model_line, std::vector<ModelRollout>{});
-  EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
+  EXPECT_FALSE(vid_model_selector.GetModelRelease(labeler_input));
 }
 
 TEST(VidModelSelectorTest, TestReturnsNullWhenModelLineIsNoLongerActive) {
@@ -101,7 +101,7 @@ TEST(VidModelSelectorTest, TestReturnsNullWhenModelLineIsNoLongerActive) {
 
   VidModelSelector vid_model_selector =
       VidModelSelector(model_line, std::vector<ModelRollout>{});
-  EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
+  EXPECT_FALSE(vid_model_selector.GetModelRelease(labeler_input));
 }
 
 TEST(VidModelSelectorTest, TestReturnsNullWhenModelRolloutsIsEmptyList) {
@@ -116,7 +116,7 @@ TEST(VidModelSelectorTest, TestReturnsNullWhenModelRolloutsIsEmptyList) {
 
   VidModelSelector vid_model_selector =
       VidModelSelector(model_line, std::vector<ModelRollout>{});
-  EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
+  EXPECT_FALSE(vid_model_selector.GetModelRelease(labeler_input));
 }
 
 TEST(VidModelSelectorTest,
@@ -138,7 +138,7 @@ TEST(VidModelSelectorTest,
   labeler_input.set_timestamp_usec(1050000000000000LL);
   VidModelSelector vid_model_selector =
       VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
-  EXPECT_FALSE(vid_model_selector.GetModelRelease(&labeler_input));
+  EXPECT_FALSE(vid_model_selector.GetModelRelease(labeler_input));
 }
 
 TEST(VidModelSelectorTest,
@@ -161,7 +161,7 @@ TEST(VidModelSelectorTest,
   VidModelSelector vid_model_selector =
       VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -190,7 +190,7 @@ TEST(VidModelSelectorTest,
   VidModelSelector vid_model_selector =
       VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -225,7 +225,7 @@ TEST(VidModelSelectorTest,
   VidModelSelector vid_model_selector = VidModelSelector(
       model_line, std::vector<ModelRollout>{model_rollout_1, model_rollout_2});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -259,7 +259,7 @@ TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR2) {
   VidModelSelector vid_model_selector = VidModelSelector(
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -294,7 +294,7 @@ TEST(VidModelSelectorTest,
   VidModelSelector vid_model_selector = VidModelSelector(
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -329,7 +329,7 @@ TEST(VidModelSelectorTest,
   VidModelSelector vid_model_selector = VidModelSelector(
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -363,7 +363,7 @@ TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR1) {
   VidModelSelector vid_model_selector = VidModelSelector(
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -397,7 +397,7 @@ TEST(VidModelSelectorTest, TestReturnsSameModelReleaseWithMultipleInvocation) {
   VidModelSelector vid_model_selector = VidModelSelector(
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
   std::string model_release_1 =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -405,7 +405,7 @@ TEST(VidModelSelectorTest, TestReturnsSameModelReleaseWithMultipleInvocation) {
       model_release_1);
 
   std::string model_release_2 =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -447,7 +447,7 @@ TEST(VidModelSelectorTest,
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
                                             model_rollout_3});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -489,7 +489,7 @@ TEST(VidModelSelectorTest,
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
                                             model_rollout_3});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -531,7 +531,7 @@ TEST(VidModelSelectorTest,
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
                                             model_rollout_3});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -580,7 +580,7 @@ TEST(VidModelSelectorTest,
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
                                             model_rollout_3, model_rollout_4});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -622,7 +622,7 @@ TEST(VidModelSelectorTest, TestBlockRolloutWhenFreezeTimeIsSet) {
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
                                             model_rollout_3});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -664,7 +664,7 @@ TEST(VidModelSelectorTest, TestRolloutWithFreezeTimeIsCorrectlySelected) {
       model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
                                             model_rollout_3});
   std::string model_release =
-      vid_model_selector.GetModelRelease(&labeler_input).value();
+      vid_model_selector.GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"

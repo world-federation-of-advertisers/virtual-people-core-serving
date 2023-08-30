@@ -23,7 +23,7 @@
 
 namespace wfa_virtual_people {
 
-const int CACHE_SIZE = 60;
+const int kCacheSize = 60;
 
 const double UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1;
 
@@ -93,7 +93,7 @@ bool VidModelSelector::IsOlderDate(const std::tm& date1,
 VidModelSelector::VidModelSelector(
     const ModelLine& model_line,
     const std::vector<ModelRollout>& model_rollouts)
-    : lru_cache(CACHE_SIZE) {
+    : lru_cache(kCacheSize) {
   std::string model_line_id = ExtractModelLine(model_line.name());
   if (model_line_id == "") {
     throw std::invalid_argument(
@@ -112,8 +112,8 @@ VidModelSelector::VidModelSelector(
 }
 
 std::optional<std::string> VidModelSelector::GetModelRelease(
-    const LabelerInput* labeler_input) {
-  std::int64_t event_timestamp_usec = labeler_input->timestamp_usec();
+    const LabelerInput& labeler_input) {
+  std::int64_t event_timestamp_usec = labeler_input.timestamp_usec();
   std::int64_t model_line_active_start_time =
       google::protobuf::util::TimeUtil::TimestampToMicroseconds(
           model_line.active_start_time());
@@ -135,7 +135,7 @@ std::optional<std::string> VidModelSelector::GetModelRelease(
       selected_model_release =
           model_adoption_percentages[0].model_release_resource_key;
     }
-    std::string event_id = GetEventId(*labeler_input);
+    std::string event_id = GetEventId(labeler_input);
     for (auto percentage = model_adoption_percentages.begin();
          percentage != model_adoption_percentages.end(); ++percentage) {
       std::string string_to_hash;

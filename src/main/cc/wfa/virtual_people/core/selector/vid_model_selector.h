@@ -33,7 +33,7 @@ class VidModelSelector {
  public:
   VidModelSelector(const ModelLine& model_line,
                    const std::vector<ModelRollout>& model_rollouts);
-  std::optional<std::string> GetModelRelease(const LabelerInput* labeler_input);
+  std::optional<std::string> GetModelRelease(const LabelerInput& labeler_input);
 
  private:
   ModelLine model_line;

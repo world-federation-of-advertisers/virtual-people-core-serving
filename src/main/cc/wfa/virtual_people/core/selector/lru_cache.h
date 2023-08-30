@@ -32,7 +32,7 @@ struct ModelReleasePercentile {
 
 class LruCache {
  public:
-  explicit LruCache(int n);
+  explicit LruCache(int max_elements);
 
   void Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data);
 
