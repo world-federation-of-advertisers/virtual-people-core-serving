@@ -30,21 +30,39 @@ struct ModelReleasePercentile {
   std::string model_release_resource_key;
 };
 
+struct TmHash {
+    std::size_t operator()(const std::tm& tm) const {
+        std::size_t seed = 0;
+        seed ^= std::hash<int>{}(tm.tm_year) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        seed ^= std::hash<int>{}(tm.tm_mon) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        seed ^= std::hash<int>{}(tm.tm_mday) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        return seed;
+    }
+};
+
+struct TmEqual {
+    bool operator()(const std::tm& lhs, const std::tm& rhs) const {
+        return lhs.tm_year == rhs.tm_year &&
+               lhs.tm_mon == rhs.tm_mon &&
+               lhs.tm_mday == rhs.tm_mday;
+    }
+};
+
+// TODO(@marcopremier): Move this class in common-cpp
+// Definition of a least recently used (LRU) cache with a fixed maximum number of elements.
 class LruCache {
  public:
-  explicit LruCache(int max_elements);
+   explicit LruCache(int max_elements);
 
-  void Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data);
+   void Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data);
 
-  std::optional<std::vector<ModelReleasePercentile>> Get(const std::tm& key);
+   std::optional<std::vector<ModelReleasePercentile>> Get(const std::tm& key);
 
- private:
-  absl::flat_hash_map<std::string, std::vector<ModelReleasePercentile>>
-      cache_data;
-  std::list<std::string> access_order;
-  int cache_size;
-
-  std::string TmToString(const std::tm& tm);
+  private:
+   absl::flat_hash_map<std::tm, std::vector<ModelReleasePercentile>, TmHash, TmEqual>
+       cache_data;
+   std::list<std::tm> access_order;
+   int cache_size;
 };
 
 }  // namespace wfa_virtual_people

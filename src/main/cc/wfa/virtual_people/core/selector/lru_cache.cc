@@ -18,40 +18,33 @@ namespace wfa_virtual_people {
 
 LruCache::LruCache(int max_elements) : cache_size(max_elements) {}
 
-// Converts a std:tm object into a string used as key in the LRU cache
-// implementation.
-std::string LruCache::TmToString(const std::tm& tm) {
-  return std::to_string(tm.tm_year) + "-" + std::to_string(tm.tm_mon) + "-" +
-         std::to_string(tm.tm_mday);
-}
-
 // Add a new entry into the cache. If the cache is full, the oldest element is
 // removed.
-void LruCache::Add(const std::tm& key,
-                   const std::vector<ModelReleasePercentile>& data) {
+void LruCache::Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data) {
   if (cache_data.size() >= cache_size) {
     auto oldest = access_order.begin();
     for (auto idx = access_order.begin(); idx != access_order.end(); ++idx) {
-      if (*idx < *oldest) {
-        oldest = idx;
+      if (std::tie(idx->tm_year, idx->tm_mon, idx->tm_mday) <
+          std::tie(oldest->tm_year, oldest->tm_mon, oldest->tm_mday)) {
+          oldest = idx;
       }
     }
     cache_data.erase(*oldest);
     access_order.erase(oldest);
   }
-  cache_data[TmToString(key)] = data;
-  access_order.emplace_front(TmToString(key));
+  cache_data[key] = data;
+  access_order.emplace_front(key);
 }
 
 // Returns an element by its key, or nullopt if the key is not found.
 std::optional<std::vector<ModelReleasePercentile>> LruCache::Get(
     const std::tm& key) {
-  auto idx = cache_data.find(TmToString(key));
+  auto idx = cache_data.find(key);
   if (idx != cache_data.end()) {
     for (auto it = access_order.begin(); it != access_order.end(); ++it) {
-      if (*it == TmToString(key)) {
+      if (TmEqual{}(*it, key)) {
         access_order.erase(it);
-        access_order.push_front(TmToString(key));
+        access_order.push_front(key);
         break;
       }
     }

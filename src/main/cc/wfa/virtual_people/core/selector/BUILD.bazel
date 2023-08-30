@@ -5,16 +5,6 @@ package(default_visibility = ["//visibility:public"])
 
 _INCLUDE_PREFIX = "/src/main/cc"
 
-cc_proto_library(
-    name = "model_line_cc_proto",
-    deps = ["@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v2alpha:model_line_proto"],
-)
-
-cc_proto_library(
-    name = "model_rollout_cc_proto",
-    deps = ["@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v2alpha:model_rollout_proto"],
-)
-
 cc_library(
     name = "lru_cache",
     srcs = [
@@ -40,8 +30,8 @@ cc_library(
     ],
     strip_include_prefix = _INCLUDE_PREFIX,
     deps = [
-        ":model_line_cc_proto",
-        ":model_rollout_cc_proto",
+        "//src/main/proto/wfa/measurement/api/v2alpha:model_line_cc_proto",
+        "//src/main/proto/wfa/measurement/api/v2alpha:model_rollout_cc_proto",
         ":lru_cache",
         "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:event_cc_proto",
     ],
