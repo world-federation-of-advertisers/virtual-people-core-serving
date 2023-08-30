@@ -18,8 +18,6 @@ namespace wfa_virtual_people {
 
 LruCache::LruCache(int max_elements) : cache_size(max_elements) {}
 
-// Add a new entry into the cache. If the cache is full, the oldest element is
-// removed.
 void LruCache::Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data) {
   if (cache_data.size() >= cache_size) {
     auto oldest = access_order.begin();
@@ -36,7 +34,6 @@ void LruCache::Add(const std::tm& key, const std::vector<ModelReleasePercentile>
   access_order.emplace_front(key);
 }
 
-// Returns an element by its key, or nullopt if the key is not found.
 std::optional<std::vector<ModelReleasePercentile>> LruCache::Get(
     const std::tm& key) {
   auto idx = cache_data.find(key);

@@ -54,8 +54,11 @@ class LruCache {
  public:
    explicit LruCache(int max_elements);
 
+   // Add a new entry into the cache. If the cache is full, the oldest element is
+   // removed.
    void Add(const std::tm& key, const std::vector<ModelReleasePercentile>& data);
 
+   // Returns an element by its key, or nullopt if the key is not found.
    std::optional<std::vector<ModelReleasePercentile>> Get(const std::tm& key);
 
   private:
