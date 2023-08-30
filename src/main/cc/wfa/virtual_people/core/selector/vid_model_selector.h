@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "google/type/date.pb.h"
 #include "wfa/measurement/api/v2alpha/model_line.pb.h"
 #include "wfa/measurement/api/v2alpha/model_rollout.pb.h"
@@ -32,12 +34,20 @@ using ::wfa::measurement::api::v2alpha::ModelRollout;
 class VidModelSelector {
  public:
 
-  // Class constructor.
-  // Throws an exception if model_line name is unspecified or invalid and if
+  // Factory method to create an instance of `VidModelSelector`.
+  //
+  // Returns an error if model_line name is unspecified or invalid and if
   // model_rollout is parented by a different model_line.
+  static absl::StatusOr<std::unique_ptr<VidModelSelector>> Build(
+          const ModelLine& model_line,
+          const std::vector<ModelRollout>& model_rollouts);
+
+  absl::StatusOr<std::unique_ptr<std::string>> GetModelRelease(const LabelerInput& labeler_input);
+
+  // Class constructor. Never call the constructor directly.
+  // Instances of this class must be built using the factory method `Build`.
   VidModelSelector(const ModelLine& model_line,
                    const std::vector<ModelRollout>& model_rollouts);
-  std::optional<std::string> GetModelRelease(const LabelerInput& labeler_input);
 
  private:
   ModelLine model_line;
@@ -79,7 +89,7 @@ class VidModelSelector {
   // `active_rollouts` vector until the following condition is met: event_date_utc
   // >= rollout_period_end_date && !rollout.has_rollout_freeze_date()
   std::vector<ModelRollout> RetrieveActiveRollouts(std::tm& event_date_utc);
-  std::string GetEventId(const LabelerInput& labeler_input);
+  absl::StatusOr<std::unique_ptr<std::string>> GetEventId(const LabelerInput& labeler_input);
 
   // Converts a given TimestampUsec into a std::tm object
   // std::tm is used to compare date in UTC time.
@@ -106,7 +116,7 @@ class VidModelSelector {
 
   // Returns the model_line_id from the given resource name.
   // Returns an empty string if not model_line_id is found.
-  std::string ReadModelLine(const std::string& input);
+  static std::string ReadModelLine(const std::string& input);
 };
 
 }  // namespace wfa_virtual_people

@@ -24,15 +24,16 @@ namespace {
 
 using ::wfa::IsOk;
 using ::wfa::ReadTextProtoFile;
+using ::wfa::StatusIs;
 
 const char kTestDataDir[] =
     "src/main/resources/selector/";
 
 TEST(VidModelSelectorTest,
      TestBuildVidSelectorObjectWithoutParamsThrowsException) {
-  EXPECT_THROW(VidModelSelector vid_model_selector(ModelLine{},
-                                                   std::vector<ModelRollout>{}),
-               std::invalid_argument);
+
+  EXPECT_THAT(VidModelSelector::Build(ModelLine{}, std::vector<ModelRollout>{}).status(), StatusIs(absl::StatusCode::kInvalidArgument, ""));
+
 }
 
 TEST(VidModelSelectorTest,
@@ -48,9 +49,8 @@ TEST(VidModelSelectorTest,
                                 model_rollout),
               IsOk());
 
-  EXPECT_THROW(VidModelSelector vid_model_selector(
-                   model_line, std::vector<ModelRollout>{model_rollout}),
-               std::invalid_argument);
+  EXPECT_THAT(VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout}).status(), StatusIs(absl::StatusCode::kInvalidArgument, ""));
+
 }
 
 TEST(VidModelSelectorTest, TestMissingLabelerIputIdsThrowsException) {
@@ -68,10 +68,11 @@ TEST(VidModelSelectorTest, TestMissingLabelerIputIdsThrowsException) {
   LabelerInput labeler_input;
   labeler_input.set_timestamp_usec(1200000000000000LL);
 
-  VidModelSelector vid_model_selector =
-      VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
-  EXPECT_THROW(vid_model_selector.GetModelRelease(labeler_input),
-               std::runtime_error);
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout}));
+
+  EXPECT_THAT(vid_model_selector->GetModelRelease(labeler_input).status(),
+                StatusIs(absl::StatusCode::kInvalidArgument, ""));
+
 }
 
 TEST(VidModelSelectorTest, TestReturnsNullWhenModelLineIsNotYetActive) {
@@ -84,9 +85,9 @@ TEST(VidModelSelectorTest, TestReturnsNullWhenModelLineIsNotYetActive) {
   LabelerInput labeler_input;
   labeler_input.set_timestamp_usec(900000000000000LL);
 
-  VidModelSelector vid_model_selector =
-      VidModelSelector(model_line, std::vector<ModelRollout>{});
-  EXPECT_FALSE(vid_model_selector.GetModelRelease(labeler_input));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{}));
+
+  EXPECT_FALSE(*vid_model_selector->GetModelRelease(labeler_input));
 }
 
 TEST(VidModelSelectorTest, TestReturnsNullWhenModelLineIsNoLongerActive) {
@@ -99,9 +100,8 @@ TEST(VidModelSelectorTest, TestReturnsNullWhenModelLineIsNoLongerActive) {
   LabelerInput labeler_input;
   labeler_input.set_timestamp_usec(2100000000000000LL);
 
-  VidModelSelector vid_model_selector =
-      VidModelSelector(model_line, std::vector<ModelRollout>{});
-  EXPECT_FALSE(vid_model_selector.GetModelRelease(labeler_input));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{}));
+  EXPECT_FALSE(*vid_model_selector->GetModelRelease(labeler_input));
 }
 
 TEST(VidModelSelectorTest, TestReturnsNullWhenModelRolloutsIsEmptyList) {
@@ -114,9 +114,8 @@ TEST(VidModelSelectorTest, TestReturnsNullWhenModelRolloutsIsEmptyList) {
   LabelerInput labeler_input;
   labeler_input.set_timestamp_usec(1200000000000000LL);
 
-  VidModelSelector vid_model_selector =
-      VidModelSelector(model_line, std::vector<ModelRollout>{});
-  EXPECT_FALSE(vid_model_selector.GetModelRelease(labeler_input));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{}));
+  EXPECT_FALSE(*vid_model_selector->GetModelRelease(labeler_input));
 }
 
 TEST(VidModelSelectorTest,
@@ -136,9 +135,9 @@ TEST(VidModelSelectorTest,
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "abc@mail.com");
   labeler_input.set_timestamp_usec(1050000000000000LL);
-  VidModelSelector vid_model_selector =
-      VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
-  EXPECT_FALSE(vid_model_selector.GetModelRelease(labeler_input));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout}));
+  EXPECT_FALSE(*vid_model_selector->GetModelRelease(labeler_input));
 }
 
 TEST(VidModelSelectorTest,
@@ -158,10 +157,10 @@ TEST(VidModelSelectorTest,
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "abc@mail.com");
   labeler_input.set_timestamp_usec(1200000000000000LL);
-  VidModelSelector vid_model_selector =
-      VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout}));
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -187,10 +186,10 @@ TEST(VidModelSelectorTest,
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "abc@mail.com");
   labeler_input.set_timestamp_usec(1200000000000000LL);
-  VidModelSelector vid_model_selector =
-      VidModelSelector(model_line, std::vector<ModelRollout>{model_rollout});
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout}));
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -222,10 +221,10 @@ TEST(VidModelSelectorTest,
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "abc@mail.com");
   labeler_input.set_timestamp_usec(1800000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_1, model_rollout_2});
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_1, model_rollout_2}));
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -256,10 +255,10 @@ TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR2) {
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "abc@mail.com");
   labeler_input.set_timestamp_usec(1620000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1}));
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -291,10 +290,10 @@ TEST(VidModelSelectorTest,
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "abc@mail.com");
   labeler_input.set_timestamp_usec(1500000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1}));
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -326,10 +325,10 @@ TEST(VidModelSelectorTest,
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "xyz@mail.com");
   labeler_input.set_timestamp_usec(1500000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_1, model_rollout_2}));
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -360,10 +359,10 @@ TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR1) {
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "abc@mail.com");
   labeler_input.set_timestamp_usec(1200000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1}));
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -394,10 +393,10 @@ TEST(VidModelSelectorTest, TestReturnsSameModelReleaseWithMultipleInvocation) {
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "xyz@mail.com");
   labeler_input.set_timestamp_usec(1500000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1});
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1}));
   std::string model_release_1 =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -405,7 +404,7 @@ TEST(VidModelSelectorTest, TestReturnsSameModelReleaseWithMultipleInvocation) {
       model_release_1);
 
   std::string model_release_2 =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -443,11 +442,9 @@ TEST(VidModelSelectorTest,
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "xyz@mail.com");
   labeler_input.set_timestamp_usec(1450000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
-                                            model_rollout_3});
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3}));
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -485,11 +482,9 @@ TEST(VidModelSelectorTest,
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "cba@mail.com");
   labeler_input.set_timestamp_usec(1580000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
-                                            model_rollout_3});
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3}));
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -527,11 +522,10 @@ TEST(VidModelSelectorTest,
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "abc@mail.com");
   labeler_input.set_timestamp_usec(1450000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
-                                            model_rollout_3});
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3}));
+
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -576,11 +570,10 @@ TEST(VidModelSelectorTest,
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "abc@mail.com");
   labeler_input.set_timestamp_usec(1450000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
-                                            model_rollout_3, model_rollout_4});
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3, model_rollout_4}));
+
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -618,11 +611,10 @@ TEST(VidModelSelectorTest, TestBlockRolloutWhenFreezeTimeIsSet) {
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "xyz@mail.com");
   labeler_input.set_timestamp_usec(1900000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
-                                            model_rollout_3});
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3}));
+
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
@@ -660,11 +652,10 @@ TEST(VidModelSelectorTest, TestRolloutWithFreezeTimeIsCorrectlySelected) {
   labeler_input.mutable_profile_info()->mutable_email_user_info()->set_user_id(
       "abc@mail.com");
   labeler_input.set_timestamp_usec(1900000000000000LL);
-  VidModelSelector vid_model_selector = VidModelSelector(
-      model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1,
-                                            model_rollout_3});
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<VidModelSelector> vid_model_selector, VidModelSelector::Build(model_line, std::vector<ModelRollout>{model_rollout_2, model_rollout_1, model_rollout_3}));
+
   std::string model_release =
-      vid_model_selector.GetModelRelease(labeler_input).value();
+      *vid_model_selector->GetModelRelease(labeler_input).value();
 
   ASSERT_EQ(
       "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
