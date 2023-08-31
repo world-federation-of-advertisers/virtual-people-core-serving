@@ -21,7 +21,10 @@
 #include <iostream>
 #include <limits>
 
+#include "absl/time/civil_time.h"
+#include "absl/time/time.h"
 #include "common_cpp/macros/macros.h"
+#include "src/farmhash.h"
 
 namespace wfa_virtual_people {
 
@@ -47,35 +50,21 @@ std::string VidModelSelector::ReadModelLine(const std::string& input) {
   return "";
 }
 
-std::tm VidModelSelector::TimestampUsecToTm(std::int64_t timestamp_usec) {
-  const std::time_t timestamp_sec =
-      static_cast<std::time_t>(timestamp_usec / 1000000);
-  const std::tm* utc_tm = std::gmtime(&timestamp_sec);
-  std::tm result = {};
-  result.tm_year = utc_tm->tm_year + 1900;
-  result.tm_mon = utc_tm->tm_mon + 1;
-  result.tm_mday = utc_tm->tm_mday;
-  return result;
+absl::CivilDay VidModelSelector::TimestampUsecToCivilDay(std::int64_t timestamp_usec) {
+  absl::Time timestamp = absl::FromUnixMicros(timestamp_usec);
+  absl::TimeZone utc_time_zone = absl::UTCTimeZone();
+  return absl::ToCivilDay(timestamp, utc_time_zone);
 }
 
-std::tm VidModelSelector::DateToTm(const google::type::Date& date) {
-  std::tm tmDate = {};
-  tmDate.tm_year = date.year();
-  tmDate.tm_mon = date.month();
-  tmDate.tm_mday = date.day();
-  return tmDate;
+absl::CivilDay VidModelSelector::DateToCivilDay(const google::type::Date& date) {
+  return absl::CivilDay(date.year(), date.month(), date.day());
 }
 
-bool VidModelSelector::IsSameDate(const std::tm& date1,
-                                  const std::tm& date2) const {
-  return std::tie(date1.tm_year, date1.tm_mon, date1.tm_mday) ==
-         std::tie(date2.tm_year, date2.tm_mon, date2.tm_mday);
-}
-
-bool VidModelSelector::IsOlderDate(const std::tm& date1,
-                                   const std::tm& date2) const {
-  return std::tie(date1.tm_year, date1.tm_mon, date1.tm_mday) <
-         std::tie(date2.tm_year, date2.tm_mon, date2.tm_mday);
+double VidModelSelector::GetTimeDifferenceInSeconds(absl::CivilDay& date_1, absl::CivilDay& date_2) {
+  absl::Time time_1 = absl::FromCivil(date_1, absl::UTCTimeZone());
+  absl::Time time_2 = absl::FromCivil(date_2, absl::UTCTimeZone());
+  absl::Duration difference = time_2 - time_1;
+  return absl::ToDoubleSeconds(difference);
 }
 
 absl::StatusOr<std::unique_ptr<VidModelSelector>> VidModelSelector::Build(
@@ -119,7 +108,7 @@ absl::StatusOr<std::unique_ptr<std::string>> VidModelSelector::GetModelRelease(
 
   if (event_timestamp_usec >= model_line_active_start_time &&
       event_timestamp_usec < model_line_active_end_time) {
-    std::tm event_date_utc = TimestampUsecToTm(event_timestamp_usec);
+    absl::CivilDay event_date_utc = TimestampUsecToCivilDay(event_timestamp_usec);
     std::vector<ModelReleasePercentile> model_adoption_percentages =
         ReadFromCache(event_date_utc);
     std::string selected_model_release;
@@ -156,7 +145,7 @@ absl::StatusOr<std::unique_ptr<std::string>> VidModelSelector::GetModelRelease(
 }
 
 std::vector<ModelReleasePercentile> VidModelSelector::ReadFromCache(
-    std::tm& event_date_utc) {
+    absl::CivilDay& event_date_utc) {
   std::lock_guard<std::mutex> lock(mtx);
 
   std::optional<std::vector<ModelReleasePercentile>> cache_value =
@@ -172,7 +161,7 @@ std::vector<ModelReleasePercentile> VidModelSelector::ReadFromCache(
 }
 
 std::vector<ModelReleasePercentile> VidModelSelector::CalculatePercentages(
-    std::tm& event_date_utc) {
+    absl::CivilDay& event_date_utc) {
   std::vector<ModelRollout> active_rollouts =
       RetrieveActiveRollouts(event_date_utc);
   std::vector<ModelReleasePercentile> result;
@@ -189,59 +178,45 @@ std::vector<ModelReleasePercentile> VidModelSelector::CalculatePercentages(
 }
 
 double VidModelSelector::CalculatePercentageAdoption(
-    std::tm& event_date_utc, const ModelRollout& model_rollout) {
-  std::tm model_rollout_freeze_date =
+    absl::CivilDay& event_date_utc, const ModelRollout& model_rollout) {
+  absl::CivilDay model_rollout_freeze_date =
       model_rollout.has_rollout_freeze_date()
-          ? DateToTm(model_rollout.rollout_freeze_date())
-          : [] {
-              std::tm max_date_tm = {};
-              max_date_tm.tm_year = 9999 - 1900;
-              max_date_tm.tm_mon = 11;
-              max_date_tm.tm_mday = 31;
-              return max_date_tm;
-            }();
-
-  std::tm rollout_period_start_date =
+          ? DateToCivilDay(model_rollout.rollout_freeze_date())
+          : absl::CivilDay(absl::CivilSecond::max());
+  absl::CivilDay rollout_period_start_date =
       model_rollout.has_gradual_rollout_period()
-          ? DateToTm(model_rollout.gradual_rollout_period().start_date())
-          : DateToTm(model_rollout.instant_rollout_date());
+          ? DateToCivilDay(model_rollout.gradual_rollout_period().start_date())
+          : DateToCivilDay(model_rollout.instant_rollout_date());
 
-  std::tm rollout_period_end_date =
+  absl::CivilDay rollout_period_end_date =
       model_rollout.has_gradual_rollout_period()
-          ? DateToTm(model_rollout.gradual_rollout_period().end_date())
-          : DateToTm(model_rollout.instant_rollout_date());
+          ? DateToCivilDay(model_rollout.gradual_rollout_period().end_date())
+          : DateToCivilDay(model_rollout.instant_rollout_date());
 
-  if (IsSameDate(rollout_period_start_date, rollout_period_end_date)) {
+  if (rollout_period_start_date == rollout_period_end_date) {
     return UPPER_BOUND_PERCENTAGE_ADOPTION;
-  } else if (!IsOlderDate(event_date_utc, model_rollout_freeze_date)) {
-    return (difftime(std::mktime(&model_rollout_freeze_date),
-                     std::mktime(&rollout_period_start_date))) /
-           (difftime(std::mktime(&rollout_period_end_date),
-                     std::mktime(&rollout_period_start_date)));
+  } else if (event_date_utc >= model_rollout_freeze_date) {
+    return (GetTimeDifferenceInSeconds(rollout_period_start_date, model_rollout_freeze_date)) / (GetTimeDifferenceInSeconds(rollout_period_start_date, rollout_period_end_date));
   } else {
-    return (difftime(std::mktime(&event_date_utc),
-                     std::mktime(&rollout_period_start_date))) /
-           (difftime(std::mktime(&rollout_period_end_date),
-                     std::mktime(&rollout_period_start_date)));
+    return (GetTimeDifferenceInSeconds(rollout_period_start_date, event_date_utc)) / (GetTimeDifferenceInSeconds(rollout_period_start_date, rollout_period_end_date));
   }
 }
 
 bool VidModelSelector::CompareModelRollouts(const ModelRollout& lhs,
                                             const ModelRollout& rhs) {
-  const std::tm lhsDate =
+  const absl::CivilDay lhsDate =
       lhs.has_gradual_rollout_period()
-          ? DateToTm(lhs.gradual_rollout_period().start_date())
-          : DateToTm(lhs.instant_rollout_date());
-  const std::tm rhsDate =
+          ? DateToCivilDay(lhs.gradual_rollout_period().start_date())
+          : DateToCivilDay(lhs.instant_rollout_date());
+  const absl::CivilDay rhsDate =
       rhs.has_gradual_rollout_period()
-          ? DateToTm(rhs.gradual_rollout_period().start_date())
-          : DateToTm(rhs.instant_rollout_date());
-  return std::tie(lhsDate.tm_year, lhsDate.tm_mon, lhsDate.tm_mday) <
-         std::tie(rhsDate.tm_year, rhsDate.tm_mon, rhsDate.tm_mday);
+          ? DateToCivilDay(rhs.gradual_rollout_period().start_date())
+          : DateToCivilDay(rhs.instant_rollout_date());
+  return lhsDate < rhsDate;
 }
 
 std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(
-    std::tm& event_date_utc) {
+    absl::CivilDay& event_date_utc) {
   if (model_rollouts.empty()) {
     return model_rollouts;
   }
@@ -253,12 +228,12 @@ std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(
             });
 
   const ModelRollout& first_rollout = sorted_rollouts.front();
-  std::tm first_rollout_period_start_date =
+  absl::CivilDay first_rollout_period_start_date =
       first_rollout.has_gradual_rollout_period()
-          ? DateToTm(first_rollout.gradual_rollout_period().start_date())
-          : DateToTm(first_rollout.instant_rollout_date());
+          ? DateToCivilDay(first_rollout.gradual_rollout_period().start_date())
+          : DateToCivilDay(first_rollout.instant_rollout_date());
 
-  if (IsOlderDate(event_date_utc, first_rollout_period_start_date)) {
+  if (event_date_utc < first_rollout_period_start_date) {
     return {};
   }
 
@@ -268,12 +243,12 @@ std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(
        rollout_idx != sorted_rollouts.rend(); ++rollout_idx) {
     const ModelRollout& rollout = *rollout_idx;
 
-    std::tm rollout_period_end_date =
+    absl::CivilDay rollout_period_end_date =
         rollout.has_gradual_rollout_period()
-            ? DateToTm(rollout.gradual_rollout_period().end_date())
-            : DateToTm(rollout.instant_rollout_date());
+            ? DateToCivilDay(rollout.gradual_rollout_period().end_date())
+            : DateToCivilDay(rollout.instant_rollout_date());
 
-    if (!IsOlderDate(event_date_utc, rollout_period_end_date)) {
+    if (event_date_utc >= rollout_period_end_date) {
       active_rollouts.push_back(rollout);
       if (!rollout.has_rollout_freeze_date()) {
         break;
@@ -281,12 +256,12 @@ std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(
       continue;
     }
 
-    std::tm rollout_period_start_date =
+    absl::CivilDay rollout_period_start_date =
         rollout.has_gradual_rollout_period()
-            ? DateToTm(rollout.gradual_rollout_period().start_date())
-            : DateToTm(rollout.instant_rollout_date());
+            ? DateToCivilDay(rollout.gradual_rollout_period().start_date())
+            : DateToCivilDay(rollout.instant_rollout_date());
 
-    if (!IsOlderDate(event_date_utc, rollout_period_start_date)) {
+    if (event_date_utc >= rollout_period_start_date) {
       active_rollouts.push_back(rollout);
     }
   }

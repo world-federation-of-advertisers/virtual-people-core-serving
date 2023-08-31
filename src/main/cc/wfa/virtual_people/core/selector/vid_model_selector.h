@@ -58,7 +58,7 @@ class VidModelSelector {
 
   // Access to the cache is synchronized to prevent multiple threads calculating
   // percentages in case of cache miss.
-  std::vector<ModelReleasePercentile> ReadFromCache(std::tm& event_date_utc);
+  std::vector<ModelReleasePercentile> ReadFromCache(absl::CivilDay& event_date_utc);
 
   // Return a list of ModelReleasePercentile(s). Each ModelReleasePercentile
   // wraps the percentage of adoption of a particular ModelRelease and the
@@ -77,11 +77,11 @@ class VidModelSelector {
   // In case of an instant rollout ROLLOUT_START_DATE is equal to
   // ROLLOUT_END_DATE.
   std::vector<ModelReleasePercentile> CalculatePercentages(
-      std::tm& event_date_utc);
+      absl::CivilDay& event_date_utc);
 
   // Returns the percentage of events that this ModelRollout must label for the
   // given `event_date_utc`.
-  double CalculatePercentageAdoption(std::tm& event_date_utc,
+  double CalculatePercentageAdoption(absl::CivilDay& event_date_utc,
                                      const ModelRollout& model_rollout);
 
   // Iterates through all available ModelRollout(s) sorted by either
@@ -90,26 +90,18 @@ class VidModelSelector {
   // `active_rollouts` vector until the following condition is met:
   // event_date_utc
   // >= rollout_period_end_date && !rollout.has_rollout_freeze_date()
-  std::vector<ModelRollout> RetrieveActiveRollouts(std::tm& event_date_utc);
+  std::vector<ModelRollout> RetrieveActiveRollouts(absl::CivilDay& event_date_utc);
   absl::StatusOr<std::unique_ptr<std::string>> GetEventId(
       const LabelerInput& labeler_input);
 
-  // Converts a given TimestampUsec into a std::tm object
-  // std::tm is used to compare date in UTC time.
-  std::tm TimestampUsecToTm(std::int64_t timestamp_usec);
+  // Converts a given TimestampUsec into a absl::CivilDay object.
+  // absl::CivilDay is used to compare dates in UTC time.
+  absl::CivilDay TimestampUsecToCivilDay(std::int64_t timestamp_usec);
 
-  // Converts a google::type::Date object into a std:tm object.
-  std::tm DateToTm(const google::type::Date& date);
+  // Converts a google::type::Date object into a absl::CivilDay.
+  absl::CivilDay DateToCivilDay(const google::type::Date& date);
 
-  // Returns true if the given dates represent the same day.
-  // It performs a lexicographically check, which is more efficient than
-  // converting both date into std::time_t
-  bool IsSameDate(const std::tm& date1, const std::tm& date2) const;
-
-  // Returns true if date1 is older in time compare to date2.
-  // It performs a lexicographically check, which is more efficient than
-  // converting both date into std::time_t
-  bool IsOlderDate(const std::tm& date1, const std::tm& date2) const;
+  double GetTimeDifferenceInSeconds(absl::CivilDay& date1, absl::CivilDay& date2);
 
   // Comparator used to sort a std::vector of `ModelRollout`.
   //
