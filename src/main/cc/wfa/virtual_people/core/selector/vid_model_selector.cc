@@ -26,21 +26,22 @@
 #include "common_cpp/macros/macros.h"
 #include "src/farmhash.h"
 
-namespace wfa_virtual_people {
+namespace {
 
 const int kCacheSize = 60;
+const double kUpperBoundPercentageAdoption = 1.1;
 
-const double UPPER_BOUND_PERCENTAGE_ADOPTION = 1.1;
-
-std::string VidModelSelector::ReadModelLine(const std::string& input) {
-  std::string modelLineMarker = "modelLines/";
-  std::string modelRolloutMarker = "/modelRollouts/";
+// Returns the model_line_id from the given resource name.
+// Returns an empty string if not model_line_id is found.
+std::string_view ReadModelLine(std::string_view input) {
+  std::string_view modelLineMarker = "modelLines/";
+  std::string_view modelRolloutMarker = "/modelRollouts/";
 
   size_t start = input.find(modelLineMarker);
-  if (start != std::string::npos) {
+  if (start != std::string_view::npos) {
     start += modelLineMarker.length();
     size_t end = input.find(modelRolloutMarker, start);
-    if (end != std::string::npos) {
+    if (end != std::string_view::npos) {
       return input.substr(start, end - start);
     } else {
       return input.substr(start);
@@ -49,28 +50,45 @@ std::string VidModelSelector::ReadModelLine(const std::string& input) {
 
   return "";
 }
+}  // namespace
 
-absl::CivilDay VidModelSelector::TimestampUsecToCivilDay(std::int64_t timestamp_usec) {
-  absl::Time timestamp = absl::FromUnixMicros(timestamp_usec);
+namespace wfa_virtual_people {
+
+absl::CivilDay VidModelSelector::TimeUsecToCivilDay(absl::Time time) {
   absl::TimeZone utc_time_zone = absl::UTCTimeZone();
-  return absl::ToCivilDay(timestamp, utc_time_zone);
+  return absl::ToCivilDay(time, utc_time_zone);
 }
 
-absl::CivilDay VidModelSelector::DateToCivilDay(const google::type::Date& date) {
+absl::CivilDay VidModelSelector::DateToCivilDay(
+    const google::type::Date& date) {
   return absl::CivilDay(date.year(), date.month(), date.day());
 }
 
-double VidModelSelector::GetTimeDifferenceInSeconds(absl::CivilDay& date_1, absl::CivilDay& date_2) {
+double VidModelSelector::GetTimeDifferenceInSeconds(absl::CivilDay& date_1,
+                                                    absl::CivilDay& date_2) {
   absl::Time time_1 = absl::FromCivil(date_1, absl::UTCTimeZone());
   absl::Time time_2 = absl::FromCivil(date_2, absl::UTCTimeZone());
   absl::Duration difference = time_2 - time_1;
   return absl::ToDoubleSeconds(difference);
 }
 
-absl::StatusOr<std::unique_ptr<VidModelSelector>> VidModelSelector::Build(
+VidModelSelector::VidModelSelector(
+    const ModelLine& model_line,
+    const std::vector<ModelRollout>& model_rollouts)
+    : model_line(model_line),
+      model_rollouts(model_rollouts),
+      lru_cache(kCacheSize) {}
+
+// Move constructor
+VidModelSelector::VidModelSelector(VidModelSelector&& other) noexcept
+    : model_line(std::move(other.model_line)),
+      model_rollouts(std::move(other.model_rollouts)),
+      lru_cache(std::move(other.lru_cache)) {}
+
+absl::StatusOr<VidModelSelector> VidModelSelector::Build(
     const ModelLine& model_line,
     const std::vector<ModelRollout>& model_rollouts) {
-  std::string model_line_id = ReadModelLine(model_line.name());
+  std::string_view model_line_id = ReadModelLine(model_line.name());
   if (model_line_id == "") {
     return absl::InvalidArgumentError(
         "ModelLine resource name is either unspecified or invalid");
@@ -82,50 +100,45 @@ absl::StatusOr<std::unique_ptr<VidModelSelector>> VidModelSelector::Build(
     }
   }
 
-  auto selector =
-      absl::make_unique<VidModelSelector>(model_line, model_rollouts);
+  VidModelSelector selector(model_line, model_rollouts);
   return std::move(selector);
 }
 
-VidModelSelector::VidModelSelector(
-    const ModelLine& model_line,
-    const std::vector<ModelRollout>& model_rollouts)
-    : model_line(model_line),
-      model_rollouts(model_rollouts),
-      lru_cache(kCacheSize) {}
-
-absl::StatusOr<std::unique_ptr<std::string>> VidModelSelector::GetModelRelease(
+absl::StatusOr<std::optional<std::string>> VidModelSelector::GetModelRelease(
     const LabelerInput& labeler_input) {
-  std::int64_t event_timestamp_usec = labeler_input.timestamp_usec();
-  std::int64_t model_line_active_start_time =
+  absl::Time event_timestamp =
+      absl::FromUnixMicros(labeler_input.timestamp_usec());
+  absl::Time model_line_active_start_time = absl::FromUnixMicros(
       google::protobuf::util::TimeUtil::TimestampToMicroseconds(
-          model_line.active_start_time());
-  std::int64_t model_line_active_end_time =
-      model_line.has_active_end_time()
-          ? google::protobuf::util::TimeUtil::TimestampToMicroseconds(
-                model_line.active_end_time())
-          : ((1LL << 63) - 1);
+          model_line.active_start_time()));
 
-  if (event_timestamp_usec >= model_line_active_start_time &&
-      event_timestamp_usec < model_line_active_end_time) {
-    absl::CivilDay event_date_utc = TimestampUsecToCivilDay(event_timestamp_usec);
+  absl::Time model_line_active_end_time =
+      model_line.has_active_end_time()
+          ? absl::FromUnixMicros(
+                google::protobuf::util::TimeUtil::TimestampToMicroseconds(
+                    model_line.active_end_time()))
+          : absl::InfiniteFuture();
+
+  if (event_timestamp >= model_line_active_start_time &&
+      event_timestamp < model_line_active_end_time) {
+    absl::CivilDay event_date_utc = TimeUsecToCivilDay(event_timestamp);
     std::vector<ModelReleasePercentile> model_adoption_percentages =
         ReadFromCache(event_date_utc);
     std::string selected_model_release;
     if (model_adoption_percentages.empty()) {
-      return std::unique_ptr<std::string>(nullptr);
+      return std::nullopt;
     } else {
       selected_model_release =
           model_adoption_percentages[0].model_release_resource_key;
     }
-    std::unique_ptr<std::string> event_id = nullptr;
+    std::string event_id;
     ASSIGN_OR_RETURN(event_id, GetEventId(labeler_input));
 
     for (auto percentage = model_adoption_percentages.begin();
          percentage != model_adoption_percentages.end(); ++percentage) {
       std::string string_to_hash;
       string_to_hash += percentage->model_release_resource_key;
-      string_to_hash += *event_id;
+      string_to_hash += event_id;
       // Convert into a signed number to make sure that the event_fingerprint is
       // the same one produced by the Kotlin library.
       int64_t event_fingerprint =
@@ -138,9 +151,9 @@ absl::StatusOr<std::unique_ptr<std::string>> VidModelSelector::GetModelRelease(
         selected_model_release = percentage->model_release_resource_key;
       }
     }
-    return std::make_unique<std::string>(std::move(selected_model_release));
+    return selected_model_release;
   } else {
-    return std::unique_ptr<std::string>(nullptr);
+    return std::nullopt;
   }
 }
 
@@ -171,7 +184,7 @@ std::vector<ModelReleasePercentile> VidModelSelector::CalculatePercentages(
         CalculatePercentageAdoption(event_date_utc, active_rollout);
     ModelReleasePercentile release_percentile{percentage,
                                               active_rollout.model_release()};
-    result.push_back(release_percentile);
+    result.emplace_back(release_percentile);
   }
 
   return result;
@@ -194,11 +207,17 @@ double VidModelSelector::CalculatePercentageAdoption(
           : DateToCivilDay(model_rollout.instant_rollout_date());
 
   if (rollout_period_start_date == rollout_period_end_date) {
-    return UPPER_BOUND_PERCENTAGE_ADOPTION;
+    return kUpperBoundPercentageAdoption;
   } else if (event_date_utc >= model_rollout_freeze_date) {
-    return (GetTimeDifferenceInSeconds(rollout_period_start_date, model_rollout_freeze_date)) / (GetTimeDifferenceInSeconds(rollout_period_start_date, rollout_period_end_date));
+    return (GetTimeDifferenceInSeconds(rollout_period_start_date,
+                                       model_rollout_freeze_date)) /
+           (GetTimeDifferenceInSeconds(rollout_period_start_date,
+                                       rollout_period_end_date));
   } else {
-    return (GetTimeDifferenceInSeconds(rollout_period_start_date, event_date_utc)) / (GetTimeDifferenceInSeconds(rollout_period_start_date, rollout_period_end_date));
+    return (GetTimeDifferenceInSeconds(rollout_period_start_date,
+                                       event_date_utc)) /
+           (GetTimeDifferenceInSeconds(rollout_period_start_date,
+                                       rollout_period_end_date));
   }
 }
 
@@ -270,84 +289,69 @@ std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(
   return active_rollouts;
 }
 
-absl::StatusOr<std::unique_ptr<std::string>> VidModelSelector::GetEventId(
+absl::StatusOr<std::string> VidModelSelector::GetEventId(
     const LabelerInput& labeler_input) {
   if (labeler_input.has_profile_info()) {
     const ProfileInfo* profile_info = &labeler_input.profile_info();
 
     if (profile_info->has_email_user_info() &&
         profile_info->email_user_info().has_user_id()) {
-      return std::make_unique<std::string>(
-          std::move(profile_info->email_user_info().user_id()));
+      return profile_info->email_user_info().user_id();
     }
     if (profile_info->has_phone_user_info() &&
         profile_info->phone_user_info().has_user_id()) {
-      return std::make_unique<std::string>(
-          std::move(profile_info->phone_user_info().user_id()));
+      return profile_info->phone_user_info().user_id();
     }
     if (profile_info->has_logged_in_id_user_info() &&
         profile_info->logged_in_id_user_info().has_user_id()) {
-      return std::make_unique<std::string>(
-          std::move(profile_info->logged_in_id_user_info().user_id()));
+      return profile_info->logged_in_id_user_info().user_id();
     }
     if (profile_info->has_logged_out_id_user_info() &&
         profile_info->logged_out_id_user_info().has_user_id()) {
-      return std::make_unique<std::string>(
-          std::move(profile_info->logged_out_id_user_info().user_id()));
+      return profile_info->logged_out_id_user_info().user_id();
     }
     if (profile_info->has_proprietary_id_space_1_user_info() &&
         profile_info->proprietary_id_space_1_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(
-          profile_info->proprietary_id_space_1_user_info().user_id()));
+      return profile_info->proprietary_id_space_1_user_info().user_id();
     }
     if (profile_info->has_proprietary_id_space_2_user_info() &&
         profile_info->proprietary_id_space_2_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(
-          profile_info->proprietary_id_space_2_user_info().user_id()));
+      return profile_info->proprietary_id_space_2_user_info().user_id();
     }
     if (profile_info->has_proprietary_id_space_3_user_info() &&
         profile_info->proprietary_id_space_3_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(
-          profile_info->proprietary_id_space_3_user_info().user_id()));
+      return profile_info->proprietary_id_space_3_user_info().user_id();
     }
     if (profile_info->has_proprietary_id_space_4_user_info() &&
         profile_info->proprietary_id_space_4_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(
-          profile_info->proprietary_id_space_4_user_info().user_id()));
+      return profile_info->proprietary_id_space_4_user_info().user_id();
     }
     if (profile_info->has_proprietary_id_space_5_user_info() &&
         profile_info->proprietary_id_space_5_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(
-          profile_info->proprietary_id_space_5_user_info().user_id()));
+      return profile_info->proprietary_id_space_5_user_info().user_id();
     }
     if (profile_info->has_proprietary_id_space_6_user_info() &&
         profile_info->proprietary_id_space_6_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(
-          profile_info->proprietary_id_space_6_user_info().user_id()));
+      return profile_info->proprietary_id_space_6_user_info().user_id();
     }
     if (profile_info->has_proprietary_id_space_7_user_info() &&
         profile_info->proprietary_id_space_7_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(
-          profile_info->proprietary_id_space_7_user_info().user_id()));
+      return profile_info->proprietary_id_space_7_user_info().user_id();
     }
     if (profile_info->has_proprietary_id_space_8_user_info() &&
         profile_info->proprietary_id_space_8_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(
-          profile_info->proprietary_id_space_8_user_info().user_id()));
+      return profile_info->proprietary_id_space_8_user_info().user_id();
     }
     if (profile_info->has_proprietary_id_space_9_user_info() &&
         profile_info->proprietary_id_space_9_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(
-          profile_info->proprietary_id_space_9_user_info().user_id()));
+      return profile_info->proprietary_id_space_9_user_info().user_id();
     }
     if (profile_info->has_proprietary_id_space_10_user_info() &&
         profile_info->proprietary_id_space_10_user_info().has_user_id()) {
-      return std::make_unique<std::string>(std::move(
-          profile_info->proprietary_id_space_10_user_info().user_id()));
+      return profile_info->proprietary_id_space_10_user_info().user_id();
     }
   } else if (labeler_input.has_event_id()) {
-    return std::make_unique<std::string>(
-        std::move(labeler_input.event_id().id()));
+    return labeler_input.event_id().id();
   }
   return absl::InvalidArgumentError(
       "Neither user_id nor event_id was found in the LabelerInput.");

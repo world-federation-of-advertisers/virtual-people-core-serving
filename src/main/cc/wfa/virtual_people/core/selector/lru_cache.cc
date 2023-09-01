@@ -16,37 +16,38 @@
 
 namespace wfa_virtual_people {
 
-    LruCache::LruCache(int max_elements) : cache_size(max_elements) {}
+LruCache::LruCache(int max_elements) : cache_size(max_elements) {}
 
-    void LruCache::Add(const absl::CivilDay& key, const std::vector<ModelReleasePercentile>& data) {
-      if (cache_data.size() >= cache_size) {
-        auto oldest = access_order.begin();
-        for (auto idx = access_order.begin(); idx != access_order.end(); ++idx) {
-          if (*idx < *oldest) {
-            oldest = idx;
-          }
-         }
-         cache_data.erase(*oldest);
-         access_order.erase(oldest);
+void LruCache::Add(const absl::CivilDay& key,
+                   const std::vector<ModelReleasePercentile>& data) {
+  if (cache_data.size() >= cache_size) {
+    auto oldest = access_order.begin();
+    for (auto idx = access_order.begin(); idx != access_order.end(); ++idx) {
+      if (*idx < *oldest) {
+        oldest = idx;
       }
-      cache_data[key] = data;
-      access_order.emplace_front(key);
     }
+    cache_data.erase(*oldest);
+    access_order.erase(oldest);
+  }
+  cache_data[key] = data;
+  access_order.emplace_front(key);
+}
 
-    std::optional<std::vector<ModelReleasePercentile>> LruCache::Get(const absl::CivilDay& key) {
-        auto idx = cache_data.find(key);
-        if (idx != cache_data.end()) {
-            for (auto it = access_order.begin(); it != access_order.end(); ++it) {
-                if (CivilDayEqual{}(*it, key)) {
-                    access_order.erase(it);
-                    access_order.push_front(key);
-                    break;
-                }
-            }
-            return idx->second;
-        }
-        return std::nullopt;
+std::optional<std::vector<ModelReleasePercentile>> LruCache::Get(
+    const absl::CivilDay& key) {
+  auto idx = cache_data.find(key);
+  if (idx != cache_data.end()) {
+    for (auto it = access_order.begin(); it != access_order.end(); ++it) {
+      if (CivilDayEqual{}(*it, key)) {
+        access_order.erase(it);
+        access_order.push_front(key);
+        break;
+      }
     }
-
+    return idx->second;
+  }
+  return std::nullopt;
+}
 
 }  // namespace wfa_virtual_people

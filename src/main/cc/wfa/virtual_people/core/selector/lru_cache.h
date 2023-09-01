@@ -51,13 +51,17 @@ class LruCache {
 
   // Add a new entry into the cache. If the cache is full, the oldest element is
   // removed.
-  void Add(const absl::CivilDay& key, const std::vector<ModelReleasePercentile>& data);
+  void Add(const absl::CivilDay& key,
+           const std::vector<ModelReleasePercentile>& data);
 
   // Returns an element by its key, or nullopt if the key is not found.
-  std::optional<std::vector<ModelReleasePercentile>> Get(const absl::CivilDay& key);
+  std::optional<std::vector<ModelReleasePercentile>> Get(
+      const absl::CivilDay& key);
 
  private:
-  absl::flat_hash_map<absl::CivilDay, std::vector<ModelReleasePercentile>, CivilDayHash, CivilDayEqual> cache_data;
+  absl::flat_hash_map<absl::CivilDay, std::vector<ModelReleasePercentile>,
+                      CivilDayHash, CivilDayEqual>
+      cache_data;
   std::list<absl::CivilDay> access_order;
   int cache_size;
 };

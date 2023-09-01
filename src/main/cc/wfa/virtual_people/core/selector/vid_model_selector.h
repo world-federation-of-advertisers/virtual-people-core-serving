@@ -38,17 +38,15 @@ class VidModelSelector {
   //
   // Returns an error if model_line name is unspecified or invalid and if
   // model_rollout is parented by a different model_line.
-  static absl::StatusOr<std::unique_ptr<VidModelSelector>> Build(
+  static absl::StatusOr<VidModelSelector> Build(
       const ModelLine& model_line,
       const std::vector<ModelRollout>& model_rollouts);
 
-  absl::StatusOr<std::unique_ptr<std::string>> GetModelRelease(
+  absl::StatusOr<std::optional<std::string>> GetModelRelease(
       const LabelerInput& labeler_input);
 
-  // Class constructor. Never call the constructor directly.
-  // Instances of this class must be built using the factory method `Build`.
-  VidModelSelector(const ModelLine& model_line,
-                   const std::vector<ModelRollout>& model_rollouts);
+  // Move constructor
+  VidModelSelector(VidModelSelector&& other) noexcept;
 
  private:
   ModelLine model_line;
@@ -56,9 +54,15 @@ class VidModelSelector {
   LruCache lru_cache;
   std::mutex mtx;
 
+  // Class constructor. Private.
+  // Instances of this class must be built using the factory method `Build`.
+  explicit VidModelSelector(const ModelLine& model_line,
+                            const std::vector<ModelRollout>& model_rollouts);
+
   // Access to the cache is synchronized to prevent multiple threads calculating
   // percentages in case of cache miss.
-  std::vector<ModelReleasePercentile> ReadFromCache(absl::CivilDay& event_date_utc);
+  std::vector<ModelReleasePercentile> ReadFromCache(
+      absl::CivilDay& event_date_utc);
 
   // Return a list of ModelReleasePercentile(s). Each ModelReleasePercentile
   // wraps the percentage of adoption of a particular ModelRelease and the
@@ -90,28 +94,25 @@ class VidModelSelector {
   // `active_rollouts` vector until the following condition is met:
   // event_date_utc
   // >= rollout_period_end_date && !rollout.has_rollout_freeze_date()
-  std::vector<ModelRollout> RetrieveActiveRollouts(absl::CivilDay& event_date_utc);
-  absl::StatusOr<std::unique_ptr<std::string>> GetEventId(
-      const LabelerInput& labeler_input);
+  std::vector<ModelRollout> RetrieveActiveRollouts(
+      absl::CivilDay& event_date_utc);
+  absl::StatusOr<std::string> GetEventId(const LabelerInput& labeler_input);
 
-  // Converts a given TimestampUsec into a absl::CivilDay object.
+  // Converts a given absl::Time into a absl::CivilDay object.
   // absl::CivilDay is used to compare dates in UTC time.
-  absl::CivilDay TimestampUsecToCivilDay(std::int64_t timestamp_usec);
+  absl::CivilDay TimeUsecToCivilDay(absl::Time time);
 
   // Converts a google::type::Date object into a absl::CivilDay.
   absl::CivilDay DateToCivilDay(const google::type::Date& date);
 
-  double GetTimeDifferenceInSeconds(absl::CivilDay& date1, absl::CivilDay& date2);
+  double GetTimeDifferenceInSeconds(absl::CivilDay& date1,
+                                    absl::CivilDay& date2);
 
   // Comparator used to sort a std::vector of `ModelRollout`.
   //
   // If `ModelRollout` has gradual rollout period use the `start_date`.
   // Otherwise use the `instant_rollout_date`.
   bool CompareModelRollouts(const ModelRollout& lhs, const ModelRollout& rhs);
-
-  // Returns the model_line_id from the given resource name.
-  // Returns an empty string if not model_line_id is found.
-  static std::string ReadModelLine(const std::string& input);
 };
 
 }  // namespace wfa_virtual_people
