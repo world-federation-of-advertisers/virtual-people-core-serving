@@ -48,6 +48,9 @@ class VidModelSelector {
   // Move constructor
   VidModelSelector(VidModelSelector&& other) noexcept;
 
+  // Move assignment operator
+  VidModelSelector& operator=(VidModelSelector&& other) = delete;
+
  private:
   const ModelLine model_line_;
   const std::vector<ModelRollout> model_rollouts_;
