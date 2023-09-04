@@ -43,16 +43,16 @@ class VidModelSelector {
       const std::vector<ModelRollout>& model_rollouts);
 
   absl::StatusOr<std::optional<std::string>> GetModelRelease(
-      const LabelerInput& labeler_input);
+      const LabelerInput& labeler_input) const;
 
   // Move constructor
   VidModelSelector(VidModelSelector&& other) noexcept;
 
  private:
-  ModelLine model_line;
-  std::vector<ModelRollout> model_rollouts;
-  LruCache lru_cache;
-  std::mutex mtx;
+  const ModelLine model_line_;
+  const std::vector<ModelRollout> model_rollouts_;
+  mutable LruCache lru_cache_;
+  mutable std::mutex mtx_;
 
   // Class constructor. Private.
   // Instances of this class must be built using the factory method `Build`.
@@ -62,7 +62,7 @@ class VidModelSelector {
   // Access to the cache is synchronized to prevent multiple threads calculating
   // percentages in case of cache miss.
   std::vector<ModelReleasePercentile> ReadFromCache(
-      absl::CivilDay& event_date_utc);
+      const absl::CivilDay& event_date_utc) const;
 
   // Return a list of ModelReleasePercentile(s). Each ModelReleasePercentile
   // wraps the percentage of adoption of a particular ModelRelease and the
@@ -81,12 +81,12 @@ class VidModelSelector {
   // In case of an instant rollout ROLLOUT_START_DATE is equal to
   // ROLLOUT_END_DATE.
   std::vector<ModelReleasePercentile> CalculatePercentages(
-      absl::CivilDay& event_date_utc);
+      const absl::CivilDay& event_date_utc) const;
 
   // Returns the percentage of events that this ModelRollout must label for the
   // given `event_date_utc`.
-  double CalculatePercentageAdoption(absl::CivilDay& event_date_utc,
-                                     const ModelRollout& model_rollout);
+  double CalculatePercentageAdoption(const absl::CivilDay& event_date_utc,
+                                     const ModelRollout& model_rollout) const;
 
   // Iterates through all available ModelRollout(s) sorted by either
   // `rollout_period_start_date` or `instant_rollout_date` from the most recent
@@ -95,24 +95,14 @@ class VidModelSelector {
   // event_date_utc
   // >= rollout_period_end_date && !rollout.has_rollout_freeze_date()
   std::vector<ModelRollout> RetrieveActiveRollouts(
-      absl::CivilDay& event_date_utc);
-  absl::StatusOr<std::string> GetEventId(const LabelerInput& labeler_input);
-
-  // Converts a given absl::Time into a absl::CivilDay object.
-  // absl::CivilDay is used to compare dates in UTC time.
-  absl::CivilDay TimeUsecToCivilDay(absl::Time time);
-
-  // Converts a google::type::Date object into a absl::CivilDay.
-  absl::CivilDay DateToCivilDay(const google::type::Date& date);
-
-  double GetTimeDifferenceInSeconds(absl::CivilDay& date1,
-                                    absl::CivilDay& date2);
+      const absl::CivilDay& event_date_utc) const;
+  absl::StatusOr<std::string> GetEventId(const LabelerInput& labeler_input) const;
 
   // Comparator used to sort a std::vector of `ModelRollout`.
   //
   // If `ModelRollout` has gradual rollout period use the `start_date`.
   // Otherwise use the `instant_rollout_date`.
-  bool CompareModelRollouts(const ModelRollout& lhs, const ModelRollout& rhs);
+  bool CompareModelRollouts(const ModelRollout& lhs, const ModelRollout& rhs) const;
 };
 
 }  // namespace wfa_virtual_people

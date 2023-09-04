@@ -27,6 +27,8 @@
 #include "common_cpp/macros/macros.h"
 #include "src/farmhash.h"
 
+namespace wfa_virtual_people {
+
 namespace {
 
 const int kCacheSize = 60;
@@ -34,7 +36,7 @@ const double kUpperBoundPercentageAdoption = 1.1;
 
 // Returns the model_line_id from the given resource name.
 // Returns an empty string if not model_line_id is found.
-std::string_view ReadModelLine(std::string_view input) {
+static std::string_view ReadModelLine(std::string_view input) {
   std::string_view modelLineMarker = "modelLines/";
   std::string_view modelRolloutMarker = "/modelRollouts/";
 
@@ -51,40 +53,42 @@ std::string_view ReadModelLine(std::string_view input) {
 
   return "";
 }
-}  // namespace
 
-namespace wfa_virtual_people {
-
-absl::CivilDay VidModelSelector::TimeUsecToCivilDay(absl::Time time) {
+// Converts a given absl::Time into a absl::CivilDay object.
+// absl::CivilDay is used to compare dates in UTC time.
+static absl::CivilDay TimeUsecToCivilDay(const absl::Time time) {
   absl::TimeZone utc_time_zone = absl::UTCTimeZone();
   return absl::ToCivilDay(time, utc_time_zone);
 }
 
-absl::CivilDay VidModelSelector::DateToCivilDay(
+// Converts a google::type::Date object into a absl::CivilDay.
+static absl::CivilDay DateToCivilDay(
     const google::type::Date& date) {
   return absl::CivilDay(date.year(), date.month(), date.day());
 }
 
-double VidModelSelector::GetTimeDifferenceInSeconds(absl::CivilDay& date_1,
-                                                    absl::CivilDay& date_2) {
+static double GetTimeDifferenceInSeconds(const absl::CivilDay& date_1,
+                                                    const absl::CivilDay& date_2) {
   absl::Time time_1 = absl::FromCivil(date_1, absl::UTCTimeZone());
   absl::Time time_2 = absl::FromCivil(date_2, absl::UTCTimeZone());
   absl::Duration difference = time_2 - time_1;
   return absl::ToDoubleSeconds(difference);
 }
 
+}  // namespace
+
 VidModelSelector::VidModelSelector(
     const ModelLine& model_line,
     const std::vector<ModelRollout>& model_rollouts)
-    : model_line(model_line),
-      model_rollouts(model_rollouts),
-      lru_cache(kCacheSize) {}
+    : model_line_(model_line),
+      model_rollouts_(model_rollouts),
+      lru_cache_(kCacheSize) {}
 
 // Move constructor
 VidModelSelector::VidModelSelector(VidModelSelector&& other) noexcept
-    : model_line(std::move(other.model_line)),
-      model_rollouts(std::move(other.model_rollouts)),
-      lru_cache(std::move(other.lru_cache)) {}
+    : model_line_(std::move(other.model_line_)),
+      model_rollouts_(std::move(other.model_rollouts_)),
+      lru_cache_(std::move(other.lru_cache_)) {}
 
 absl::StatusOr<VidModelSelector> VidModelSelector::Build(
     const ModelLine& model_line,
@@ -106,18 +110,18 @@ absl::StatusOr<VidModelSelector> VidModelSelector::Build(
 }
 
 absl::StatusOr<std::optional<std::string>> VidModelSelector::GetModelRelease(
-    const LabelerInput& labeler_input) {
+    const LabelerInput& labeler_input) const {
   absl::Time event_timestamp =
       absl::FromUnixMicros(labeler_input.timestamp_usec());
   absl::Time model_line_active_start_time = absl::FromUnixMicros(
       google::protobuf::util::TimeUtil::TimestampToMicroseconds(
-          model_line.active_start_time()));
+          model_line_.active_start_time()));
 
   absl::Time model_line_active_end_time =
-      model_line.has_active_end_time()
+      model_line_.has_active_end_time()
           ? absl::FromUnixMicros(
                 google::protobuf::util::TimeUtil::TimestampToMicroseconds(
-                    model_line.active_end_time()))
+                    model_line_.active_end_time()))
           : absl::InfiniteFuture();
 
   if (event_timestamp >= model_line_active_start_time &&
@@ -159,23 +163,23 @@ absl::StatusOr<std::optional<std::string>> VidModelSelector::GetModelRelease(
 }
 
 std::vector<ModelReleasePercentile> VidModelSelector::ReadFromCache(
-    absl::CivilDay& event_date_utc) {
-  std::lock_guard<std::mutex> lock(mtx);
+    const absl::CivilDay& event_date_utc) const {
+  std::lock_guard<std::mutex> lock(mtx_);
 
   std::optional<std::vector<ModelReleasePercentile>> cache_value =
-      lru_cache.Get(event_date_utc);
+      lru_cache_.Get(event_date_utc);
   if (cache_value.has_value()) {
     return cache_value.value();
   } else {
     std::vector<ModelReleasePercentile> percentages =
         CalculatePercentages(event_date_utc);
-    lru_cache.Add(event_date_utc, percentages);
+    lru_cache_.Add(event_date_utc, percentages);
     return percentages;
   }
 }
 
 std::vector<ModelReleasePercentile> VidModelSelector::CalculatePercentages(
-    absl::CivilDay& event_date_utc) {
+    const absl::CivilDay& event_date_utc) const {
   std::vector<ModelRollout> active_rollouts =
       RetrieveActiveRollouts(event_date_utc);
   std::vector<ModelReleasePercentile> result;
@@ -192,7 +196,7 @@ std::vector<ModelReleasePercentile> VidModelSelector::CalculatePercentages(
 }
 
 double VidModelSelector::CalculatePercentageAdoption(
-    absl::CivilDay& event_date_utc, const ModelRollout& model_rollout) {
+    const absl::CivilDay& event_date_utc, const ModelRollout& model_rollout) const {
   absl::CivilDay model_rollout_freeze_date =
       model_rollout.has_rollout_freeze_date()
           ? DateToCivilDay(model_rollout.rollout_freeze_date())
@@ -223,7 +227,7 @@ double VidModelSelector::CalculatePercentageAdoption(
 }
 
 bool VidModelSelector::CompareModelRollouts(const ModelRollout& lhs,
-                                            const ModelRollout& rhs) {
+                                            const ModelRollout& rhs) const {
   const absl::CivilDay lhsDate =
       lhs.has_gradual_rollout_period()
           ? DateToCivilDay(lhs.gradual_rollout_period().start_date())
@@ -236,12 +240,12 @@ bool VidModelSelector::CompareModelRollouts(const ModelRollout& lhs,
 }
 
 std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(
-    absl::CivilDay& event_date_utc) {
-  if (model_rollouts.empty()) {
-    return model_rollouts;
+    const absl::CivilDay& event_date_utc) const {
+  if (model_rollouts_.empty()) {
+    return model_rollouts_;
   }
 
-  std::vector<ModelRollout> sorted_rollouts = model_rollouts;
+  std::vector<ModelRollout> sorted_rollouts = model_rollouts_;
   std::sort(sorted_rollouts.begin(), sorted_rollouts.end(),
             [this](const ModelRollout& lhs, const ModelRollout& rhs) {
               return CompareModelRollouts(lhs, rhs);
@@ -291,7 +295,7 @@ std::vector<ModelRollout> VidModelSelector::RetrieveActiveRollouts(
 }
 
 absl::StatusOr<std::string> VidModelSelector::GetEventId(
-    const LabelerInput& labeler_input) {
+    const LabelerInput& labeler_input) const {
   if (labeler_input.has_profile_info()) {
     const ProfileInfo* profile_info = &labeler_input.profile_info();
 

@@ -39,7 +39,7 @@ std::optional<std::vector<ModelReleasePercentile>> LruCache::Get(
   auto idx = cache_data.find(key);
   if (idx != cache_data.end()) {
     for (auto it = access_order.begin(); it != access_order.end(); ++it) {
-      if (CivilDayEqual {}(*it, key)) {
+      if (*it == key) {
         access_order.erase(it);
         access_order.push_front(key);
         break;

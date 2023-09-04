@@ -30,18 +30,6 @@ struct ModelReleasePercentile {
   std::string model_release_resource_key;
 };
 
-struct CivilDayHash {
-  std::size_t operator()(const absl::CivilDay& day) const {
-    return absl::Hash<absl::CivilDay>{}(day);
-  }
-};
-
-struct CivilDayEqual {
-  bool operator()(const absl::CivilDay& lhs, const absl::CivilDay& rhs) const {
-    return lhs == rhs;
-  }
-};
-
 // TODO(@marcopremier): Move this class in common-cpp
 // Definition of a least recently used (LRU) cache with a fixed maximum number
 // of elements.
@@ -59,8 +47,7 @@ class LruCache {
       const absl::CivilDay& key);
 
  private:
-  absl::flat_hash_map<absl::CivilDay, std::vector<ModelReleasePercentile>,
-                      CivilDayHash, CivilDayEqual>
+  absl::flat_hash_map<absl::CivilDay, std::vector<ModelReleasePercentile>>
       cache_data;
   std::list<absl::CivilDay> access_order;
   int cache_size;
