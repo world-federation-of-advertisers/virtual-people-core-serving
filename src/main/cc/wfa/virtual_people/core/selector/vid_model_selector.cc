@@ -62,13 +62,12 @@ static absl::CivilDay TimeUsecToCivilDay(const absl::Time time) {
 }
 
 // Converts a google::type::Date object into a absl::CivilDay.
-static absl::CivilDay DateToCivilDay(
-    const google::type::Date& date) {
+static absl::CivilDay DateToCivilDay(const google::type::Date& date) {
   return absl::CivilDay(date.year(), date.month(), date.day());
 }
 
 static double GetTimeDifferenceInSeconds(const absl::CivilDay& date_1,
-                                                    const absl::CivilDay& date_2) {
+                                         const absl::CivilDay& date_2) {
   absl::Time time_1 = absl::FromCivil(date_1, absl::UTCTimeZone());
   absl::Time time_2 = absl::FromCivil(date_2, absl::UTCTimeZone());
   absl::Duration difference = time_2 - time_1;
@@ -196,7 +195,8 @@ std::vector<ModelReleasePercentile> VidModelSelector::CalculatePercentages(
 }
 
 double VidModelSelector::CalculatePercentageAdoption(
-    const absl::CivilDay& event_date_utc, const ModelRollout& model_rollout) const {
+    const absl::CivilDay& event_date_utc,
+    const ModelRollout& model_rollout) const {
   absl::CivilDay model_rollout_freeze_date =
       model_rollout.has_rollout_freeze_date()
           ? DateToCivilDay(model_rollout.rollout_freeze_date())

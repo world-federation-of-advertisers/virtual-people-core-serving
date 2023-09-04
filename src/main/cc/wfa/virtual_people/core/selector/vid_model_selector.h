@@ -99,13 +99,15 @@ class VidModelSelector {
   // >= rollout_period_end_date && !rollout.has_rollout_freeze_date()
   std::vector<ModelRollout> RetrieveActiveRollouts(
       const absl::CivilDay& event_date_utc) const;
-  absl::StatusOr<std::string> GetEventId(const LabelerInput& labeler_input) const;
+  absl::StatusOr<std::string> GetEventId(
+      const LabelerInput& labeler_input) const;
 
   // Comparator used to sort a std::vector of `ModelRollout`.
   //
   // If `ModelRollout` has gradual rollout period use the `start_date`.
   // Otherwise use the `instant_rollout_date`.
-  bool CompareModelRollouts(const ModelRollout& lhs, const ModelRollout& rhs) const;
+  bool CompareModelRollouts(const ModelRollout& lhs,
+                            const ModelRollout& rhs) const;
 };
 
 }  // namespace wfa_virtual_people
