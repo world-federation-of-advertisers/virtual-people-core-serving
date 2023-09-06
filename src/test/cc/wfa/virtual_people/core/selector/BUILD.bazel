@@ -2,16 +2,6 @@ load("@rules_cc//cc:defs.bzl", "cc_test")
 
 package(default_visibility = ["//visibility:private"])
 
-cc_proto_library(
-    name = "model_line_cc_proto",
-    deps = ["@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v2alpha:model_line_proto"],
-)
-
-cc_proto_library(
-    name = "model_rollout_cc_proto",
-    deps = ["@wfa_measurement_proto//src/main/proto/wfa/measurement/api/v2alpha:model_rollout_proto"],
-)
-
 cc_test(
     name = "vid_model_selector_test",
     srcs = ["vid_model_selector_test.cc"],

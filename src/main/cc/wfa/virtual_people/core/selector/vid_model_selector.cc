@@ -36,7 +36,7 @@ const double kUpperBoundPercentageAdoption = 1.1;
 
 // Returns the model_line_id from the given resource name.
 // Returns an empty string if not model_line_id is found.
-static std::string_view ReadModelLine(std::string_view input) {
+std::string_view ReadModelLine(std::string_view input) {
   std::string_view modelLineMarker = "modelLines/";
   std::string_view modelRolloutMarker = "/modelRollouts/";
 
@@ -186,9 +186,7 @@ std::vector<ModelReleasePercentile> VidModelSelector::CalculatePercentages(
   for (const ModelRollout& active_rollout : active_rollouts) {
     double percentage =
         CalculatePercentageAdoption(event_date_utc, active_rollout);
-    ModelReleasePercentile release_percentile{percentage,
-                                              active_rollout.model_release()};
-    result.emplace_back(release_percentile);
+    result.emplace_back(ModelReleasePercentile{percentage, active_rollout.model_release()});
   }
 
   return result;
