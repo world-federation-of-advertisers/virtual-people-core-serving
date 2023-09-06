@@ -186,7 +186,8 @@ std::vector<ModelReleasePercentile> VidModelSelector::CalculatePercentages(
   for (const ModelRollout& active_rollout : active_rollouts) {
     double percentage =
         CalculatePercentageAdoption(event_date_utc, active_rollout);
-    result.emplace_back(ModelReleasePercentile{percentage, active_rollout.model_release()});
+    result.emplace_back(
+        ModelReleasePercentile{percentage, active_rollout.model_release()});
   }
 
   return result;
