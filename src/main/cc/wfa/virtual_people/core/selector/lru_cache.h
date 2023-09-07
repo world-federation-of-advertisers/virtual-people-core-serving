@@ -28,6 +28,11 @@ namespace wfa_virtual_people {
 struct ModelReleasePercentile {
   double end_percentile;
   std::string model_release_resource_key;
+
+  ModelReleasePercentile(double end_percentile,
+                         const std::string& model_release_resource_key)
+      : end_percentile(end_percentile),
+        model_release_resource_key(model_release_resource_key) {}
 };
 
 // TODO(@marcopremier): Move this class in common-cpp

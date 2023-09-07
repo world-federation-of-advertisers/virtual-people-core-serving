@@ -56,18 +56,18 @@ std::string_view ReadModelLine(std::string_view input) {
 
 // Converts a given absl::Time into a absl::CivilDay object.
 // absl::CivilDay is used to compare dates in UTC time.
-static absl::CivilDay TimeUsecToCivilDay(const absl::Time time) {
+absl::CivilDay TimeUsecToCivilDay(const absl::Time time) {
   absl::TimeZone utc_time_zone = absl::UTCTimeZone();
   return absl::ToCivilDay(time, utc_time_zone);
 }
 
 // Converts a google::type::Date object into a absl::CivilDay.
-static absl::CivilDay DateToCivilDay(const google::type::Date& date) {
+absl::CivilDay DateToCivilDay(const google::type::Date& date) {
   return absl::CivilDay(date.year(), date.month(), date.day());
 }
 
-static double GetTimeDifferenceInSeconds(const absl::CivilDay& date_1,
-                                         const absl::CivilDay& date_2) {
+double GetTimeDifferenceInSeconds(const absl::CivilDay& date_1,
+                                  const absl::CivilDay& date_2) {
   absl::Time time_1 = absl::FromCivil(date_1, absl::UTCTimeZone());
   absl::Time time_2 = absl::FromCivil(date_2, absl::UTCTimeZone());
   absl::Duration difference = time_2 - time_1;
@@ -186,8 +186,9 @@ std::vector<ModelReleasePercentile> VidModelSelector::CalculatePercentages(
   for (const ModelRollout& active_rollout : active_rollouts) {
     double percentage =
         CalculatePercentageAdoption(event_date_utc, active_rollout);
-    result.emplace_back(
-        ModelReleasePercentile{percentage, active_rollout.model_release()});
+    result.emplace_back(percentage, active_rollout.model_release());
+    // result.emplace_back(
+    //     ModelReleasePercentile{percentage, active_rollout.model_release()});
   }
 
   return result;
