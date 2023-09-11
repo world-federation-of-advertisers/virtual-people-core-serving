@@ -21,14 +21,9 @@ LruCache::LruCache(int max_elements) : cache_size(max_elements) {}
 void LruCache::Add(const absl::CivilDay& key,
                    const std::vector<ModelReleasePercentile>& data) {
   if (cache_data.size() >= cache_size) {
-    auto oldest = access_order.begin();
-    for (auto idx = access_order.begin(); idx != access_order.end(); ++idx) {
-      if (*idx < *oldest) {
-        oldest = idx;
-      }
-    }
-    cache_data.erase(*oldest);
-    access_order.erase(oldest);
+    absl::CivilDay lru_key = access_order.back();
+    cache_data.erase(lru_key);
+    access_order.pop_back();
   }
   cache_data[key] = data;
   access_order.emplace_front(key);
