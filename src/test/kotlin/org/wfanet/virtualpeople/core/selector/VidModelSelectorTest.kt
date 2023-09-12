@@ -29,8 +29,7 @@ import org.wfanet.virtualpeople.common.labelerInput
 import org.wfanet.virtualpeople.common.profileInfo
 import org.wfanet.virtualpeople.common.userInfo
 
-private const val TEXTPROTO_PATH =
-  "src/main/kotlin/org/wfanet/virtualpeople/core/selector/testing/testdata"
+private const val TEXTPROTO_PATH = "src/main/resources/selector/"
 
 @RunWith(JUnit4::class)
 class VidModelSelectorTest {
@@ -591,7 +590,7 @@ class VidModelSelectorTest {
   }
 
   @Test
-  fun `rollout with freeze time is choosen when reducedEventId is smaller than rollout percentage`() {
+  fun `rollout with freeze time is chosen when reducedEventId is smaller than rollout percentage`() {
 
     val modelLine =
       parseTextProto(

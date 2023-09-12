@@ -37,8 +37,7 @@ using ::wfa::IsOk;
 using ::wfa::ReadRiegeliFile;
 using ::wfa::ReadTextProtoFile;
 
-const char kTestDataDir[] =
-    "src/test/proto/wfa/virtual_people/core/labeler/test_data/";
+const char kTestDataDir[] = "src/main/resources/labeler/";
 
 void ApplyAndValidate(absl::string_view model_path,
                       absl::string_view input_path,

@@ -1,6 +1,7 @@
 package(
     default_testonly = True,
     default_visibility = [
+        "//src/test/cc/wfa/virtual_people/core/selector:__subpackages__",
         "//src/test/kotlin/org/wfanet/virtualpeople/core/selector:__subpackages__",
     ],
 )
