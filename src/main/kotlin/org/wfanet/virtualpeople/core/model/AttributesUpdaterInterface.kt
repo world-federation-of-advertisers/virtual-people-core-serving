@@ -40,7 +40,7 @@ sealed interface AttributesUpdaterInterface {
      */
     fun build(
       config: AttributesUpdater,
-      nodeRefs: MutableMap<Int, ModelNode>
+      nodeRefs: MutableMap<Int, ModelNode>,
     ): AttributesUpdaterInterface {
       return if (config.updateCase == UpdateCase.UPDATE_TREE) {
         UpdateTreeImpl.build(config.updateTree, nodeRefs)
@@ -62,8 +62,7 @@ sealed interface AttributesUpdaterInterface {
         UpdateCase.CONDITIONAL_ASSIGNMENT ->
           ConditionalAssignmentImpl.build(config.conditionalAssignment)
         UpdateCase.UPDATE_TREE -> UpdateTreeImpl.build(config.updateTree, mutableMapOf())
-        // TODO(@tcsnfkx): Implement geometric_shredder.
-        UpdateCase.GEOMETRIC_SHREDDER -> error("geometric_shredder is not implemented.")
+        UpdateCase.GEOMETRIC_SHREDDER -> GeometricShredderImpl.build(config.geometricShredder)
         UpdateCase.UPDATE_NOT_SET -> error("config.update is not set.")
       }
     }
@@ -72,5 +71,5 @@ sealed interface AttributesUpdaterInterface {
 
 enum class PassThroughNonMatches {
   NO,
-  YES
+  YES,
 }
