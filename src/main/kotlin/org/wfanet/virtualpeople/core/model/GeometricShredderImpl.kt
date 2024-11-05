@@ -21,7 +21,6 @@ import kotlin.math.floor
 import kotlin.math.ln
 import org.wfanet.virtualpeople.common.GeometricShredder
 import org.wfanet.virtualpeople.common.LabelerEvent
-import org.wfanet.virtualpeople.common.fieldfilter.FieldFilter
 import org.wfanet.virtualpeople.common.fieldfilter.utils.getFieldFromProto
 import org.wfanet.virtualpeople.common.fieldfilter.utils.getValueFromProto
 import org.wfanet.virtualpeople.common.fieldfilter.utils.setValueToProtoBuilder
