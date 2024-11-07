@@ -24,7 +24,7 @@ import org.wfanet.virtualpeople.common.LabelerEvent
 import org.wfanet.virtualpeople.common.fieldfilter.utils.getFieldFromProto
 import org.wfanet.virtualpeople.common.fieldfilter.utils.getValueFromProto
 import org.wfanet.virtualpeople.common.fieldfilter.utils.setValueToProtoBuilder
-import org.wfanet.virtualpeople.core.model.utils.*
+import org.wfanet.virtualpeople.core.model.utils.expHash
 
 /**
  * @param psi The shredding probability parameter psi, which corresponds to the success probability
