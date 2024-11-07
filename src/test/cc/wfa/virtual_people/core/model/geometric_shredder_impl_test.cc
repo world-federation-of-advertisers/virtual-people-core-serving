@@ -293,9 +293,30 @@ TEST(GeometricShredderImplTest, TestShredWithProbability) {
         ++shred_count;
       }
     }
-    double shred_chance = static_cast<double>(shred_count) /
-                          static_cast<double>(kRandomnessKeyNumber);
-    EXPECT_THAT(shred_chance, DoubleNear(0.65, 0.01));
+    // Compare to the exact result to make sure C++ and Kotlin implementations
+    // behave the same. The result should be around psi * kRandomnessKeyNumber =
+    // 6500.
+    EXPECT_EQ(6533, shred_count);
+  }
+
+  // Test again with different value in randomness field(id_fingerprint).
+  for (uint64_t acting_fp = 0; acting_fp < kTargetKeyNumber; ++acting_fp) {
+    int shred_count = 0;
+    for (uint64_t event_id_fp = 1; event_id_fp <= kRandomnessKeyNumber;
+         ++event_id_fp) {
+      LabelerEvent event;
+      event.mutable_labeler_input()->mutable_event_id()->set_id_fingerprint(
+          event_id_fp + 20000);
+      event.set_acting_fingerprint(acting_fp);
+      EXPECT_THAT(updater->Update(event), IsOk());
+      if (event.acting_fingerprint() != acting_fp) {
+        ++shred_count;
+      }
+    }
+    // Compare to the exact result to make sure C++ and Kotlin implementations
+    // behave the same. The result should be around psi * kRandomnessKeyNumber =
+    // 6500.
+    EXPECT_EQ(6442, shred_count);
   }
 }
 

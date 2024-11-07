@@ -94,3 +94,14 @@ kt_jvm_test(
         "@wfa_common_jvm//imports/kotlin/kotlin/test",
     ],
 )
+
+kt_jvm_test(
+    name = "GeometricShredderImplTest",
+    srcs = ["GeometricShredderImplTest.kt"],
+    test_class = "org.wfanet.virtualpeople.core.model.GeometricShredderImplTest",
+    deps = [
+        "//src/main/kotlin/org/wfanet/virtualpeople/core/model:model_node",
+        "@wfa_common_jvm//imports/java/org/junit",
+        "@wfa_common_jvm//imports/kotlin/kotlin/test",
+    ],
+)
