@@ -3,8 +3,6 @@ module(
     repo_name = "wfa_virtual_people_core_serving",
 )
 
-TRUTH_VERSION = "1.1.2"
-
 MAVEN_REPO_NAME = "maven"
 
 # WFA registry modules.
@@ -55,7 +53,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "abseil-cpp",
-    version = "20230802.0.bcr.1",
+    version = "20230802.1",
     repo_name = "com_google_absl",
 )
 bazel_dep(
