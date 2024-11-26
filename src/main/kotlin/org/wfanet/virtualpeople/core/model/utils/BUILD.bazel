@@ -6,7 +6,6 @@ kt_jvm_library(
     name = "utils",
     srcs = glob(["*.kt"]),
     deps = [
-        #"@maven//:com_google_guava_guava",
         "@wfa_common_jvm//imports/java/com/google/common:guava",
         "@wfa_common_jvm//imports/java/com/google/protobuf",
         "@wfa_common_jvm//imports/java/com/google/protobuf/util",

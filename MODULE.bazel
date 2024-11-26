@@ -77,7 +77,6 @@ maven.install(
     name = MAVEN_REPO_NAME,
     artifacts = [
         "junit:junit:4.13.2",
-        "com.google.guava:guava:33.0.0-jre",
         "com.google.truth:truth:" + TRUTH_VERSION,
         "com.google.truth.extensions:truth-java8-extension:" + TRUTH_VERSION,
         "com.google.truth.extensions:truth-proto-extension:" + TRUTH_VERSION,
