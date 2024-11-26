@@ -16,6 +16,7 @@
 #define SRC_MAIN_CC_WFA_VIRTUAL_PEOPLE_CORE_SELECTOR_VID_MODEL_SELECTOR_H_
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
