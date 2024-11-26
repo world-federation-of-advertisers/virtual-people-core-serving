@@ -1,6 +1,6 @@
 load("@rules_java//java:defs.bzl", "java_proto_library")
 load("@wfa_common_jvm//build/kt_jvm_proto:defs.bzl", "kt_jvm_proto_library")
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@wfa_rules_kotlin_jvm//kotlin:defs.bzl", "kt_jvm_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -83,7 +83,7 @@ kt_jvm_library(
         ":model_rollout_kt_jvm_proto",
         "//src/main/kotlin/org/wfanet/virtualpeople/core/common",
         "//src/main/kotlin/org/wfanet/virtualpeople/core/selector/resourcekey:resource_key",
-        "@wfa_common_jvm//src/main/proto/google/type:date_kt_jvm_proto",
+        "@wfa_common_jvm//imports/kotlin/com/google/type:date_kt_jvm_proto",
         "@wfa_virtual_people_common//src/main/proto/wfa/virtual_people/common:event_kt_jvm_proto",
     ],
 )
