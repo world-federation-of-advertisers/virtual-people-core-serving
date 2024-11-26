@@ -1,4 +1,4 @@
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@wfa_rules_kotlin_jvm//kotlin:defs.bzl", "kt_jvm_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -6,7 +6,7 @@ kt_jvm_library(
     name = "utils",
     srcs = glob(["*.kt"]),
     deps = [
-        "@maven//:com_google_guava_guava",
+        "@wfa_common_jvm//imports/java/com/google/common:guava",
         "@wfa_common_jvm//imports/java/com/google/protobuf",
         "@wfa_common_jvm//imports/java/com/google/protobuf/util",
         "@wfa_virtual_people_common//src/main/kotlin/org/wfanet/virtualpeople/common/fieldfilter",
