@@ -75,13 +75,6 @@ bazel_dep(
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     name = MAVEN_REPO_NAME,
-    artifacts = [
-        "junit:junit:4.13.2",
-        "com.google.truth:truth:" + TRUTH_VERSION,
-        "com.google.truth.extensions:truth-java8-extension:" + TRUTH_VERSION,
-        "com.google.truth.extensions:truth-proto-extension:" + TRUTH_VERSION,
-        "com.google.truth.extensions:truth-liteproto-extension:" + TRUTH_VERSION,
-    ],
     fail_if_repin_required = True,
     fetch_sources = True,  # For IDE integration.
     lock_file = "//:maven_install.json",
