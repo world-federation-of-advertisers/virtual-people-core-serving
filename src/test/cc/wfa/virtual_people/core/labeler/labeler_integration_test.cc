@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include <vector>
+#include <memory>
+#include <string>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
@@ -40,8 +42,8 @@ using ::wfa::ReadTextProtoFile;
 const char kTestDataDir[] = "src/main/resources/testing/labeler/";
 
 void ApplyAndValidate(absl::string_view model_path,
-                      absl::string_view input_path,
-                      absl::string_view output_path, bool is_single_node_file) {
+absl::string_view input_path,
+absl::string_view output_path, bool is_single_node_file) {
   SCOPED_TRACE(absl::StrCat("ApplyAndValidate(", model_path, ", ", input_path,
                             ", ", output_path));
   std::unique_ptr<Labeler> labeler = nullptr;

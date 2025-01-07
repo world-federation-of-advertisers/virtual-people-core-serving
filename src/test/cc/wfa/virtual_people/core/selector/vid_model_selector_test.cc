@@ -14,6 +14,9 @@
 
 #include "wfa/virtual_people/core/selector/vid_model_selector.h"
 
+#include <vector>
+#include <string>
+
 #include "common_cpp/protobuf_util/textproto_io.h"
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"
@@ -29,14 +32,14 @@ using ::wfa::StatusIs;
 const char kTestDataDir[] = "src/main/resources/testing/selector/";
 
 TEST(VidModelSelectorTest,
-     TestBuildVidSelectorObjectWithoutParamsThrowsException) {
+TestBuildVidSelectorObjectWithoutParamsThrowsException) {
   EXPECT_THAT(VidModelSelector::Build(ModelLine{}, std::vector<ModelRollout>{})
                   .status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(VidModelSelectorTest,
-     TestBuildVidSelectorObjectWithWrongModelRolloutThrowsException) {
+TestBuildVidSelectorObjectWithWrongModelRolloutThrowsException) {
   const std::string model_line_path = "model_line_02.textproto";
   const std::string model_rollout_path = "model_rollout_01.textproto";
   ModelLine model_line;
@@ -128,7 +131,7 @@ TEST(VidModelSelectorTest, TestReturnsNullWhenModelRolloutsIsEmptyList) {
 }
 
 TEST(VidModelSelectorTest,
-     TestReturnsNullWhenEventTimePrecedesRolloutPeriodStartTime) {
+TestReturnsNullWhenEventTimePrecedesRolloutPeriodStartTime) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path = "model_rollout_01.textproto";
   ModelLine model_line;
@@ -153,7 +156,7 @@ TEST(VidModelSelectorTest,
 }
 
 TEST(VidModelSelectorTest,
-     TestReturnsModelReleaseWhenModelRolloutHasRolloutPeriod) {
+TestReturnsModelReleaseWhenModelRolloutHasRolloutPeriod) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path = "model_rollout_01.textproto";
   ModelLine model_line;
@@ -184,7 +187,7 @@ TEST(VidModelSelectorTest,
 }
 
 TEST(VidModelSelectorTest,
-     TestReturnsModelReleaseWhenModelRolloutHasInstantRollout) {
+TestReturnsModelReleaseWhenModelRolloutHasInstantRollout) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path =
       "model_rollout_without_rollout_period_02.textproto";
@@ -216,7 +219,7 @@ TEST(VidModelSelectorTest,
 }
 
 TEST(VidModelSelectorTest,
-     TestReturnsModelReleaseWithTwoRolloutsAndEventAfterR2) {
+TestReturnsModelReleaseWithTwoRolloutsAndEventAfterR2) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -291,7 +294,7 @@ TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR2) {
 }
 
 TEST(VidModelSelectorTest,
-     TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1) {
+TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -329,7 +332,7 @@ TEST(VidModelSelectorTest,
 }
 
 TEST(VidModelSelectorTest,
-     TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1AndR2) {
+TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1AndR2) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -449,7 +452,7 @@ TEST(VidModelSelectorTest, TestReturnsSameModelReleaseWithMultipleInvocation) {
 }
 
 TEST(VidModelSelectorTest,
-     TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR2) {
+TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR2) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -493,7 +496,7 @@ TEST(VidModelSelectorTest,
 }
 
 TEST(VidModelSelectorTest,
-     TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR3) {
+TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR3) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -537,7 +540,7 @@ TEST(VidModelSelectorTest,
 }
 
 TEST(VidModelSelectorTest,
-     TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1) {
+TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -582,7 +585,7 @@ TEST(VidModelSelectorTest,
 }
 
 TEST(VidModelSelectorTest,
-     TestExcludeRolloutsPriorToRolloutWithInstantRollout) {
+TestExcludeRolloutsPriorToRolloutWithInstantRollout) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
