@@ -711,5 +711,5 @@ TEST(VidModelSelectorTest, TestRolloutWithFreezeTimeIsCorrectlySelected) {
             model_release);
 }
 
-}  // namespace
-}  // namespace wfa_virtual_people
+} // namespace
+} // namespace wfa_virtual_people
