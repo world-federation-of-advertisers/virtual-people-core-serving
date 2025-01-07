@@ -26,7 +26,7 @@ using ::wfa::IsOk;
 using ::wfa::ReadTextProtoFile;
 using ::wfa::StatusIs;
 
-const char kTestDataDir[] = "src/main/resources/selector/";
+const char kTestDataDir[] = "src/main/resources/testing/selector/";
 
 TEST(VidModelSelectorTest,
      TestBuildVidSelectorObjectWithoutParamsThrowsException) {
