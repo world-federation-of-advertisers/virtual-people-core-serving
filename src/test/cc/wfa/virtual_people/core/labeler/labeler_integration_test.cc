@@ -108,5 +108,5 @@ TEST(LabelerIntegrationTest, TestSingleIdModel) {
   }
 }
 
-} // namespace
-} // namespace wfa_virtual_people
+}  // namespace
+}  // namespace wfa_virtual_people
