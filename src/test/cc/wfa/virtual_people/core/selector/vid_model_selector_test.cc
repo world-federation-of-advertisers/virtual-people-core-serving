@@ -180,9 +180,10 @@ TEST(VidModelSelectorTest,
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_01",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_01",
+      model_release);
 }
 
 TEST(VidModelSelectorTest,
@@ -211,9 +212,10 @@ TEST(VidModelSelectorTest,
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_without_rollout_period_02",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_without_rollout_period_02",
+      model_release);
 }
 
 TEST(VidModelSelectorTest,
@@ -248,9 +250,10 @@ TEST(VidModelSelectorTest,
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_02",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release);
 }
 
 TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR2) {
@@ -284,9 +287,10 @@ TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR2) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_02",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release);
 }
 
 TEST(VidModelSelectorTest,
@@ -321,9 +325,10 @@ TEST(VidModelSelectorTest,
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_01",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_01",
+      model_release);
 }
 
 TEST(VidModelSelectorTest,
@@ -358,9 +363,10 @@ TEST(VidModelSelectorTest,
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_02",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release);
 }
 
 TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR1) {
@@ -394,9 +400,10 @@ TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR1) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_01",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_01",
+      model_release);
 }
 
 TEST(VidModelSelectorTest, TestReturnsSameModelReleaseWithMultipleInvocation) {
@@ -430,16 +437,18 @@ TEST(VidModelSelectorTest, TestReturnsSameModelReleaseWithMultipleInvocation) {
   std::string model_release_1 =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_02",
-            model_release_1);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release_1);
 
   std::string model_release_2 =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_02",
-            model_release_2);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release_2);
 }
 
 TEST(VidModelSelectorTest,
@@ -480,9 +489,10 @@ TEST(VidModelSelectorTest,
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_02",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release);
 }
 
 TEST(VidModelSelectorTest,
@@ -523,9 +533,10 @@ TEST(VidModelSelectorTest,
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_03",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_03",
+      model_release);
 }
 
 TEST(VidModelSelectorTest,
@@ -567,9 +578,10 @@ TEST(VidModelSelectorTest,
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_01",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_01",
+      model_release);
 }
 
 TEST(VidModelSelectorTest,
@@ -618,9 +630,10 @@ TEST(VidModelSelectorTest,
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_without_rollout_period_01",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_without_rollout_period_01",
+      model_release);
 }
 
 TEST(VidModelSelectorTest, TestBlockRolloutWhenFreezeTimeIsSet) {
@@ -662,9 +675,10 @@ TEST(VidModelSelectorTest, TestBlockRolloutWhenFreezeTimeIsSet) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_02",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_02",
+      model_release);
 }
 
 TEST(VidModelSelectorTest, TestRolloutWithFreezeTimeIsCorrectlySelected) {
@@ -706,10 +720,11 @@ TEST(VidModelSelectorTest, TestRolloutWithFreezeTimeIsCorrectlySelected) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-            "rollout_freeze_time_01",
-            model_release);
+  ASSERT_EQ(
+      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+      "rollout_freeze_time_01",
+      model_release);
 }
 
-} // namespace
-} // namespace wfa_virtual_people
+}  // namespace
+}  // namespace wfa_virtual_people

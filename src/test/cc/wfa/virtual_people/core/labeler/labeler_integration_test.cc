@@ -24,12 +24,12 @@
 #include "common_cpp/testing/common_matchers.h"
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "wfa/virtual_people/common/event.pb.h"
 #include "wfa/virtual_people/common/label.pb.h"
 #include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/labeler/labeler.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 namespace wfa_virtual_people {
 namespace {
@@ -108,5 +108,5 @@ TEST(LabelerIntegrationTest, TestSingleIdModel) {
   }
 }
 
-} // namespace
-} // namespace wfa_virtual_people
+}  // namespace
+}  // namespace wfa_virtual_people
