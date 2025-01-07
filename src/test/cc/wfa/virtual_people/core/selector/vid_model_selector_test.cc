@@ -14,8 +14,8 @@
 
 #include "wfa/virtual_people/core/selector/vid_model_selector.h"
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "common_cpp/protobuf_util/textproto_io.h"
 #include "common_cpp/testing/status_macros.h"
@@ -32,14 +32,14 @@ using ::wfa::StatusIs;
 const char kTestDataDir[] = "src/main/resources/testing/selector/";
 
 TEST(VidModelSelectorTest,
-TestBuildVidSelectorObjectWithoutParamsThrowsException) {
+     TestBuildVidSelectorObjectWithoutParamsThrowsException) {
   EXPECT_THAT(VidModelSelector::Build(ModelLine{}, std::vector<ModelRollout>{})
                   .status(),
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(VidModelSelectorTest,
-TestBuildVidSelectorObjectWithWrongModelRolloutThrowsException) {
+     TestBuildVidSelectorObjectWithWrongModelRolloutThrowsException) {
   const std::string model_line_path = "model_line_02.textproto";
   const std::string model_rollout_path = "model_rollout_01.textproto";
   ModelLine model_line;
@@ -131,7 +131,7 @@ TEST(VidModelSelectorTest, TestReturnsNullWhenModelRolloutsIsEmptyList) {
 }
 
 TEST(VidModelSelectorTest,
-TestReturnsNullWhenEventTimePrecedesRolloutPeriodStartTime) {
+     TestReturnsNullWhenEventTimePrecedesRolloutPeriodStartTime) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path = "model_rollout_01.textproto";
   ModelLine model_line;
@@ -156,7 +156,7 @@ TestReturnsNullWhenEventTimePrecedesRolloutPeriodStartTime) {
 }
 
 TEST(VidModelSelectorTest,
-TestReturnsModelReleaseWhenModelRolloutHasRolloutPeriod) {
+     TestReturnsModelReleaseWhenModelRolloutHasRolloutPeriod) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path = "model_rollout_01.textproto";
   ModelLine model_line;
@@ -180,14 +180,13 @@ TestReturnsModelReleaseWhenModelRolloutHasRolloutPeriod) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_01",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_01",
+            model_release);
 }
 
 TEST(VidModelSelectorTest,
-TestReturnsModelReleaseWhenModelRolloutHasInstantRollout) {
+     TestReturnsModelReleaseWhenModelRolloutHasInstantRollout) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path =
       "model_rollout_without_rollout_period_02.textproto";
@@ -212,14 +211,13 @@ TestReturnsModelReleaseWhenModelRolloutHasInstantRollout) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_without_rollout_period_02",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_without_rollout_period_02",
+            model_release);
 }
 
 TEST(VidModelSelectorTest,
-TestReturnsModelReleaseWithTwoRolloutsAndEventAfterR2) {
+     TestReturnsModelReleaseWithTwoRolloutsAndEventAfterR2) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -250,10 +248,9 @@ TestReturnsModelReleaseWithTwoRolloutsAndEventAfterR2) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_02",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_02",
+            model_release);
 }
 
 TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR2) {
@@ -287,14 +284,13 @@ TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR2) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_02",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_02",
+            model_release);
 }
 
 TEST(VidModelSelectorTest,
-TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1) {
+     TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -325,14 +321,13 @@ TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_01",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_01",
+            model_release);
 }
 
 TEST(VidModelSelectorTest,
-TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1AndR2) {
+     TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1AndR2) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -363,10 +358,9 @@ TestReturnsModelReleaseWithTwoRolloutsAndEventSmallerThanR1AndR2) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_02",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_02",
+            model_release);
 }
 
 TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR1) {
@@ -400,10 +394,9 @@ TEST(VidModelSelectorTest, TestReturnsModelReleaseWithTwoRolloutsAndEventInR1) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_01",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_01",
+            model_release);
 }
 
 TEST(VidModelSelectorTest, TestReturnsSameModelReleaseWithMultipleInvocation) {
@@ -437,22 +430,20 @@ TEST(VidModelSelectorTest, TestReturnsSameModelReleaseWithMultipleInvocation) {
   std::string model_release_1 =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_02",
-      model_release_1);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_02",
+            model_release_1);
 
   std::string model_release_2 =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_02",
-      model_release_2);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_02",
+            model_release_2);
 }
 
 TEST(VidModelSelectorTest,
-TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR2) {
+     TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR2) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -489,14 +480,13 @@ TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR2) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_02",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_02",
+            model_release);
 }
 
 TEST(VidModelSelectorTest,
-TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR3) {
+     TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR3) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -533,14 +523,13 @@ TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1AndR3) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_03",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_03",
+            model_release);
 }
 
 TEST(VidModelSelectorTest,
-TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1) {
+     TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -578,14 +567,13 @@ TestReturnsModelReleaseWithThreeRolloutsAndEventSmallerThanR1) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_01",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_01",
+            model_release);
 }
 
 TEST(VidModelSelectorTest,
-TestExcludeRolloutsPriorToRolloutWithInstantRollout) {
+     TestExcludeRolloutsPriorToRolloutWithInstantRollout) {
   const std::string model_line_path = "model_line_01.textproto";
   const std::string model_rollout_path_1 = "model_rollout_01.textproto";
   const std::string model_rollout_path_2 = "model_rollout_02.textproto";
@@ -630,10 +618,9 @@ TestExcludeRolloutsPriorToRolloutWithInstantRollout) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_without_rollout_period_01",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_without_rollout_period_01",
+            model_release);
 }
 
 TEST(VidModelSelectorTest, TestBlockRolloutWhenFreezeTimeIsSet) {
@@ -675,10 +662,9 @@ TEST(VidModelSelectorTest, TestBlockRolloutWhenFreezeTimeIsSet) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_02",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_02",
+            model_release);
 }
 
 TEST(VidModelSelectorTest, TestRolloutWithFreezeTimeIsCorrectlySelected) {
@@ -720,11 +706,10 @@ TEST(VidModelSelectorTest, TestRolloutWithFreezeTimeIsCorrectlySelected) {
   std::string model_release =
       *vid_model_selector.GetModelRelease(labeler_input).value();
 
-  ASSERT_EQ(
-      "modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
-      "rollout_freeze_time_01",
-      model_release);
+  ASSERT_EQ("modelProviders/AAAAAAAAAHs/modelSuites/AAAAAAAAAHs/modelReleases/"
+            "rollout_freeze_time_01",
+            model_release);
 }
 
-}  // namespace
-}  // namespace wfa_virtual_people
+} // namespace
+} // namespace wfa_virtual_people

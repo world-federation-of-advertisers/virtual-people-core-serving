@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_cat.h"
@@ -24,12 +24,12 @@
 #include "common_cpp/testing/common_matchers.h"
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "wfa/virtual_people/common/event.pb.h"
 #include "wfa/virtual_people/common/label.pb.h"
 #include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/labeler/labeler.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace wfa_virtual_people {
 namespace {
@@ -42,8 +42,8 @@ using ::wfa::ReadTextProtoFile;
 const char kTestDataDir[] = "src/main/resources/testing/labeler/";
 
 void ApplyAndValidate(absl::string_view model_path,
-absl::string_view input_path,
-absl::string_view output_path, bool is_single_node_file) {
+                      absl::string_view input_path,
+                      absl::string_view output_path, bool is_single_node_file) {
   SCOPED_TRACE(absl::StrCat("ApplyAndValidate(", model_path, ", ", input_path,
                             ", ", output_path));
   std::unique_ptr<Labeler> labeler = nullptr;
@@ -83,7 +83,7 @@ TEST(LabelerIntegrationTest, TestBuildFromRoot) {
         absl::StrFormat("labeler_output_%02d.textproto", i);
   }
 
-  for (auto& [input_path, output_path] : input_output_paths) {
+  for (auto &[input_path, output_path] : input_output_paths) {
     ApplyAndValidate(single_node_model_path, input_path, output_path,
                      /* is_single_node_file = */ true);
     ApplyAndValidate(node_list_model_path, input_path, output_path,
@@ -100,7 +100,7 @@ TEST(LabelerIntegrationTest, TestSingleIdModel) {
         "single_id_labeler_output.textproto";
   }
 
-  for (auto& [input_path, output_path] : input_output_paths) {
+  for (auto &[input_path, output_path] : input_output_paths) {
     ApplyAndValidate(single_node_model_path, input_path, output_path,
                      /* is_single_node_file = */ true);
     ApplyAndValidate(node_list_model_path, input_path, output_path,
@@ -108,5 +108,5 @@ TEST(LabelerIntegrationTest, TestSingleIdModel) {
   }
 }
 
-}  // namespace
-}  // namespace wfa_virtual_people
+} // namespace
+} // namespace wfa_virtual_people
