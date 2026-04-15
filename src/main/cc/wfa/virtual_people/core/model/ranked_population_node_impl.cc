@@ -118,6 +118,15 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
         "virtual_person_activities should only be created in leaf nodes.");
   }
 
+  // Pass-1 mode: emit pool identity and return without assigning a VID.
+  if (event.pool_identity_mode()) {
+    PoolAssignment* pa = event.add_pool_assignments();
+    pa->set_pool_offset(pool_offset_);
+    pa->set_pool_size(pool_size_);
+    pa->set_ranked_size(ranked_size_);
+    return absl::OkStatus();
+  }
+
   VirtualPersonActivity* activity = event.add_virtual_person_activities();
   uint64_t virtual_person_id;
 
