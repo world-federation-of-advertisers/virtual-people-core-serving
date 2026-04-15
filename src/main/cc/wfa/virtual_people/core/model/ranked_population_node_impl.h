@@ -34,6 +34,12 @@ class RankedPopulationNodeImpl : public ModelNode {
   static absl::StatusOr<std::unique_ptr<RankedPopulationNodeImpl>> Build(
       const CompiledNode& node_config);
 
+  // Never call the constructor directly.
+  RankedPopulationNodeImpl(const CompiledNode& node_config,
+                           std::string random_seed, uint64_t ranked_size,
+                           UnrankedMode unranked_mode, uint64_t pool_offset,
+                           uint64_t pool_size);
+
   RankedPopulationNodeImpl(const RankedPopulationNodeImpl&) = delete;
   RankedPopulationNodeImpl& operator=(const RankedPopulationNodeImpl&) = delete;
   ~RankedPopulationNodeImpl() override {}
@@ -41,10 +47,6 @@ class RankedPopulationNodeImpl : public ModelNode {
   absl::Status Apply(LabelerEvent& event) const override;
 
  private:
-  RankedPopulationNodeImpl(const CompiledNode& node_config,
-                           std::string random_seed, uint64_t ranked_size,
-                           UnrankedMode unranked_mode, uint64_t pool_offset,
-                           uint64_t pool_size);
 
   const std::string random_seed_;
   const uint64_t ranked_size_;
