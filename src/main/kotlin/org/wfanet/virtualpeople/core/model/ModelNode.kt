@@ -61,6 +61,7 @@ sealed class ModelNode(nodeConfig: CompiledNode) {
         TypeCase.BRANCH_NODE -> BranchNodeImpl.build(config, mutableMapOf())
         TypeCase.STOP_NODE -> StopNodeImpl.build(config)
         TypeCase.POPULATION_NODE -> PopulationNodeImpl.build(config)
+        TypeCase.RANKED_POPULATION_NODE -> RankedPopulationNodeImpl.build(config)
         TypeCase.TYPE_NOT_SET -> error("Node type is not set.")
       }
     }
