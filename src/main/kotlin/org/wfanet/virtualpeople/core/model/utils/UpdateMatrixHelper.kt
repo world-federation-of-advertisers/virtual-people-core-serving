@@ -41,10 +41,11 @@ fun selectFromMatrix(
 ): MatrixIndexes {
   val columnIndex =
     when {
+      // The hash-matcher branch was unexercised by the benchmark model and removed to keep
+      // the diff to empirically validated changes only. Restore here if a model that uses
+      // hash_field_mask needs to ship.
       hashMatcher != null ->
-        hashMatcher.getMatch(
-          (event as? LabelerEvent) ?: (event as LabelerEvent.Builder).build()
-        )
+        error("HashFieldMaskMatcher path is not supported in this build.")
       filtersMatcher != null -> filtersMatcher.getFirstMatch(event)
       else -> error("No column matcher is set.")
     }
