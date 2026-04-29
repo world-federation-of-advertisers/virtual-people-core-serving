@@ -19,21 +19,26 @@ import org.wfanet.virtualpeople.common.LabelerEvent
 import org.wfanet.virtualpeople.common.LabelerInput
 import org.wfanet.virtualpeople.common.LabelerOutput
 import org.wfanet.virtualpeople.common.UserInfo
+import org.wfanet.virtualpeople.common.labelerEvent
+import org.wfanet.virtualpeople.common.labelerOutput
 import org.wfanet.virtualpeople.core.common.Hashing
 import org.wfanet.virtualpeople.core.model.ModelNode
 
 class Labeler private constructor(private val rootNode: ModelNode) {
 
-  /** Apply the model to generate the labels. Invalid inputs will result in an error. */
+  /**
+   * Apply the model to generate the labels. Invalid inputs will result in an error.
+   *
+   * Thread safety: a single [Labeler] instance may be called from multiple threads concurrently —
+   * the model is immutable. Each [label] call uses its own mutable event builder internally.
+   */
   fun label(input: LabelerInput): LabelerOutput {
-    val eventBuilder = LabelerEvent.newBuilder().setLabelerInput(input)
+    val eventBuilder = labelerEvent { labelerInput = input }.toBuilder()
     setFingerprints(eventBuilder)
 
     rootNode.apply(eventBuilder)
 
-    return LabelerOutput.newBuilder()
-      .addAllPeople(eventBuilder.virtualPersonActivitiesList)
-      .build()
+    return labelerOutput { people.addAll(eventBuilder.virtualPersonActivitiesList) }
   }
 
   companion object {

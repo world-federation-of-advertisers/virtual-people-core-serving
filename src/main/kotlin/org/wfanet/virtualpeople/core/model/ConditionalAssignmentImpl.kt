@@ -34,12 +34,8 @@ private constructor(private val condition: FieldFilter, private val assignments:
    */
   override fun update(event: LabelerEvent.Builder) {
     if (condition.matches(event)) {
-      val n = assignments.size
-      var i = 0
-      while (i < n) {
-        val a = assignments[i]
+      for (a in assignments) {
         a.assigner.apply(event, a.source, a.target)
-        i++
       }
     }
   }
