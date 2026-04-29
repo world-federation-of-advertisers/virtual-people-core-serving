@@ -51,7 +51,7 @@ private constructor(
    */
   override fun update(event: LabelerEvent.Builder) {
     val indexes =
-      selectFromMatrix(hashMatcher, filtersMatcher, rowHashings, randomSeed, event.build())
+      selectFromMatrix(hashMatcher, filtersMatcher, rowHashings, randomSeed, event)
     if (indexes.columnIndex == -1) {
       if (passThroughNonMatches == PassThroughNonMatches.YES) {
         return

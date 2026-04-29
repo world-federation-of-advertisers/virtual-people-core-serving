@@ -14,15 +14,11 @@
 
 package org.wfanet.virtualpeople.core.labeler
 
-import java.nio.ByteOrder
-import org.wfanet.measurement.common.toLong
 import org.wfanet.virtualpeople.common.CompiledNode
 import org.wfanet.virtualpeople.common.LabelerEvent
 import org.wfanet.virtualpeople.common.LabelerInput
 import org.wfanet.virtualpeople.common.LabelerOutput
 import org.wfanet.virtualpeople.common.UserInfo
-import org.wfanet.virtualpeople.common.labelerEvent
-import org.wfanet.virtualpeople.common.labelerOutput
 import org.wfanet.virtualpeople.core.common.Hashing
 import org.wfanet.virtualpeople.core.model.ModelNode
 
@@ -30,16 +26,14 @@ class Labeler private constructor(private val rootNode: ModelNode) {
 
   /** Apply the model to generate the labels. Invalid inputs will result in an error. */
   fun label(input: LabelerInput): LabelerOutput {
-    // Prepare labeler event.
-    val eventBuilder = labelerEvent { labelerInput = input }.toBuilder()
+    val eventBuilder = LabelerEvent.newBuilder().setLabelerInput(input)
     setFingerprints(eventBuilder)
 
     rootNode.apply(eventBuilder)
 
-    return labelerOutput {
-      people.addAll(eventBuilder.virtualPersonActivitiesList)
-      serializedDebugTrace = eventBuilder.toString()
-    }
+    return LabelerOutput.newBuilder()
+      .addAllPeople(eventBuilder.virtualPersonActivitiesList)
+      .build()
   }
 
   companion object {
@@ -146,16 +140,14 @@ class Labeler private constructor(private val rootNode: ModelNode) {
 
     private fun setUserInfoFingerprint(userInfo: UserInfo.Builder) {
       if (userInfo.hasUserId()) {
-        userInfo.userIdFingerprint =
-          Hashing.hashFingerprint64(userInfo.userId).toLong(ByteOrder.LITTLE_ENDIAN)
+        userInfo.userIdFingerprint = Hashing.hashFingerprint64Long(userInfo.userId)
       }
     }
 
     private fun setFingerprints(eventBuilder: LabelerEvent.Builder) {
       val labelerInputBuilder = eventBuilder.labelerInputBuilder
       if (labelerInputBuilder.hasEventId()) {
-        val eventIdFingerprint =
-          Hashing.hashFingerprint64(labelerInputBuilder.eventId.id).toLong(ByteOrder.LITTLE_ENDIAN)
+        val eventIdFingerprint = Hashing.hashFingerprint64Long(labelerInputBuilder.eventId.id)
         labelerInputBuilder.eventIdBuilder.idFingerprint = eventIdFingerprint
         eventBuilder.actingFingerprint = eventIdFingerprint
       }
