@@ -43,7 +43,12 @@ fun selectFromMatrix(
     when {
       hashMatcher != null ->
         hashMatcher.getMatch(
-          (event as? LabelerEvent) ?: (event as LabelerEvent.Builder).build()
+          when (event) {
+            is LabelerEvent -> event
+            is LabelerEvent.Builder -> event.build()
+            else ->
+              error("Unexpected LabelerEventOrBuilder implementation: ${event::class}")
+          }
         )
       filtersMatcher != null -> filtersMatcher.getFirstMatch(event)
       else -> error("No column matcher is set.")
