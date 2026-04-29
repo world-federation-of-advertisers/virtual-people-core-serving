@@ -88,11 +88,8 @@ private constructor(
    * [PassThroughNonMatches.NO].
    */
   override fun update(event: LabelerEvent.Builder) {
-    // NOTE: pass event.build() (not event) because this code path was never exercised by the
-    // benchmark's production model; preserving baseline behavior here keeps the diff to only
-    // empirically validated changes.
     val indexes =
-      selectFromMatrix(hashMatcher, filtersMatcher, rowHashings, randomSeed, event.build())
+      selectFromMatrix(hashMatcher, filtersMatcher, rowHashings, randomSeed, event)
     if (indexes.columnIndex == -1) {
       if (passThroughNonMatches == PassThroughNonMatches.YES) {
         return

@@ -59,13 +59,14 @@ private constructor(private val condition: FieldFilter, private val assignments:
     }
 
     private fun getAssigner(type: Type): Assigner {
-      // Only the assigners exercised by the benchmark's production model are kept (UINT32 for
-      // age min/max, UINT64 for fingerprints, ENUM for gender). Add others back when a model
-      // that uses them needs to ship.
       return when (type) {
+        Type.INT32 -> Int32Assigner
         Type.UINT32 -> UInt32Assigner
+        Type.INT64 -> Int64Assigner
         Type.UINT64 -> UInt64Assigner
+        Type.BOOL -> BoolAssigner
         Type.ENUM -> EnumAssigner
+        Type.STRING -> StringAssigner
         else -> error("Unsupported field type for ConditionalAssignment: $type")
       }
     }
@@ -130,12 +131,28 @@ private constructor(private val condition: FieldFilter, private val assignments:
       )
     }
 
+    internal object Int32Assigner : Assigner {
+      override fun apply(
+        event: LabelerEvent.Builder,
+        source: List<FieldDescriptor>,
+        target: List<FieldDescriptor>,
+      ) = assign<Int>(event, source, target)
+    }
+
     internal object UInt32Assigner : Assigner {
       override fun apply(
         event: LabelerEvent.Builder,
         source: List<FieldDescriptor>,
         target: List<FieldDescriptor>,
       ) = assign<UInt>(event, source, target)
+    }
+
+    internal object Int64Assigner : Assigner {
+      override fun apply(
+        event: LabelerEvent.Builder,
+        source: List<FieldDescriptor>,
+        target: List<FieldDescriptor>,
+      ) = assign<Long>(event, source, target)
     }
 
     internal object UInt64Assigner : Assigner {
@@ -146,12 +163,28 @@ private constructor(private val condition: FieldFilter, private val assignments:
       ) = assign<ULong>(event, source, target)
     }
 
+    internal object BoolAssigner : Assigner {
+      override fun apply(
+        event: LabelerEvent.Builder,
+        source: List<FieldDescriptor>,
+        target: List<FieldDescriptor>,
+      ) = assign<Boolean>(event, source, target)
+    }
+
     internal object EnumAssigner : Assigner {
       override fun apply(
         event: LabelerEvent.Builder,
         source: List<FieldDescriptor>,
         target: List<FieldDescriptor>,
       ) = assign<EnumValueDescriptor>(event, source, target)
+    }
+
+    internal object StringAssigner : Assigner {
+      override fun apply(
+        event: LabelerEvent.Builder,
+        source: List<FieldDescriptor>,
+        target: List<FieldDescriptor>,
+      ) = assign<String>(event, source, target)
     }
   }
 }
