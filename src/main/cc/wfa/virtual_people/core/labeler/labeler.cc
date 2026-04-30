@@ -172,9 +172,9 @@ absl::Status Labeler::Label(const LabelerInput& input,
 
   // Populate data to output.
   *output.mutable_people() = event.virtual_person_activities();
-  // TODO(@tcsnfkx): Update the content of debug trace. Currently only set the
-  //                 debug trace to be the LabelerEvent.
-  output.set_serialized_debug_trace(event.SerializeAsString());
+  if (input.enable_debug_trace()) {
+    output.set_serialized_debug_trace(event.DebugString());
+  }
   return absl::OkStatus();
 }
 

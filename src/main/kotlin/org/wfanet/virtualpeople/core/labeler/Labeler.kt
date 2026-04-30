@@ -14,6 +14,7 @@
 
 package org.wfanet.virtualpeople.core.labeler
 
+import com.google.protobuf.TextFormat
 import org.wfanet.virtualpeople.common.CompiledNode
 import org.wfanet.virtualpeople.common.LabelerEvent
 import org.wfanet.virtualpeople.common.LabelerInput
@@ -38,7 +39,12 @@ class Labeler private constructor(private val rootNode: ModelNode) {
 
     rootNode.apply(eventBuilder)
 
-    return labelerOutput { people.addAll(eventBuilder.virtualPersonActivitiesList) }
+    return labelerOutput {
+      people.addAll(eventBuilder.virtualPersonActivitiesList)
+      if (input.enableDebugTrace) {
+        serializedDebugTrace = TextFormat.printer().printToString(eventBuilder.build())
+      }
+    }
   }
 
   companion object {
