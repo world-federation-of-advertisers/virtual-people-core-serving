@@ -19,9 +19,8 @@ import java.nio.charset.StandardCharsets
 import org.wfanet.virtualpeople.common.CompiledNode
 import org.wfanet.virtualpeople.common.LabelerEvent
 import org.wfanet.virtualpeople.common.PersonLabelAttributes
-import org.wfanet.virtualpeople.common.PoolAssignment
 import org.wfanet.virtualpeople.common.QuantumLabel
-import org.wfanet.virtualpeople.common.UnrankedMode
+import org.wfanet.virtualpeople.common.RankedPopulationNode.UnrankedMode
 import org.wfanet.virtualpeople.common.VirtualPersonActivity
 import org.wfanet.virtualpeople.core.model.utils.DistributedConsistentHashing
 import org.wfanet.virtualpeople.core.model.utils.DistributionChoice
@@ -43,17 +42,6 @@ private constructor(
 ) : ModelNode(nodeConfig) {
 
   override fun apply(event: LabelerEvent.Builder) {
-    // Pass-1 mode: emit pool identity and return without assigning a VID.
-    if (event.poolIdentityMode) {
-      event.addPoolAssignments(
-        PoolAssignment.newBuilder()
-          .setPoolOffset(poolOffset.toLong())
-          .setPoolSize(poolSize.toLong())
-          .setRankedSize(rankedSize.toLong())
-      )
-      return
-    }
-
     if (event.virtualPersonActivitiesCount > 0) {
       error("virtual_person_activities should only be created in leaf nodes.")
     }

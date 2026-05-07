@@ -28,194 +28,128 @@ import org.wfanet.virtualpeople.common.RankAssignment
 class RankedLabelingIntegrationTest {
 
   @Test
-  fun `two pass collision free`() {
+  fun `ranked events produce collision free VIDs`() {
     val root = CompiledNode.newBuilder()
     TextFormat.merge(
       """
-        name: "Root"
-        branch_node {
-          branches {
-            node {
-              name: "DisjointLeaf"
-              ranked_population_node {
-                pools { population_offset: 1000 total_population: 500 }
-                random_seed: "disjoint-seed"
-                ranked_size: 200
-                unranked_mode: DISJOINT
-              }
-            }
-            chance: 0.5
-          }
-          branches {
-            node {
-              name: "FullPoolLeaf"
-              ranked_population_node {
-                pools { population_offset: 5000 total_population: 500 }
-                random_seed: "fullpool-seed"
-                ranked_size: 200
-                unranked_mode: FULL_POOL
-              }
-            }
-            chance: 0.5
-          }
-          random_seed: "branch-seed"
+        name: "TestRankedNode"
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "test-seed"
+          ranked_size: 200
+          unranked_mode: DISJOINT
         }
       """,
       root,
     )
 
     val labeler = Labeler.build(root.build())
-    val eventCount = 200
+    val vids = mutableSetOf<ULong>()
 
-    // === Pass 1: collect pool assignments ===
-    data class EventInfo(
-      val input: LabelerInput,
-      val poolOffset: ULong,
-      val poolSize: ULong,
-      val rankedSize: ULong,
-    )
-
-    val events = mutableListOf<EventInfo>()
-    val poolRankCounter = mutableMapOf<ULong, ULong>()
-
-    for (i in 0 until eventCount) {
-      val input =
-        LabelerInput.newBuilder()
-          .setEventId(
-            org.wfanet.virtualpeople.common.EventId.newBuilder()
-              .setPublisher("test-pub")
-              .setId(i.toString())
-          )
-          .build()
-
-      val output = labeler.label(input, LabelingMode.POOL_IDENTITY)
-
-      assertEquals(1, output.poolAssignmentsCount, "Event $i should have 1 pool assignment")
-      assertEquals(0, output.peopleCount, "Event $i should have no people in pass-1")
-
-      val pa = output.poolAssignmentsList[0]
-      val offset = pa.poolOffset.toULong()
-      events.add(EventInfo(input, offset, pa.poolSize.toULong(), pa.rankedSize.toULong()))
-      poolRankCounter[offset] = (poolRankCounter[offset] ?: 0uL) + 1uL
-    }
-
-    assertTrue(poolRankCounter.containsKey(1000uL), "No events routed to DISJOINT pool")
-    assertTrue(poolRankCounter.containsKey(5000uL), "No events routed to FULL_POOL pool")
-
-    // === Simulate ranking ===
-    val poolNextRank = mutableMapOf<ULong, ULong>()
-    val rankedInputs =
-      events.map { ev ->
-        val rank = poolNextRank.getOrDefault(ev.poolOffset, 0uL)
-        poolNextRank[ev.poolOffset] = rank + 1uL
-        ev.input
-          .toBuilder()
-          .addRankAssignments(
-            RankAssignment.newBuilder()
-              .setPoolOffset(ev.poolOffset.toLong())
-              .setLocalRank(rank.toLong())
-          )
-          .build() to ev
-      }
-
-    // === Pass 2: assign VIDs ===
-    val rankedVids = mutableMapOf<ULong, MutableSet<ULong>>()
-
-    for ((input, ev) in rankedInputs) {
-      val output = labeler.label(input)
-      assertEquals(1, output.peopleCount)
-      assertTrue(output.peopleList[0].hasVirtualPersonId())
-      val vid = output.peopleList[0].virtualPersonId.toULong()
-
-      val localRank = input.rankAssignmentsList.first { it.poolOffset.toULong() == ev.poolOffset }.localRank.toULong()
-
-      if (localRank < ev.rankedSize) {
-        assertTrue(vid >= ev.poolOffset, "Ranked VID below pool_offset")
-        assertTrue(vid < ev.poolOffset + ev.rankedSize, "Ranked VID above ranked range")
-        rankedVids.getOrPut(ev.poolOffset) { mutableSetOf() }.add(vid)
-      } else {
-        if (ev.poolOffset == 1000uL) {
-          assertTrue(vid >= ev.poolOffset + ev.rankedSize)
-          assertTrue(vid < ev.poolOffset + ev.poolSize)
-        } else {
-          assertTrue(vid >= ev.poolOffset)
-          assertTrue(vid < ev.poolOffset + ev.poolSize)
-        }
-      }
-    }
-
-    // Verify collision-free
-    for ((poolOffset, vids) in rankedVids) {
-      val eventsInPool = poolRankCounter[poolOffset]!!
-      val expectedRanked = minOf(eventsInPool, 200uL)
-      assertEquals(
-        expectedRanked.toInt(),
-        vids.size,
-        "Collision in ranked VIDs for pool $poolOffset",
-      )
-    }
-  }
-
-  @Test
-  fun `mixed model pass 1`() {
-    val root = CompiledNode.newBuilder()
-    TextFormat.merge(
-      """
-        name: "MixedRoot"
-        branch_node {
-          branches {
-            node {
-              name: "ClassicLeaf"
-              population_node {
-                pools { population_offset: 10 total_population: 100 }
-                random_seed: "classic-seed"
-              }
-            }
-            chance: 0.5
-          }
-          branches {
-            node {
-              name: "RankedLeaf"
-              ranked_population_node {
-                pools { population_offset: 2000 total_population: 500 }
-                random_seed: "ranked-seed"
-                ranked_size: 300
-                unranked_mode: DISJOINT
-              }
-            }
-            chance: 0.5
-          }
-          random_seed: "mixed-branch-seed"
-        }
-      """,
-      root,
-    )
-
-    val labeler = Labeler.build(root.build())
-    var poolAssignmentCount = 0
-    var peopleCount = 0
-
-    for (i in 0 until 200) {
+    for (rank in 0uL until 200uL) {
       val input =
         LabelerInput.newBuilder()
           .setEventId(
             org.wfanet.virtualpeople.common.EventId.newBuilder()
               .setPublisher("test")
-              .setId(i.toString())
+              .setId(rank.toString())
+          )
+          .addRankAssignments(
+            RankAssignment.newBuilder()
+              .setPoolOffset(100)
+              .setLocalRank(rank.toLong())
           )
           .build()
 
-      val output = labeler.label(input, LabelingMode.POOL_IDENTITY)
-      poolAssignmentCount += output.poolAssignmentsCount
-      peopleCount += output.peopleCount
+      val output = labeler.label(input)
+      assertEquals(1, output.peopleCount)
+      val vid = output.peopleList[0].virtualPersonId.toULong()
+      // Ranked VIDs in [pool_offset, pool_offset + ranked_size)
+      assertTrue(vid >= 100uL, "VID $vid below pool_offset")
+      assertTrue(vid < 300uL, "VID $vid above ranked range")
+      vids.add(vid)
     }
 
-    assertTrue(poolAssignmentCount > 0, "No events routed to RankedPopulationNode")
-    assertTrue(peopleCount > 0, "No events routed to PopulationNode")
+    // All 200 ranked events must produce 200 distinct VIDs.
+    assertEquals(200, vids.size, "Collision detected in ranked VIDs")
   }
 
   @Test
-  fun `ranked size zero is hash based`() {
+  fun `unranked disjoint events get VIDs in unranked range`() {
+    val root = CompiledNode.newBuilder()
+    TextFormat.merge(
+      """
+        name: "TestRankedNode"
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "test-seed"
+          ranked_size: 200
+          unranked_mode: DISJOINT
+        }
+      """,
+      root,
+    )
+
+    val labeler = Labeler.build(root.build())
+
+    for (i in 0 until 50) {
+      val input =
+        LabelerInput.newBuilder()
+          .setEventId(
+            org.wfanet.virtualpeople.common.EventId.newBuilder()
+              .setPublisher("test")
+              .setId("unranked-$i")
+          )
+          .build()
+
+      val output = labeler.label(input)
+      assertEquals(1, output.peopleCount)
+      val vid = output.peopleList[0].virtualPersonId.toULong()
+      // DISJOINT: VIDs in [pool_offset + ranked_size, pool_offset + pool_size)
+      assertTrue(vid >= 300uL, "VID $vid below unranked range")
+      assertTrue(vid < 600uL, "VID $vid above pool range")
+    }
+  }
+
+  @Test
+  fun `unranked full pool events get VIDs in full range`() {
+    val root = CompiledNode.newBuilder()
+    TextFormat.merge(
+      """
+        name: "TestRankedNode"
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "test-seed"
+          ranked_size: 200
+          unranked_mode: FULL_POOL
+        }
+      """,
+      root,
+    )
+
+    val labeler = Labeler.build(root.build())
+
+    for (i in 0 until 50) {
+      val input =
+        LabelerInput.newBuilder()
+          .setEventId(
+            org.wfanet.virtualpeople.common.EventId.newBuilder()
+              .setPublisher("test")
+              .setId("fullpool-$i")
+          )
+          .build()
+
+      val output = labeler.label(input)
+      assertEquals(1, output.peopleCount)
+      val vid = output.peopleList[0].virtualPersonId.toULong()
+      // FULL_POOL: VIDs in [pool_offset, pool_offset + pool_size)
+      assertTrue(vid >= 100uL, "VID $vid below pool range")
+      assertTrue(vid < 600uL, "VID $vid above pool range")
+    }
+  }
+
+  @Test
+  fun `ranked size zero behaves like hash based`() {
     val root = CompiledNode.newBuilder()
     TextFormat.merge(
       """
