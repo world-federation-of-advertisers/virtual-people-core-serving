@@ -43,8 +43,8 @@ sealed class ModelNode(nodeConfig: CompiledNode) {
      * factory function or constructor of the derived class directly.
      *
      * @param [nodeRefs] the mapping from indexes to the [ModelNode] objects, which should contain
-     * the child nodes referenced by indexes. Throws an error if any child node referenced by index
-     * is not found in [nodeRefs].
+     *   the child nodes referenced by indexes. Throws an error if any child node referenced by
+     *   index is not found in [nodeRefs].
      */
     fun build(config: CompiledNode, nodeRefs: MutableMap<Int, ModelNode>): ModelNode {
       return if (config.typeCase == TypeCase.BRANCH_NODE) {

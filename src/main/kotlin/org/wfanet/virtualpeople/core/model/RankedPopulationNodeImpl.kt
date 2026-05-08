@@ -72,8 +72,8 @@ private constructor(
           }
           UnrankedMode.FULL_POOL ->
             poolOffset + jumpConsistentHash(seed, poolSize.toInt()).toULong()
-          UnrankedMode.UNRANKED_MODE_UNSPECIFIED, UnrankedMode.UNRECOGNIZED ->
-            error("UnrankedMode must be DISJOINT or FULL_POOL.")
+          UnrankedMode.UNRANKED_MODE_UNSPECIFIED,
+          UnrankedMode.UNRECOGNIZED -> error("UnrankedMode must be DISJOINT or FULL_POOL.")
         }
       }
 
