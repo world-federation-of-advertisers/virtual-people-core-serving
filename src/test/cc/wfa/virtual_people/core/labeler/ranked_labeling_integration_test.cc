@@ -1,0 +1,279 @@
+// Copyright 2026 The Cross-Media Measurement Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#include "wfa/virtual_people/core/labeler/labeler.h"
+
+#include "common_cpp/testing/status_macros.h"
+#include "common_cpp/testing/status_matchers.h"
+#include "gmock/gmock.h"
+#include "google/protobuf/text_format.h"
+#include "gtest/gtest.h"
+#include "wfa/virtual_people/common/event.pb.h"
+#include "wfa/virtual_people/common/label.pb.h"
+#include "wfa/virtual_people/common/model.pb.h"
+
+namespace wfa_virtual_people {
+namespace {
+
+using ::wfa::IsOk;
+
+constexpr int kEventCount = 200;
+
+// Build a model: BranchNode with 50/50 chance between two
+// RankedPopulationNode leaves — one DISJOINT, one FULL_POOL.
+CompiledNode BuildTwoLeafModel() {
+  CompiledNode root;
+  google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "Root"
+        branch_node {
+          branches {
+            node {
+              name: "DisjointLeaf"
+              ranked_population_node {
+                pools { population_offset: 1000 total_population: 500 }
+                random_seed: "disjoint-seed"
+                ranked_size: 200
+                unranked_mode: DISJOINT
+              }
+            }
+            chance: 0.5
+          }
+          branches {
+            node {
+              name: "FullPoolLeaf"
+              ranked_population_node {
+                pools { population_offset: 5000 total_population: 500 }
+                random_seed: "fullpool-seed"
+                ranked_size: 200
+                unranked_mode: FULL_POOL
+              }
+            }
+            chance: 0.5
+          }
+          random_seed: "branch-seed"
+        }
+      )pb",
+      &root);
+  return root;
+}
+
+// Two-pass end-to-end test.
+TEST(RankedLabelingIntegrationTest, TwoPassCollisionFree) {
+  CompiledNode root = BuildTwoLeafModel();
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(root));
+
+  // === Pass 1: collect pool assignments ===
+  // Track which events go to which pool.
+  struct EventInfo {
+    LabelerInput input;
+    uint64_t pool_offset;
+    uint64_t pool_size;
+    uint64_t ranked_size;
+  };
+  std::vector<EventInfo> events;
+  // Per-pool rank counter for simulated ranking.
+  std::unordered_map<uint64_t, uint64_t> pool_rank_counter;
+
+  for (int i = 0; i < kEventCount; ++i) {
+    LabelerInput input;
+    input.mutable_event_id()->set_publisher("test-pub");
+    input.mutable_event_id()->set_id(std::to_string(i));
+
+    LabelerOutput output;
+    ASSERT_THAT(labeler->Label(input, output, LabelingMode::kPoolIdentity),
+                IsOk());
+
+    // Pass-1 should produce pool_assignments.
+    ASSERT_EQ(output.pool_assignments_size(), 1)
+        << "Event " << i << " should have exactly 1 pool assignment";
+    EXPECT_EQ(output.people_size(), 0)
+        << "Event " << i << " should have no people in pass-1";
+
+    const auto& pa = output.pool_assignments(0);
+    events.push_back({input, pa.pool_offset(), pa.pool_size(),
+                      pa.ranked_size()});
+    pool_rank_counter[pa.pool_offset()]++;  // count events per pool
+  }
+
+  // Verify events were split across both pools.
+  EXPECT_GT(pool_rank_counter[1000], 0) << "No events routed to DISJOINT pool";
+  EXPECT_GT(pool_rank_counter[5000], 0) << "No events routed to FULL_POOL pool";
+
+  // === Simulate ranking: assign sequential ranks per pool ===
+  std::unordered_map<uint64_t, uint64_t> pool_next_rank;
+  for (auto& ev : events) {
+    uint64_t rank = pool_next_rank[ev.pool_offset]++;
+    // Add rank assignment to the input.
+    auto* ra = ev.input.add_rank_assignments();
+    ra->set_pool_offset(ev.pool_offset);
+    ra->set_local_rank(rank);
+  }
+
+  // === Pass 2: assign VIDs ===
+  std::unordered_map<uint64_t, std::unordered_set<uint64_t>> ranked_vids;
+  int disjoint_unranked_count = 0;
+  int fullpool_unranked_count = 0;
+
+  for (const auto& ev : events) {
+    LabelerOutput output;
+    ASSERT_THAT(labeler->Label(ev.input, output), IsOk());
+
+    ASSERT_EQ(output.people_size(), 1);
+    EXPECT_TRUE(output.people(0).has_virtual_person_id());
+    uint64_t vid = output.people(0).virtual_person_id();
+
+    // Find the rank for this event.
+    uint64_t local_rank = 0;
+    for (const auto& ra : ev.input.rank_assignments()) {
+      if (ra.pool_offset() == ev.pool_offset) {
+        local_rank = ra.local_rank();
+        break;
+      }
+    }
+
+    if (local_rank < ev.ranked_size) {
+      // RANKED event: VID must be in [pool_offset, pool_offset + ranked_size).
+      EXPECT_GE(vid, ev.pool_offset)
+          << "Ranked VID below pool_offset for pool " << ev.pool_offset;
+      EXPECT_LT(vid, ev.pool_offset + ev.ranked_size)
+          << "Ranked VID above ranked range for pool " << ev.pool_offset;
+      ranked_vids[ev.pool_offset].insert(vid);
+    } else {
+      // UNRANKED event: check range depends on mode.
+      if (ev.pool_offset == 1000) {
+        // DISJOINT: VID in [pool_offset + ranked_size, pool_offset + pool_size).
+        EXPECT_GE(vid, ev.pool_offset + ev.ranked_size);
+        EXPECT_LT(vid, ev.pool_offset + ev.pool_size);
+        disjoint_unranked_count++;
+      } else {
+        // FULL_POOL: VID in [pool_offset, pool_offset + pool_size).
+        EXPECT_GE(vid, ev.pool_offset);
+        EXPECT_LT(vid, ev.pool_offset + ev.pool_size);
+        fullpool_unranked_count++;
+      }
+    }
+  }
+
+  // Verify collision-free property: all ranked VIDs per pool are unique.
+  for (const auto& [pool_offset, vids] : ranked_vids) {
+    uint64_t ranked_size = (pool_offset == 1000) ? 200 : 200;
+    // Number of ranked events = min(events_in_pool, ranked_size).
+    uint64_t events_in_pool = pool_rank_counter[pool_offset];
+    uint64_t expected_ranked = std::min(events_in_pool, ranked_size);
+    EXPECT_EQ(vids.size(), expected_ranked)
+        << "Collision detected in ranked VIDs for pool " << pool_offset
+        << ": got " << vids.size() << " unique VIDs from " << expected_ranked
+        << " ranked events";
+  }
+}
+
+// Mixed model: one PopulationNode leaf, one RankedPopulationNode leaf.
+TEST(RankedLabelingIntegrationTest, MixedModelPass1) {
+  CompiledNode root;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "MixedRoot"
+        branch_node {
+          branches {
+            node {
+              name: "ClassicLeaf"
+              population_node {
+                pools { population_offset: 10 total_population: 100 }
+                random_seed: "classic-seed"
+              }
+            }
+            chance: 0.5
+          }
+          branches {
+            node {
+              name: "RankedLeaf"
+              ranked_population_node {
+                pools { population_offset: 2000 total_population: 500 }
+                random_seed: "ranked-seed"
+                ranked_size: 300
+                unranked_mode: DISJOINT
+              }
+            }
+            chance: 0.5
+          }
+          random_seed: "mixed-branch-seed"
+        }
+      )pb",
+      &root));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(root));
+
+  int pool_assignment_count = 0;
+  int people_count = 0;
+
+  for (int i = 0; i < kEventCount; ++i) {
+    LabelerInput input;
+    input.mutable_event_id()->set_publisher("test");
+    input.mutable_event_id()->set_id(std::to_string(i));
+
+    LabelerOutput output;
+    ASSERT_THAT(labeler->Label(input, output, LabelingMode::kPoolIdentity),
+                IsOk());
+
+    pool_assignment_count += output.pool_assignments_size();
+    people_count += output.people_size();
+  }
+
+  // Some events should hit the RankedPopulationNode (pool_assignments),
+  // and some should hit the PopulationNode (people).
+  EXPECT_GT(pool_assignment_count, 0)
+      << "No events routed to RankedPopulationNode";
+  EXPECT_GT(people_count, 0) << "No events routed to PopulationNode";
+}
+
+// Verify pass-2 with ranked_size=0 behaves like hash-based.
+TEST(RankedLabelingIntegrationTest, RankedSizeZeroFullHashBased) {
+  CompiledNode root;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "HashOnlyNode"
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 1000 }
+          random_seed: "hash-only-seed"
+          ranked_size: 0
+          unranked_mode: FULL_POOL
+        }
+      )pb",
+      &root));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(root));
+
+  for (int i = 0; i < 50; ++i) {
+    LabelerInput input;
+    input.mutable_event_id()->set_publisher("test");
+    input.mutable_event_id()->set_id(std::to_string(i));
+
+    LabelerOutput output;
+    ASSERT_THAT(labeler->Label(input, output), IsOk());
+    ASSERT_EQ(output.people_size(), 1);
+    uint64_t vid = output.people(0).virtual_person_id();
+    EXPECT_GE(vid, 100);
+    EXPECT_LT(vid, 1100);
+  }
+}
+
+}  // namespace
+}  // namespace wfa_virtual_people
