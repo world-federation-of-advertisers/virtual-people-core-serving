@@ -33,28 +33,28 @@ object Feistel {
     if (domainSize <= 1uL) return 0uL
 
     val half = ceil(sqrt(domainSize.toDouble())).toULong()
-    var current = value
 
-    // Cycle-walk iteratively until the result is in range.
-    do {
-      var left = current / half
-      var right = current % half
-
+    fun feistelRound(input: ULong): ULong {
+      var left = input / half
+      var right = input % half
       repeat(4) { round ->
-        val roundInput = "$seed-feistel-$round-$right"
         val roundHash =
           Hashing.farmHashFingerprint64()
-            .hashString(roundInput, StandardCharsets.UTF_8)
+            .hashString("$seed-feistel-$round-$right", StandardCharsets.UTF_8)
             .asLong()
             .toULong()
         val newRight = (left + (roundHash % half)) % half
         left = right
         right = newRight
       }
+      return left * half + right
+    }
 
-      current = left * half + right
-    } while (current >= domainSize)
-
+    // Cycle-walk iteratively until the result is in range.
+    var current = feistelRound(value)
+    while (current >= domainSize) {
+      current = feistelRound(current)
+    }
     return current
   }
 }
