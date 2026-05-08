@@ -29,32 +29,28 @@ object Feistel {
    *
    * Must produce identical output to the C++ FeistelPermute for cross-language determinism.
    */
+  // Recursive cycle-walking matches the C++ FeistelPermute implementation.
+  // Recursion depth is bounded: for a domain of size N, the expected number of
+  // cycle-walk steps is ceil(half^2 / N), which is ≤ 2 for all practical sizes.
   fun permute(value: ULong, domainSize: ULong, seed: String): ULong {
     if (domainSize <= 1uL) return 0uL
 
     val half = ceil(sqrt(domainSize.toDouble())).toULong()
+    var left = value / half
+    var right = value % half
 
-    fun feistelRound(input: ULong): ULong {
-      var left = input / half
-      var right = input % half
-      repeat(4) { round ->
-        val roundHash =
-          Hashing.farmHashFingerprint64()
-            .hashString("$seed-feistel-$round-$right", StandardCharsets.UTF_8)
-            .asLong()
-            .toULong()
-        val newRight = (left + (roundHash % half)) % half
-        left = right
-        right = newRight
-      }
-      return left * half + right
+    repeat(4) { round ->
+      val roundHash =
+        Hashing.farmHashFingerprint64()
+          .hashString("$seed-feistel-$round-$right", StandardCharsets.UTF_8)
+          .asLong()
+          .toULong()
+      val newRight = (left + (roundHash % half)) % half
+      left = right
+      right = newRight
     }
 
-    // Cycle-walk iteratively until the result is in range.
-    var current = feistelRound(value)
-    while (current >= domainSize) {
-      current = feistelRound(current)
-    }
-    return current
+    val result = left * half + right
+    return if (result >= domainSize) permute(result, domainSize, seed) else result
   }
 }
