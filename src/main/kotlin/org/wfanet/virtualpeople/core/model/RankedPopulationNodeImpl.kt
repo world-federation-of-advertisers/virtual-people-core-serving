@@ -14,22 +14,21 @@
 
 package org.wfanet.virtualpeople.core.model
 
-import com.google.common.hash.Hashing
-import java.nio.charset.StandardCharsets
 import org.wfanet.virtualpeople.common.CompiledNode
 import org.wfanet.virtualpeople.common.LabelerEvent
-import org.wfanet.virtualpeople.common.PersonLabelAttributes
-import org.wfanet.virtualpeople.common.QuantumLabel
 import org.wfanet.virtualpeople.common.RankedPopulationNode.UnrankedMode
 import org.wfanet.virtualpeople.common.VirtualPersonActivity
-import org.wfanet.virtualpeople.core.model.utils.DistributedConsistentHashing
-import org.wfanet.virtualpeople.core.model.utils.DistributionChoice
 import org.wfanet.virtualpeople.core.model.utils.Feistel
+import org.wfanet.virtualpeople.core.model.utils.PopulationNodeHelper
+import org.wfanet.virtualpeople.core.model.utils.jumpConsistentHash
 
 /**
  * Implementation of CompiledNode with ranked_population_node set.
  *
  * Splits VID assignment into ranked (Feistel, collision-free) and unranked (hash-based) sub-ranges.
+ * If a pre-computed rank is available and within [0, rankedSize), the Feistel path is used. If the
+ * rank is >= rankedSize or no rank is provided, the event falls back to hash-based assignment per
+ * the configured UnrankedMode.
  */
 internal class RankedPopulationNodeImpl
 private constructor(
@@ -48,55 +47,44 @@ private constructor(
 
     val activity = VirtualPersonActivity.newBuilder()
 
-    // Look up pre-computed rank from LabelerInput.rank_assignments.
-    var hasRank = false
-    var localRank = 0uL
-    if (event.hasLabelerInput()) {
-      val rankAssignment =
+    val rankAssignment =
+      if (event.hasLabelerInput()) {
         event.labelerInput.rankAssignmentsList.firstOrNull {
           it.poolOffset.toULong() == poolOffset
         }
-      if (rankAssignment != null) {
-        localRank = rankAssignment.localRank.toULong()
-        hasRank = true
+      } else {
+        null
       }
-    }
 
-    val virtualPersonId: ULong
-    if (hasRank && localRank < rankedSize) {
-      // RANKED path: Feistel bijection — zero collisions.
-      virtualPersonId = poolOffset + Feistel.permute(localRank, rankedSize, randomSeed)
-    } else {
-      // UNRANKED path: hash-based (mode-dependent scope).
-      val seed =
-        Hashing.farmHashFingerprint64()
-          .hashString("$randomSeed${event.actingFingerprint.toULong()}", StandardCharsets.UTF_8)
-          .asLong()
-          .toULong()
-
-      virtualPersonId =
-        if (unrankedMode == UnrankedMode.DISJOINT) {
-          val unrankedSize = poolSize - rankedSize
-          check(unrankedSize > 0uL) {
-            "DISJOINT mode with ranked_size == pool_size leaves no unranked space."
+    val virtualPersonId =
+      if (rankAssignment != null && rankAssignment.localRank.toULong() < rankedSize) {
+        poolOffset + Feistel.permute(rankAssignment.localRank.toULong(), rankedSize, randomSeed)
+      } else {
+        val seed = PopulationNodeHelper.computeVidSeed(randomSeed, event.actingFingerprint)
+        when (unrankedMode) {
+          UnrankedMode.DISJOINT -> {
+            val unrankedSize = poolSize - rankedSize
+            check(unrankedSize > 0uL) {
+              "DISJOINT mode with ranked_size == pool_size leaves no unranked space."
+            }
+            poolOffset + rankedSize +
+              jumpConsistentHash(seed, unrankedSize.toInt()).toULong()
           }
-          poolOffset + rankedSize + (seed % unrankedSize)
-        } else {
-          // FULL_POOL: hash into the entire pool.
-          poolOffset + (seed % poolSize)
+          UnrankedMode.FULL_POOL ->
+            poolOffset + jumpConsistentHash(seed, poolSize.toInt()).toULong()
+          UnrankedMode.UNRANKED_MODE_UNSPECIFIED, UnrankedMode.UNRECOGNIZED ->
+            error("UnrankedMode must be DISJOINT or FULL_POOL.")
         }
-    }
+      }
 
     activity.virtualPersonId = virtualPersonId.toLong()
 
-    // Collapse quantum labels from the event (same as PopulationNodeImpl).
     if (event.hasQuantumLabels()) {
       val seedSuffix = virtualPersonId.toString()
       event.quantumLabels.quantumLabelsList.forEach {
-        collapseQuantumLabel(it, seedSuffix, activity.labelBuilder)
+        PopulationNodeHelper.collapseQuantumLabel(it, seedSuffix, activity.labelBuilder)
       }
     }
-    // Merge classic label from the event.
     if (event.hasLabel()) {
       activity.labelBuilder.mergeFrom(event.label)
     }
@@ -105,24 +93,6 @@ private constructor(
   }
 
   companion object {
-    private fun collapseQuantumLabel(
-      quantumLabel: QuantumLabel,
-      seedSuffix: String,
-      outputLabel: PersonLabelAttributes.Builder
-    ) {
-      if (quantumLabel.labelsCount == 0) {
-        error("Empty quantum label.")
-      }
-      if (quantumLabel.labelsCount != quantumLabel.probabilitiesCount) {
-        error("The sizes of labels and probabilities are different in quantum label. $quantumLabel")
-      }
-      val distribution =
-        quantumLabel.probabilitiesList.mapIndexed { index, it -> DistributionChoice(index, it) }
-      val hashing = DistributedConsistentHashing(distribution)
-      val index = hashing.hash("quantum-label-collapse-${quantumLabel.seed}$seedSuffix")
-      outputLabel.mergeFrom(quantumLabel.getLabels(index))
-    }
-
     fun build(nodeConfig: CompiledNode): RankedPopulationNodeImpl {
       if (!nodeConfig.hasRankedPopulationNode()) {
         error("This is not a ranked population node.")
@@ -131,9 +101,9 @@ private constructor(
 
       require(config.poolsCount > 0) { "RankedPopulationNode must have at least one pool." }
 
-      val poolOffset = config.poolsList[0].populationOffset.toULong()
-      var poolSize = 0uL
-      config.poolsList.forEach { poolSize += it.totalPopulation.toULong() }
+      val pool = config.poolsList.single()
+      val poolOffset = pool.populationOffset.toULong()
+      val poolSize = pool.totalPopulation.toULong()
 
       require(poolSize > 0uL) { "RankedPopulationNode total pool size must be > 0." }
 

@@ -149,6 +149,45 @@ class RankedLabelingIntegrationTest {
   }
 
   @Test
+  fun `rank overflow falls back to unranked path`() {
+    val root = CompiledNode.newBuilder()
+    TextFormat.merge(
+      """
+        name: "TestRankedNode"
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "overflow-seed"
+          ranked_size: 200
+          unranked_mode: DISJOINT
+        }
+      """,
+      root,
+    )
+
+    val labeler = Labeler.build(root.build())
+
+    // local_rank=250 >= ranked_size=200 — should fall back to unranked DISJOINT range.
+    val input =
+      LabelerInput.newBuilder()
+        .setEventId(
+          org.wfanet.virtualpeople.common.EventId.newBuilder()
+            .setPublisher("test")
+            .setId("overflow-event")
+        )
+        .addRankAssignments(
+          RankAssignment.newBuilder().setPoolOffset(100).setLocalRank(250)
+        )
+        .build()
+
+    val output = labeler.label(input)
+    assertEquals(1, output.peopleCount)
+    val vid = output.peopleList[0].virtualPersonId.toULong()
+    // DISJOINT unranked range: [pool_offset + ranked_size, pool_offset + pool_size)
+    assertTrue(vid >= 300uL, "Overflow VID $vid should be in unranked range")
+    assertTrue(vid < 600uL, "Overflow VID $vid should be in unranked range")
+  }
+
+  @Test
   fun `ranked size zero behaves like hash based`() {
     val root = CompiledNode.newBuilder()
     TextFormat.merge(

@@ -33,27 +33,28 @@ object Feistel {
     if (domainSize <= 1uL) return 0uL
 
     val half = ceil(sqrt(domainSize.toDouble())).toULong()
-    var left = value / half
-    var right = value % half
+    var current = value
 
-    repeat(4) { round ->
-      val roundInput = "$seed-feistel-$round-$right"
-      val roundHash =
-        Hashing.farmHashFingerprint64()
-          .hashString(roundInput, StandardCharsets.UTF_8)
-          .asLong()
-          .toULong()
-      val newRight = (left + (roundHash % half)) % half
-      left = right
-      right = newRight
-    }
+    // Cycle-walk iteratively until the result is in range.
+    do {
+      var left = current / half
+      var right = current % half
 
-    val result = left * half + right
-    // Cycle-walk: re-encrypt if result is out of range.
-    return if (result >= domainSize) {
-      permute(result, domainSize, seed)
-    } else {
-      result
-    }
+      repeat(4) { round ->
+        val roundInput = "$seed-feistel-$round-$right"
+        val roundHash =
+          Hashing.farmHashFingerprint64()
+            .hashString(roundInput, StandardCharsets.UTF_8)
+            .asLong()
+            .toULong()
+        val newRight = (left + (roundHash % half)) % half
+        left = right
+        right = newRight
+      }
+
+      current = left * half + right
+    } while (current >= domainSize)
+
+    return current
   }
 }

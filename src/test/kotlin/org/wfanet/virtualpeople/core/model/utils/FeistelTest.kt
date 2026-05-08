@@ -81,4 +81,16 @@ class FeistelTest {
     }
     assertTrue(anyDifferent)
   }
+
+  @Test
+  fun `golden vectors for cross-language parity with C++`() {
+    // These values were independently computed using the C++ FeistelPermute
+    // implementation. Any change here indicates a cross-language divergence.
+    assertEquals(72uL, Feistel.permute(0uL, 100uL, "bijectivity-seed"))
+    assertEquals(52uL, Feistel.permute(1uL, 100uL, "bijectivity-seed"))
+    assertEquals(46uL, Feistel.permute(99uL, 100uL, "bijectivity-seed"))
+    assertEquals(0uL, Feistel.permute(0uL, 1000uL, "medium-seed"))
+    assertEquals(458uL, Feistel.permute(1uL, 1000uL, "medium-seed"))
+    assertEquals(347uL, Feistel.permute(999uL, 1000uL, "medium-seed"))
+  }
 }
