@@ -24,33 +24,33 @@ object Feistel {
    * Bijective permutation on [0, [domainSize]).
    *
    * Returns a unique output for each unique input — zero collisions by construction. Uses a 4-round
-   * Feistel network with FarmHash64 as the round function and cycle-walking for non-power-of-2
-   * domains.
-   *
-   * Must produce identical output to the C++ FeistelPermute for cross-language determinism.
+   * Feistel network with FarmHash64 as the round function and iterative cycle-walking for
+   * non-power-of-2 domains.
    */
-  // Recursive cycle-walking matches the C++ FeistelPermute implementation.
-  // Recursion depth is bounded: for a domain of size N, the expected number of
-  // cycle-walk steps is ceil(half^2 / N), which is ≤ 2 for all practical sizes.
   fun permute(value: ULong, domainSize: ULong, seed: String): ULong {
     if (domainSize <= 1uL) return 0uL
 
     val half = ceil(sqrt(domainSize.toDouble())).toULong()
-    var left = value / half
-    var right = value % half
+    var current = value
 
-    repeat(4) { round ->
-      val roundHash =
-        Hashing.farmHashFingerprint64()
-          .hashString("$seed-feistel-$round-$right", StandardCharsets.UTF_8)
-          .asLong()
-          .toULong()
-      val newRight = (left + (roundHash % half)) % half
-      left = right
-      right = newRight
-    }
+    do {
+      var left = current / half
+      var right = current % half
 
-    val result = left * half + right
-    return if (result >= domainSize) permute(result, domainSize, seed) else result
+      repeat(4) { round ->
+        val roundHash =
+          Hashing.farmHashFingerprint64()
+            .hashString("$seed-feistel-$round-$right", StandardCharsets.UTF_8)
+            .asLong()
+            .toULong()
+        val newRight = (left + (roundHash % half)) % half
+        left = right
+        right = newRight
+      }
+
+      current = left * half + right
+    } while (current >= domainSize)
+
+    return current
   }
 }

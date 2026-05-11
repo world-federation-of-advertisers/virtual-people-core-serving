@@ -14,16 +14,11 @@
 
 package org.wfanet.virtualpeople.core.model
 
-import com.google.common.hash.Hashing
-import java.nio.charset.StandardCharsets
 import org.wfanet.virtualpeople.common.CompiledNode
 import org.wfanet.virtualpeople.common.LabelerEvent
-import org.wfanet.virtualpeople.common.PersonLabelAttributes
 import org.wfanet.virtualpeople.common.PopulationNode.VirtualPersonPool
-import org.wfanet.virtualpeople.common.QuantumLabel
 import org.wfanet.virtualpeople.common.VirtualPersonActivity
-import org.wfanet.virtualpeople.core.model.utils.DistributedConsistentHashing
-import org.wfanet.virtualpeople.core.model.utils.DistributionChoice
+import org.wfanet.virtualpeople.core.model.utils.PopulationNodeHelper
 import org.wfanet.virtualpeople.core.model.utils.VirtualPeopleSelector
 
 /** The implementation of the CompiledNode with population_node set. */
@@ -52,14 +47,7 @@ private constructor(
     val virtualPeopleActivity = VirtualPersonActivity.newBuilder()
     /** Only populate virtual_person_id when the pools is not an empty population pool. */
     if (virtualPeopleSelector != null) {
-      /**
-       * The seed uses the string representation of actingFingerprint as an unsigned 64-bit integer
-       */
-      val seed =
-        Hashing.farmHashFingerprint64()
-          .hashString("$randomSeed${event.actingFingerprint.toULong()}", StandardCharsets.UTF_8)
-          .asLong()
-          .toULong()
+      val seed = PopulationNodeHelper.computeVidSeed(randomSeed, event.actingFingerprint)
       /**
        * virtual_person_id is uint64 in the proto, we need to use the signed value to set it in
        * kotlin.
@@ -77,7 +65,7 @@ private constructor(
           event.actingFingerprint.toULong().toString()
         }
       event.quantumLabels.quantumLabelsList.forEach {
-        collapseQuantumLabel(it, seedSuffix, virtualPeopleActivity.labelBuilder)
+        PopulationNodeHelper.collapseQuantumLabel(it, seedSuffix, virtualPeopleActivity.labelBuilder)
       }
     }
     /** Write to virtual_person_activity.label from classic label. */
@@ -95,29 +83,6 @@ private constructor(
         return false
       }
       return pools[0].populationOffset == 0L && pools[0].totalPopulation == 0L
-    }
-
-    /**
-     * Collapse the @quantum_label to a single label based on the probabilities, and merge to
-     * [outputLabel] .
-     */
-    private fun collapseQuantumLabel(
-      quantumLabel: QuantumLabel,
-      seedSuffix: String,
-      outputLabel: PersonLabelAttributes.Builder
-    ) {
-      if (quantumLabel.labelsCount == 0) {
-        error("Empty quantum label.")
-      }
-      if (quantumLabel.labelsCount != quantumLabel.probabilitiesCount) {
-        error("The sizes of labels and probabilities are different in quantum label. $quantumLabel")
-      }
-
-      val distribution =
-        quantumLabel.probabilitiesList.mapIndexed { index, it -> DistributionChoice(index, it) }
-      val hashing = DistributedConsistentHashing(distribution)
-      val index = hashing.hash("quantum-label-collapse-${quantumLabel.seed}$seedSuffix")
-      outputLabel.mergeFrom(quantumLabel.getLabels(index))
     }
 
     /**

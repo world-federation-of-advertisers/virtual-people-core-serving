@@ -86,11 +86,9 @@ class FeistelTest {
   }
 
   @Test
-  fun `golden vectors for cross-language parity with C++`() {
-    // Pinned outputs from this implementation. Must match the C++ FeistelPermute
-    // to ensure both labelers produce identical VIDs for the same inputs.
-    // TODO: Verify these against C++ FeistelPermute test output.
-    val vectors = listOf(
+  fun `print golden vectors`() {
+    // Print values so we can hardcode them after verifying.
+    val cases = listOf(
       Triple(0uL, 100uL, "bijectivity-seed"),
       Triple(1uL, 100uL, "bijectivity-seed"),
       Triple(99uL, 100uL, "bijectivity-seed"),
@@ -98,12 +96,10 @@ class FeistelTest {
       Triple(1uL, 1000uL, "medium-seed"),
       Triple(999uL, 1000uL, "medium-seed"),
     )
-    val expected = vectors.map { (v, d, s) -> Feistel.permute(v, d, s) }
-
-    // Pin the values so any algorithm change is detected.
-    vectors.forEachIndexed { i, (v, d, s) ->
-      assertEquals(expected[i], Feistel.permute(v, d, s),
-        "Golden vector mismatch for permute($v, $d, $s)")
+    cases.forEach { (v, d, s) ->
+      val result = Feistel.permute(v, d, s)
+      println("permute($v, $d, $s) = $result")
+      assertTrue(result < d)
     }
   }
 }

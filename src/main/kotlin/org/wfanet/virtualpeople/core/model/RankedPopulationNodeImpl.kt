@@ -96,8 +96,9 @@ private constructor(
       }
       val config = nodeConfig.rankedPopulationNode
 
-      require(config.poolsCount > 0) { "RankedPopulationNode must have at least one pool." }
-
+      require(config.poolsCount == 1) {
+        "RankedPopulationNode requires exactly one pool, got ${config.poolsCount}."
+      }
       val pool = config.poolsList.single()
       val poolOffset = pool.populationOffset.toULong()
       val poolSize = pool.totalPopulation.toULong()
