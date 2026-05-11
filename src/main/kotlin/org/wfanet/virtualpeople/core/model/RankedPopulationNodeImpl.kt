@@ -49,9 +49,7 @@ private constructor(
 
     val rankAssignment =
       if (event.hasLabelerInput()) {
-        event.labelerInput.rankAssignmentsList.firstOrNull {
-          it.poolOffset.toULong() == poolOffset
-        }
+        event.labelerInput.rankAssignmentsList.firstOrNull { it.poolOffset.toULong() == poolOffset }
       } else {
         null
       }
@@ -67,8 +65,7 @@ private constructor(
             check(unrankedSize > 0uL) {
               "DISJOINT mode with ranked_size == pool_size leaves no unranked space."
             }
-            poolOffset + rankedSize +
-              jumpConsistentHash(seed, unrankedSize.toInt()).toULong()
+            poolOffset + rankedSize + jumpConsistentHash(seed, unrankedSize.toInt()).toULong()
           }
           UnrankedMode.FULL_POOL ->
             poolOffset + jumpConsistentHash(seed, poolSize.toInt()).toULong()

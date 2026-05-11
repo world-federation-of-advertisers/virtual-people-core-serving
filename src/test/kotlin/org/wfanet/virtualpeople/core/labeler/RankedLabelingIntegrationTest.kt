@@ -55,9 +55,7 @@ class RankedLabelingIntegrationTest {
               .setId(rank.toString())
           )
           .addRankAssignments(
-            RankAssignment.newBuilder()
-              .setPoolOffset(100)
-              .setLocalRank(rank.toLong())
+            RankAssignment.newBuilder().setPoolOffset(100).setLocalRank(rank.toLong())
           )
           .build()
 
@@ -174,9 +172,7 @@ class RankedLabelingIntegrationTest {
             .setPublisher("test")
             .setId("overflow-event")
         )
-        .addRankAssignments(
-          RankAssignment.newBuilder().setPoolOffset(100).setLocalRank(250)
-        )
+        .addRankAssignments(RankAssignment.newBuilder().setPoolOffset(100).setLocalRank(250))
         .build()
 
     val output = labeler.label(input)

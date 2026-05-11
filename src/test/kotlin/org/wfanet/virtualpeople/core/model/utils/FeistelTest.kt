@@ -43,7 +43,8 @@ class FeistelTest {
   @Test
   fun `bijectivity small domain`() {
     val domainSize = 100uL
-    val outputs = (0uL until domainSize).map { Feistel.permute(it, domainSize, "bijectivity-seed") }.toSet()
+    val outputs =
+      (0uL until domainSize).map { Feistel.permute(it, domainSize, "bijectivity-seed") }.toSet()
     assertEquals(domainSize.toInt(), outputs.size)
     assertTrue(outputs.all { it < domainSize })
   }
@@ -51,7 +52,8 @@ class FeistelTest {
   @Test
   fun `bijectivity medium domain`() {
     val domainSize = 1000uL
-    val outputs = (0uL until domainSize).map { Feistel.permute(it, domainSize, "medium-seed") }.toSet()
+    val outputs =
+      (0uL until domainSize).map { Feistel.permute(it, domainSize, "medium-seed") }.toSet()
     assertEquals(domainSize.toInt(), outputs.size)
     assertTrue(outputs.all { it < domainSize })
   }
@@ -59,7 +61,8 @@ class FeistelTest {
   @Test
   fun `bijectivity prime domain`() {
     val domainSize = 997uL
-    val outputs = (0uL until domainSize).map { Feistel.permute(it, domainSize, "prime-seed") }.toSet()
+    val outputs =
+      (0uL until domainSize).map { Feistel.permute(it, domainSize, "prime-seed") }.toSet()
     assertEquals(domainSize.toInt(), outputs.size)
     assertTrue(outputs.all { it < domainSize })
   }
