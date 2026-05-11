@@ -86,20 +86,13 @@ class FeistelTest {
   }
 
   @Test
-  fun `print golden vectors`() {
-    // Print values so we can hardcode them after verifying.
-    val cases = listOf(
-      Triple(0uL, 100uL, "bijectivity-seed"),
-      Triple(1uL, 100uL, "bijectivity-seed"),
-      Triple(99uL, 100uL, "bijectivity-seed"),
-      Triple(0uL, 1000uL, "medium-seed"),
-      Triple(1uL, 1000uL, "medium-seed"),
-      Triple(999uL, 1000uL, "medium-seed"),
-    )
-    cases.forEach { (v, d, s) ->
-      val result = Feistel.permute(v, d, s)
-      println("permute($v, $d, $s) = $result")
-      assertTrue(result < d)
-    }
+  fun `golden vectors pinned for algorithm stability`() {
+    // Pinned outputs — any change here indicates an algorithm modification.
+    assertEquals(39uL, Feistel.permute(0uL, 100uL, "bijectivity-seed"))
+    assertEquals(33uL, Feistel.permute(1uL, 100uL, "bijectivity-seed"))
+    assertEquals(27uL, Feistel.permute(99uL, 100uL, "bijectivity-seed"))
+    assertEquals(252uL, Feistel.permute(0uL, 1000uL, "medium-seed"))
+    assertEquals(392uL, Feistel.permute(1uL, 1000uL, "medium-seed"))
+    assertEquals(344uL, Feistel.permute(999uL, 1000uL, "medium-seed"))
   }
 }
