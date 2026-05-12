@@ -184,37 +184,48 @@ class RankedLabelingIntegrationTest {
   }
 
   @Test
-  fun `ranked size zero behaves like hash based`() {
-    val root = CompiledNode.newBuilder()
+  fun `ranked size zero produces same VIDs as PopulationNode`() {
+    val rankedRoot = CompiledNode.newBuilder()
     TextFormat.merge(
       """
-        name: "HashOnlyNode"
+        name: "RankedNode"
         ranked_population_node {
-          pools { population_offset: 100 total_population: 1000 }
-          random_seed: "hash-only-seed"
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "same-seed"
           ranked_size: 0
           unranked_mode: FULL_POOL
         }
       """,
-      root,
+      rankedRoot,
     )
 
-    val labeler = Labeler.build(root.build())
-    for (i in 0 until 50) {
+    val populationRoot = CompiledNode.newBuilder()
+    TextFormat.merge(
+      """
+        name: "PopNode"
+        population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "same-seed"
+        }
+      """,
+      populationRoot,
+    )
+
+    val rankedLabeler = Labeler.build(rankedRoot.build())
+    val popLabeler = Labeler.build(populationRoot.build())
+
+    for (i in 0 until 100) {
       val input =
         LabelerInput.newBuilder()
           .setEventId(
             org.wfanet.virtualpeople.common.EventId.newBuilder()
               .setPublisher("test")
-              .setId(i.toString())
+              .setId("event-$i")
           )
           .build()
-
-      val output = labeler.label(input)
-      assertEquals(1, output.peopleCount)
-      val vid = output.peopleList[0].virtualPersonId.toULong()
-      assertTrue(vid >= 100uL)
-      assertTrue(vid < 1100uL)
+      val rankedVid = rankedLabeler.label(input).peopleList[0].virtualPersonId
+      val popVid = popLabeler.label(input).peopleList[0].virtualPersonId
+      assertEquals(popVid, rankedVid, "VID mismatch for event-$i")
     }
   }
 }
