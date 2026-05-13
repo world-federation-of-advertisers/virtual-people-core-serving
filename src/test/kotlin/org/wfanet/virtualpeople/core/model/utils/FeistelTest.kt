@@ -79,9 +79,10 @@ class FeistelTest {
   @Test
   fun `different seeds produce different outputs`() {
     val domainSize = 100uL
-    val anyDifferent = (0uL until domainSize).any {
-      Feistel.permute(it, domainSize, "seed-a") != Feistel.permute(it, domainSize, "seed-b")
-    }
+    val anyDifferent =
+      (0uL until domainSize).any {
+        Feistel.permute(it, domainSize, "seed-a") != Feistel.permute(it, domainSize, "seed-b")
+      }
     assertTrue(anyDifferent)
   }
 
