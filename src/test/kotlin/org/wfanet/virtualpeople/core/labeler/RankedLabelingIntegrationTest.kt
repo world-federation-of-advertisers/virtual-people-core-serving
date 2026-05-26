@@ -15,6 +15,7 @@
 package org.wfanet.virtualpeople.core.labeler
 
 import com.google.protobuf.TextFormat
+import kotlin.test.assertFailsWith
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.Test
@@ -342,7 +343,7 @@ class RankedLabelingIntegrationTest {
   }
 
   @Test
-  fun `pass 1 population node unaffected`() {
+  fun `pass 1 population node throws`() {
     val root = CompiledNode.newBuilder()
     TextFormat.merge(
       """
@@ -366,11 +367,10 @@ class RankedLabelingIntegrationTest {
         )
         .build()
 
-    val output = labeler.label(input, LabelingMode.POOL_IDENTITY)
-
-    // PopulationNode doesn't check pool_identity_mode — assigns VID normally.
-    assertEquals(1, output.peopleCount)
-    assertEquals(0, output.poolAssignmentsCount)
+    // PopulationNode does not support pool-identity mode — should throw.
+    assertFailsWith<IllegalStateException> {
+      labeler.label(input, LabelingMode.POOL_IDENTITY)
+    }
   }
 
   @Test
@@ -406,7 +406,7 @@ class RankedLabelingIntegrationTest {
     inputs.forEach { input ->
       val output = labeler.label(input, LabelingMode.POOL_IDENTITY)
       assertEquals(1, output.poolAssignmentsCount)
-      assertEquals(0, output.poolAssignmentsCount.let { output.peopleCount })
+      assertEquals(0, output.peopleCount)
     }
 
     // Pass 2: inject ranks and assign VIDs.
@@ -428,5 +428,42 @@ class RankedLabelingIntegrationTest {
 
     // All ranked events must produce unique VIDs.
     assertEquals(eventCount, vids.size, "Collision detected in two-pass flow")
+  }
+
+  @Test
+  fun `rank for non-existent pool falls back to unranked`() {
+    val root = CompiledNode.newBuilder()
+    TextFormat.merge(
+      """
+        name: "TestRankedNode"
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "wrong-pool-seed"
+          ranked_size: 200
+          unranked_mode: DISJOINT
+        }
+      """,
+      root,
+    )
+
+    val labeler = Labeler.build(root.build())
+
+    // Rank assignment for pool_offset=9999 which doesn't match pool_offset=100.
+    val input =
+      LabelerInput.newBuilder()
+        .setEventId(
+          org.wfanet.virtualpeople.common.EventId.newBuilder()
+            .setPublisher("test")
+            .setId("wrong-pool-event")
+        )
+        .addRankAssignments(RankAssignment.newBuilder().setPoolOffset(9999).setLocalRank(5))
+        .build()
+
+    val output = labeler.label(input)
+    assertEquals(1, output.peopleCount)
+    val vid = output.peopleList[0].virtualPersonId.toULong()
+    // No matching rank — falls back to DISJOINT unranked range.
+    assertTrue(vid >= 300uL, "VID $vid should be in unranked range")
+    assertTrue(vid < 600uL, "VID $vid should be in unranked range")
   }
 }
