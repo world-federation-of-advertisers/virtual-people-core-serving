@@ -15,8 +15,8 @@
 package org.wfanet.virtualpeople.core.labeler
 
 import com.google.protobuf.TextFormat
-import kotlin.test.assertFailsWith
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
