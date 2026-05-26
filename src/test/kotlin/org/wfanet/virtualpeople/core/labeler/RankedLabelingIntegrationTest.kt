@@ -368,9 +368,7 @@ class RankedLabelingIntegrationTest {
         .build()
 
     // PopulationNode does not support pool-identity mode — should throw.
-    assertFailsWith<IllegalStateException> {
-      labeler.label(input, LabelingMode.POOL_IDENTITY)
-    }
+    assertFailsWith<IllegalStateException> { labeler.label(input, LabelingMode.POOL_IDENTITY) }
   }
 
   @Test
@@ -393,15 +391,16 @@ class RankedLabelingIntegrationTest {
     val eventCount = 100
 
     // Pass 1: collect pool assignments.
-    val inputs = (0 until eventCount).map { i ->
-      LabelerInput.newBuilder()
-        .setEventId(
-          org.wfanet.virtualpeople.common.EventId.newBuilder()
-            .setPublisher("test")
-            .setId("event-$i")
-        )
-        .build()
-    }
+    val inputs =
+      (0 until eventCount).map { i ->
+        LabelerInput.newBuilder()
+          .setEventId(
+            org.wfanet.virtualpeople.common.EventId.newBuilder()
+              .setPublisher("test")
+              .setId("event-$i")
+          )
+          .build()
+      }
 
     inputs.forEach { input ->
       val output = labeler.label(input, LabelingMode.POOL_IDENTITY)
