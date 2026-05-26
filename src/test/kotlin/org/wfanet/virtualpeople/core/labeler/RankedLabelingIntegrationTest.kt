@@ -304,4 +304,129 @@ class RankedLabelingIntegrationTest {
       assertEquals(popVid, rankedVid, "VID mismatch for event-$i")
     }
   }
+
+  @Test
+  fun `pass 1 emits pool assignment without VID`() {
+    val root = CompiledNode.newBuilder()
+    TextFormat.merge(
+      """
+        name: "TestRankedNode"
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "pass1-seed"
+          ranked_size: 200
+          unranked_mode: DISJOINT
+        }
+      """,
+      root,
+    )
+
+    val labeler = Labeler.build(root.build())
+
+    val input =
+      LabelerInput.newBuilder()
+        .setEventId(
+          org.wfanet.virtualpeople.common.EventId.newBuilder()
+            .setPublisher("test")
+            .setId("pass1-event")
+        )
+        .build()
+
+    val output = labeler.label(input, LabelingMode.POOL_IDENTITY)
+
+    assertEquals(0, output.peopleCount, "Pass-1 should not assign VIDs")
+    assertEquals(1, output.poolAssignmentsCount, "Pass-1 should emit pool assignment")
+    assertEquals(100L, output.poolAssignmentsList[0].poolOffset)
+    assertEquals(500L, output.poolAssignmentsList[0].poolSize)
+    assertEquals(200L, output.poolAssignmentsList[0].rankedSize)
+  }
+
+  @Test
+  fun `pass 1 population node unaffected`() {
+    val root = CompiledNode.newBuilder()
+    TextFormat.merge(
+      """
+        name: "PopNode"
+        population_node {
+          pools { population_offset: 10 total_population: 100 }
+          random_seed: "pop-seed"
+        }
+      """,
+      root,
+    )
+
+    val labeler = Labeler.build(root.build())
+
+    val input =
+      LabelerInput.newBuilder()
+        .setEventId(
+          org.wfanet.virtualpeople.common.EventId.newBuilder()
+            .setPublisher("test")
+            .setId("pop-event")
+        )
+        .build()
+
+    val output = labeler.label(input, LabelingMode.POOL_IDENTITY)
+
+    // PopulationNode doesn't check pool_identity_mode — assigns VID normally.
+    assertEquals(1, output.peopleCount)
+    assertEquals(0, output.poolAssignmentsCount)
+  }
+
+  @Test
+  fun `two pass collision free end to end`() {
+    val root = CompiledNode.newBuilder()
+    TextFormat.merge(
+      """
+        name: "TestRankedNode"
+        ranked_population_node {
+          pools { population_offset: 0 total_population: 300 }
+          random_seed: "two-pass-seed"
+          ranked_size: 100
+          unranked_mode: DISJOINT
+        }
+      """,
+      root,
+    )
+
+    val labeler = Labeler.build(root.build())
+    val eventCount = 100
+
+    // Pass 1: collect pool assignments.
+    val inputs = (0 until eventCount).map { i ->
+      LabelerInput.newBuilder()
+        .setEventId(
+          org.wfanet.virtualpeople.common.EventId.newBuilder()
+            .setPublisher("test")
+            .setId("event-$i")
+        )
+        .build()
+    }
+
+    inputs.forEach { input ->
+      val output = labeler.label(input, LabelingMode.POOL_IDENTITY)
+      assertEquals(1, output.poolAssignmentsCount)
+      assertEquals(0, output.poolAssignmentsCount.let { output.peopleCount })
+    }
+
+    // Pass 2: inject ranks and assign VIDs.
+    val vids = mutableSetOf<ULong>()
+    inputs.forEachIndexed { rank, input ->
+      val rankedInput =
+        input.toBuilder()
+          .addRankAssignments(
+            RankAssignment.newBuilder().setPoolOffset(0).setLocalRank(rank.toLong())
+          )
+          .build()
+
+      val output = labeler.label(rankedInput)
+      assertEquals(1, output.peopleCount)
+      val vid = output.peopleList[0].virtualPersonId.toULong()
+      assertTrue(vid < 100uL, "Ranked VID $vid should be in [0, 100)")
+      vids.add(vid)
+    }
+
+    // All ranked events must produce unique VIDs.
+    assertEquals(eventCount, vids.size, "Collision detected in two-pass flow")
+  }
 }
