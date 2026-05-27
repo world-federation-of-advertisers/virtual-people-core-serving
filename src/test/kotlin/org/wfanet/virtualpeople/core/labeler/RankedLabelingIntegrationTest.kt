@@ -412,7 +412,8 @@ class RankedLabelingIntegrationTest {
     val vids = mutableSetOf<ULong>()
     inputs.forEachIndexed { rank, input ->
       val rankedInput =
-        input.toBuilder()
+        input
+          .toBuilder()
           .addRankAssignments(
             RankAssignment.newBuilder().setPoolOffset(0).setLocalRank(rank.toLong())
           )
