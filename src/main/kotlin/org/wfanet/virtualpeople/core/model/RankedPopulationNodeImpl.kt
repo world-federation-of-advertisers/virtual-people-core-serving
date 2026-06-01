@@ -59,12 +59,16 @@ private constructor(
 
     val activity = VirtualPersonActivity.newBuilder()
 
-    val rankAssignment =
-      if (event.hasLabelerInput()) {
-        event.labelerInput.rankAssignmentsList.firstOrNull { it.poolOffset.toULong() == poolOffset }
-      } else {
-        null
-      }
+    val rankAssignments =
+      if (event.hasLabelerInput()) event.labelerInput.rankAssignmentsList else emptyList()
+    val rankAssignment = rankAssignments.firstOrNull { it.poolOffset.toULong() == poolOffset }
+
+    if (rankAssignments.isNotEmpty() && rankAssignment == null) {
+      error(
+        "RankAssignment provided but none match pool_offset=$poolOffset. " +
+          "Available: ${rankAssignments.map { it.poolOffset }}."
+      )
+    }
 
     val virtualPersonId =
       if (rankAssignment != null && rankAssignment.localRank.toULong() < rankedSize) {

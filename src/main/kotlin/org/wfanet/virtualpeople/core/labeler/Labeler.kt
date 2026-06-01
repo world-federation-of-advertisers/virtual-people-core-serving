@@ -53,10 +53,8 @@ class Labeler private constructor(private val rootNode: ModelNode) {
     rootNode.apply(eventBuilder)
 
     return labelerOutput {
-      people.addAll(eventBuilder.virtualPersonActivitiesList)
-      if (eventBuilder.poolAssignmentsCount > 0) {
-        poolAssignments.addAll(eventBuilder.poolAssignmentsList)
-      }
+      people += eventBuilder.virtualPersonActivitiesList
+      poolAssignments += eventBuilder.poolAssignmentsList
       serializedDebugTrace = eventBuilder.toString()
     }
   }
