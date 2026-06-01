@@ -412,13 +412,14 @@ class RankedLabelingIntegrationTest {
     // Pass 2: inject ranks and assign VIDs.
     val vids = mutableSetOf<ULong>()
     inputs.forEachIndexed { rank, input ->
-      val rankedInput = labelerInput {
-        mergeFrom(input)
-        rankAssignments += rankAssignment {
-          poolOffset = 0
-          localRank = rank.toLong()
-        }
-      }
+      val rankedInput =
+        input
+          .toBuilder()
+          .addRankAssignments(rankAssignment {
+            poolOffset = 0
+            localRank = rank.toLong()
+          })
+          .build()
 
       val output = labeler.label(rankedInput)
       assertEquals(1, output.peopleCount)
@@ -450,13 +451,14 @@ class RankedLabelingIntegrationTest {
     // Run two-pass twice and verify identical VIDs.
     fun runTwoPass(): List<Long> {
       return inputs.mapIndexed { rank, input ->
-        val rankedInput = labelerInput {
-          mergeFrom(input)
-          rankAssignments += rankAssignment {
-            poolOffset = 0
-            localRank = rank.toLong()
-          }
-        }
+        val rankedInput =
+          input
+            .toBuilder()
+            .addRankAssignments(rankAssignment {
+              poolOffset = 0
+              localRank = rank.toLong()
+            })
+            .build()
         labeler.label(rankedInput).peopleList[0].virtualPersonId
       }
     }
