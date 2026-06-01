@@ -14,6 +14,9 @@
 
 #include "wfa/virtual_people/core/labeler/labeler.h"
 
+#include <string>
+#include <vector>
+
 #include "absl/container/flat_hash_map.h"
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"
@@ -466,7 +469,7 @@ TEST(LabelerTest, SerializedDebugTraceEmptyWhenEnableDebugTraceUnset) {
   EXPECT_EQ(output.serialized_debug_trace(), "");
 }
 
-TEST(LabelerTest, SerializedDebugTraceEmptyWhenEnableDebugTraceExplicitlyFalse) {
+TEST(LabelerTest, SerializedDebugTraceEmptyWhenEnableDebugTraceFalse) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler,
                        BuildSinglePoolLabeler());
   LabelerInput input;
@@ -486,11 +489,11 @@ TEST(LabelerTest, SerializedDebugTracePopulatedWhenEnableDebugTraceTrue) {
   LabelerOutput output;
   EXPECT_THAT(labeler->Label(input, output), IsOk());
   EXPECT_FALSE(output.serialized_debug_trace().empty());
-  // The trace is the DebugString() of the LabelerEvent — the input event id we set
-  // should be visible verbatim in the trace.
+  // The trace is the DebugString() of the LabelerEvent, so the input event
+  // id we set should be visible verbatim in the trace.
   EXPECT_NE(output.serialized_debug_trace().find("evt_42"), std::string::npos);
-  // And the trace should be re-parseable as a LabelerEvent text format, round-tripping
-  // back to the original input event id.
+  // And the trace should be re-parseable as a LabelerEvent text format,
+  // round-tripping back to the original input event id.
   LabelerEvent rebuilt;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       output.serialized_debug_trace(), &rebuilt));

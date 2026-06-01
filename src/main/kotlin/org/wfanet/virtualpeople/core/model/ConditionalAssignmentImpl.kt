@@ -45,7 +45,7 @@ private constructor(private val condition: FieldFilter, private val assignments:
     private inline fun <reified T> assign(
       event: LabelerEvent.Builder,
       source: List<FieldDescriptor>,
-      target: List<FieldDescriptor>
+      target: List<FieldDescriptor>,
     ) {
       val fieldValue = getValueFromProto<T>(event, source)
       if (!fieldValue.isSet) {
@@ -76,9 +76,9 @@ private constructor(private val condition: FieldFilter, private val assignments:
      * 2. [config].assignments is empty.
      * 3. Fails to build a [FieldFilter] from [config].condition.
      * 4. In any entry of [config].assignments, sourceField or targetField is not set or does not
-     * refer to a valid field.
+     *    refer to a valid field.
      * 5. In any entry of [config].assignments, sourceField and targetField refer to different type
-     * of fields. (like int32 vs int64)
+     *    of fields. (like int32 vs int64)
      */
     internal fun build(config: ConditionalAssignment): ConditionalAssignmentImpl {
       if (!config.hasCondition()) {
@@ -114,10 +114,10 @@ private constructor(private val condition: FieldFilter, private val assignments:
     }
 
     /**
-     * Monomorphic per-type assigner. Each `object` is a single instance with a single
-     * `apply` method, so the JIT sees a monomorphic call site at each `assigner.apply(...)`
-     * invocation and can inline through. The reified-T lambda dispatch the previous code used
-     * was erased at runtime and forced primitive boxing.
+     * Monomorphic per-type assigner. Each `object` is a single instance with a single `apply`
+     * method, so the JIT sees a monomorphic call site at each `assigner.apply(...)` invocation and
+     * can inline through. The reified-T lambda dispatch the previous code used was erased at
+     * runtime and forced primitive boxing.
      */
     internal sealed interface Assigner {
       fun apply(

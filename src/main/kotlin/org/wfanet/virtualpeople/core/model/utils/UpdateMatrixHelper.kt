@@ -37,7 +37,7 @@ fun selectFromMatrix(
   filtersMatcher: FieldFiltersMatcher?,
   rowHashings: List<DistributedConsistentHashing>,
   randomSeed: String,
-  event: LabelerEventOrBuilder
+  event: LabelerEventOrBuilder,
 ): MatrixIndexes {
   val columnIndex =
     when {
@@ -46,8 +46,7 @@ fun selectFromMatrix(
           when (event) {
             is LabelerEvent -> event
             is LabelerEvent.Builder -> event.build()
-            else ->
-              error("Unexpected LabelerEventOrBuilder implementation: ${event::class}")
+            else -> error("Unexpected LabelerEventOrBuilder implementation: ${event::class}")
           }
         )
       filtersMatcher != null -> filtersMatcher.getFirstMatch(event)
