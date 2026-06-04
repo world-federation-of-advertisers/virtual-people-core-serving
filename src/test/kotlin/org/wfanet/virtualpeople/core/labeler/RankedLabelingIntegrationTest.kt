@@ -421,12 +421,11 @@ class RankedLabelingIntegrationTest {
     // Pass 2: inject ranks and assign VIDs.
     val vids = mutableSetOf<ULong>()
     inputs.forEachIndexed { rank, input ->
-      val rankedInput = input.copy {
-        rankAssignments += rankAssignment {
+      val rankedInput =
+        input.toBuilder().addRankAssignments(rankAssignment {
           poolOffset = 0
           localRank = rank.toLong()
-        }
-      }
+        }).build()
 
       val output = labeler.label(rankedInput)
       assertEquals(1, output.peopleCount)
