@@ -44,11 +44,13 @@ private constructor(
   override fun apply(event: LabelerEvent.Builder) {
     // Pass-1 mode: emit pool identity and return without assigning a VID.
     if (event.poolIdentityMode) {
-      event.addPoolAssignments(poolAssignment {
-        poolOffset = this@RankedPopulationNodeImpl.poolOffset.toLong()
-        poolSize = this@RankedPopulationNodeImpl.poolSize.toLong()
-        rankedSize = this@RankedPopulationNodeImpl.rankedSize.toLong()
-      })
+      event.addPoolAssignments(
+        poolAssignment {
+          poolOffset = this@RankedPopulationNodeImpl.poolOffset.toLong()
+          poolSize = this@RankedPopulationNodeImpl.poolSize.toLong()
+          rankedSize = this@RankedPopulationNodeImpl.rankedSize.toLong()
+        }
+      )
       return
     }
 
