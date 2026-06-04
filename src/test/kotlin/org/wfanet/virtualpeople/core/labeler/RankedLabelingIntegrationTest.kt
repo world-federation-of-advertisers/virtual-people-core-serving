@@ -461,15 +461,12 @@ class RankedLabelingIntegrationTest {
     fun runTwoPass(): List<Long> {
       return inputs.mapIndexed { rank, input ->
         val rankedInput =
-          input
-            .toBuilder()
-            .addRankAssignments(
-              rankAssignment {
-                poolOffset = 0
-                localRank = rank.toLong()
-              }
-            )
-            .build()
+          input.copy {
+            rankAssignments += rankAssignment {
+              poolOffset = 0
+              localRank = rank.toLong()
+            }
+          }
         labeler.label(rankedInput).peopleList[0].virtualPersonId
       }
     }
