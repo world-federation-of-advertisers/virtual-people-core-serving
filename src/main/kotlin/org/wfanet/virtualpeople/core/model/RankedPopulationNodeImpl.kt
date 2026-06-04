@@ -16,9 +16,9 @@ package org.wfanet.virtualpeople.core.model
 
 import org.wfanet.virtualpeople.common.CompiledNode
 import org.wfanet.virtualpeople.common.LabelerEvent
-import org.wfanet.virtualpeople.common.poolAssignment
 import org.wfanet.virtualpeople.common.RankedPopulationNode.UnrankedMode
 import org.wfanet.virtualpeople.common.VirtualPersonActivity
+import org.wfanet.virtualpeople.common.poolAssignment
 import org.wfanet.virtualpeople.core.model.utils.Feistel
 import org.wfanet.virtualpeople.core.model.utils.PopulationNodeHelper
 import org.wfanet.virtualpeople.core.model.utils.jumpConsistentHash
