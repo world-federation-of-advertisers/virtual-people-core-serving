@@ -16,7 +16,7 @@ package org.wfanet.virtualpeople.core.model
 
 import org.wfanet.virtualpeople.common.CompiledNode
 import org.wfanet.virtualpeople.common.LabelerEvent
-import org.wfanet.virtualpeople.common.PoolAssignment
+import org.wfanet.virtualpeople.common.poolAssignment
 import org.wfanet.virtualpeople.common.RankedPopulationNode.UnrankedMode
 import org.wfanet.virtualpeople.common.VirtualPersonActivity
 import org.wfanet.virtualpeople.core.model.utils.Feistel
@@ -44,12 +44,11 @@ private constructor(
   override fun apply(event: LabelerEvent.Builder) {
     // Pass-1 mode: emit pool identity and return without assigning a VID.
     if (event.poolIdentityMode) {
-      event.addPoolAssignments(
-        PoolAssignment.newBuilder()
-          .setPoolOffset(poolOffset.toLong())
-          .setPoolSize(poolSize.toLong())
-          .setRankedSize(rankedSize.toLong())
-      )
+      event.addPoolAssignments(poolAssignment {
+        poolOffset = this@RankedPopulationNodeImpl.poolOffset.toLong()
+        poolSize = this@RankedPopulationNodeImpl.poolSize.toLong()
+        rankedSize = this@RankedPopulationNodeImpl.rankedSize.toLong()
+      })
       return
     }
 

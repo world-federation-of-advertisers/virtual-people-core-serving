@@ -212,14 +212,23 @@ class RankedLabelingIntegrationTest {
     """
       )
 
+    // Event carries rank assignments for multiple pools — only pool_offset=500 should match.
     val input = labelerInput {
       eventId = eventId {
         publisher = "test"
         id = "multi-rank-event"
       }
       rankAssignments += rankAssignment {
+        poolOffset = 100
+        localRank = 5
+      }
+      rankAssignments += rankAssignment {
         poolOffset = 500
         localRank = 10
+      }
+      rankAssignments += rankAssignment {
+        poolOffset = 9000
+        localRank = 99
       }
     }
 
@@ -412,14 +421,12 @@ class RankedLabelingIntegrationTest {
     // Pass 2: inject ranks and assign VIDs.
     val vids = mutableSetOf<ULong>()
     inputs.forEachIndexed { rank, input ->
-      val rankedInput =
-        input
-          .toBuilder()
-          .addRankAssignments(rankAssignment {
-            poolOffset = 0
-            localRank = rank.toLong()
-          })
-          .build()
+      val rankedInput = input.copy {
+        rankAssignments += rankAssignment {
+          poolOffset = 0
+          localRank = rank.toLong()
+        }
+      }
 
       val output = labeler.label(rankedInput)
       assertEquals(1, output.peopleCount)
