@@ -22,6 +22,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.wfanet.virtualpeople.common.CompiledNode
+import org.wfanet.virtualpeople.common.copy
 import org.wfanet.virtualpeople.common.eventId
 import org.wfanet.virtualpeople.common.labelerInput
 import org.wfanet.virtualpeople.common.rankAssignment
@@ -421,11 +422,12 @@ class RankedLabelingIntegrationTest {
     // Pass 2: inject ranks and assign VIDs.
     val vids = mutableSetOf<ULong>()
     inputs.forEachIndexed { rank, input ->
-      val rankedInput =
-        input.toBuilder().addRankAssignments(rankAssignment {
+      val rankedInput = input.copy {
+        rankAssignments += rankAssignment {
           poolOffset = 0
           localRank = rank.toLong()
-        }).build()
+        }
+      }
 
       val output = labeler.label(rankedInput)
       assertEquals(1, output.peopleCount)
