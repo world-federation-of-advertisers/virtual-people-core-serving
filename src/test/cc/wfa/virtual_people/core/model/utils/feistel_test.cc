@@ -103,5 +103,16 @@ TEST(FeistelPermuteTest, OutputInRange) {
   }
 }
 
+TEST(FeistelPermuteTest, GoldenVectorsCrossLanguageParity) {
+  // These values must match the Kotlin Feistel.permute output to ensure both
+  // labelers produce identical VIDs for the same inputs.
+  EXPECT_EQ(FeistelPermute(0, 100, "bijectivity-seed"), 39);
+  EXPECT_EQ(FeistelPermute(1, 100, "bijectivity-seed"), 33);
+  EXPECT_EQ(FeistelPermute(99, 100, "bijectivity-seed"), 27);
+  EXPECT_EQ(FeistelPermute(0, 1000, "medium-seed"), 252);
+  EXPECT_EQ(FeistelPermute(1, 1000, "medium-seed"), 392);
+  EXPECT_EQ(FeistelPermute(999, 1000, "medium-seed"), 344);
+}
+
 }  // namespace
 }  // namespace wfa_virtual_people

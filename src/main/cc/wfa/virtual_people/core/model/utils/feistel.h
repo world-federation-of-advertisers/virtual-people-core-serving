@@ -23,7 +23,7 @@ namespace wfa_virtual_people {
 // Bijective permutation on [0, domain_size).
 // Returns a unique output for each unique input — zero collisions by
 // construction. Uses a 4-round Feistel network with FarmHash64 as the round
-// function and cycle-walking for non-power-of-2 domains.
+// function and iterative cycle-walking for non-power-of-2 domains.
 uint64_t FeistelPermute(uint64_t value, uint64_t domain_size,
                         const std::string& seed);
 

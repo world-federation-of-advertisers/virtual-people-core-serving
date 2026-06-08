@@ -29,25 +29,27 @@ uint64_t FeistelPermute(uint64_t value, uint64_t domain_size,
 
   uint64_t half = static_cast<uint64_t>(
       std::ceil(std::sqrt(static_cast<double>(domain_size))));
-  uint64_t left = value / half;
-  uint64_t right = value % half;
+  uint64_t current = value;
 
-  for (int round = 0; round < 4; ++round) {
-    std::string round_input =
-        absl::StrCat(seed, "-feistel-", round, "-", right);
-    uint64_t round_hash =
-        util::Fingerprint64(round_input.data(), round_input.size());
-    uint64_t new_right = (left + (round_hash % half)) % half;
-    left = right;
-    right = new_right;
-  }
+  // Cycle-walk iteratively until the result is in range.
+  do {
+    uint64_t left = current / half;
+    uint64_t right = current % half;
 
-  uint64_t result = left * half + right;
-  // Cycle-walk: re-encrypt if result is out of range.
-  if (result >= domain_size) {
-    return FeistelPermute(result, domain_size, seed);
-  }
-  return result;
+    for (int round = 0; round < 4; ++round) {
+      std::string round_input =
+          absl::StrCat(seed, "-feistel-", round, "-", right);
+      uint64_t round_hash =
+          util::Fingerprint64(round_input.data(), round_input.size());
+      uint64_t new_right = (left + (round_hash % half)) % half;
+      left = right;
+      right = new_right;
+    }
+
+    current = left * half + right;
+  } while (current >= domain_size);
+
+  return current;
 }
 
 }  // namespace wfa_virtual_people
