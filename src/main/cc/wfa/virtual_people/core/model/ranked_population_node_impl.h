@@ -47,7 +47,6 @@ class RankedPopulationNodeImpl : public ModelNode {
   absl::Status Apply(LabelerEvent& event) const override;
 
  private:
-
   const std::string random_seed_;
   const uint64_t ranked_size_;
   const RankedPopulationNode::UnrankedMode unranked_mode_;
