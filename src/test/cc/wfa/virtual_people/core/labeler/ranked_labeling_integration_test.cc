@@ -238,8 +238,8 @@ TEST(RankedLabelingIntegrationTest, Pass1BranchRoutesToCorrectPools) {
   }
 
   // Pool identity must vary with routing.
-  EXPECT_TRUE(pool_offsets.contains(1000)) << "No events routed to pool A";
-  EXPECT_TRUE(pool_offsets.contains(5000)) << "No events routed to pool B";
+  EXPECT_GT(pool_offsets.count(1000), 0) << "No events routed to pool A";
+  EXPECT_GT(pool_offsets.count(5000), 0) << "No events routed to pool B";
 }
 
 // Verify pass-2 with ranked_size=0 behaves like hash-based.
