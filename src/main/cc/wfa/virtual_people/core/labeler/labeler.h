@@ -29,8 +29,8 @@
 namespace wfa_virtual_people {
 
 enum class LabelingMode {
-  kFull,           // Default: assign VID (today's behavior).
-  kPoolIdentity,   // Pass 1: emit pool assignment, no VID.
+  kFull,          // Default: assign VID (today's behavior).
+  kPoolIdentity,  // Pass 1: emit pool assignment, no VID.
 };
 
 class Labeler {

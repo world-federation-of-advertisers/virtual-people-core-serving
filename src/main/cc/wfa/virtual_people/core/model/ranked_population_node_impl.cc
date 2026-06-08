@@ -74,9 +74,9 @@ RankedPopulationNodeImpl::Build(const CompiledNode& node_config) {
   const auto& config = node_config.ranked_population_node();
 
   if (config.pools_size() != 1) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "RankedPopulationNode requires exactly one pool, got ",
-        config.pools_size(), "."));
+    return absl::InvalidArgumentError(
+        absl::StrCat("RankedPopulationNode requires exactly one pool, got ",
+                     config.pools_size(), "."));
   }
 
   uint64_t pool_offset = config.pools(0).population_offset();
@@ -88,9 +88,9 @@ RankedPopulationNodeImpl::Build(const CompiledNode& node_config) {
   }
 
   if (config.ranked_size() > pool_size) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "ranked_size (", config.ranked_size(),
-        ") must not exceed pool_size (", pool_size, ")."));
+    return absl::InvalidArgumentError(
+        absl::StrCat("ranked_size (", config.ranked_size(),
+                     ") must not exceed pool_size (", pool_size, ")."));
   }
 
   return absl::make_unique<RankedPopulationNodeImpl>(
@@ -132,8 +132,7 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
   bool has_rank = false;
   uint64_t local_rank = 0;
   if (event.has_labeler_input()) {
-    has_rank_assignments =
-        event.labeler_input().rank_assignments_size() > 0;
+    has_rank_assignments = event.labeler_input().rank_assignments_size() > 0;
     for (const auto& ra : event.labeler_input().rank_assignments()) {
       if (ra.pool_offset() == pool_offset_) {
         local_rank = ra.local_rank();
@@ -173,7 +172,8 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
     } else if (unranked_mode_ == RankedPopulationNode::FULL_POOL) {
       // FULL_POOL: hash into the entire pool.
       virtual_person_id =
-          pool_offset_ + JumpConsistentHash(seed, static_cast<int32_t>(pool_size_));
+          pool_offset_ +
+          JumpConsistentHash(seed, static_cast<int32_t>(pool_size_));
     } else {
       return absl::InvalidArgumentError(
           "UnrankedMode must be DISJOINT or FULL_POOL.");

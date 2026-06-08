@@ -18,8 +18,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "wfa/virtual_people/core/labeler/labeler.h"
-
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
@@ -28,6 +26,7 @@
 #include "wfa/virtual_people/common/event.pb.h"
 #include "wfa/virtual_people/common/label.pb.h"
 #include "wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/core/labeler/labeler.h"
 
 namespace wfa_virtual_people {
 namespace {
@@ -108,8 +107,8 @@ TEST(RankedLabelingIntegrationTest, TwoPassCollisionFree) {
         << "Event " << i << " should have no people in pass-1";
 
     const auto& pa = output.pool_assignments(0);
-    events.push_back({input, pa.pool_offset(), pa.pool_size(),
-                      pa.ranked_size()});
+    events.push_back(
+        {input, pa.pool_offset(), pa.pool_size(), pa.ranked_size()});
     pool_rank_counter[pa.pool_offset()]++;  // count events per pool
   }
 
@@ -159,7 +158,8 @@ TEST(RankedLabelingIntegrationTest, TwoPassCollisionFree) {
     } else {
       // UNRANKED event: check range depends on mode.
       if (ev.pool_offset == 1000) {
-        // DISJOINT: VID in [pool_offset + ranked_size, pool_offset + pool_size).
+        // DISJOINT: VID in [pool_offset + ranked_size, pool_offset +
+        // pool_size).
         EXPECT_GE(vid, ev.pool_offset + ev.ranked_size);
         EXPECT_LT(vid, ev.pool_offset + ev.pool_size);
         disjoint_unranked_count++;

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wfa/virtual_people/core/labeler/labeler.h"
-
 #include "common_cpp/testing/status_macros.h"
 #include "common_cpp/testing/status_matchers.h"
 #include "gmock/gmock.h"
@@ -22,6 +20,7 @@
 #include "wfa/virtual_people/common/event.pb.h"
 #include "wfa/virtual_people/common/label.pb.h"
 #include "wfa/virtual_people/common/model.pb.h"
+#include "wfa/virtual_people/core/labeler/labeler.h"
 
 namespace wfa_virtual_people {
 namespace {
