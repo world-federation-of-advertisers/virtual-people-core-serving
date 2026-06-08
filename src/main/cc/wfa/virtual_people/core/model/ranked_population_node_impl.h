@@ -37,8 +37,8 @@ class RankedPopulationNodeImpl : public ModelNode {
   // Never call the constructor directly.
   RankedPopulationNodeImpl(const CompiledNode& node_config,
                            std::string random_seed, uint64_t ranked_size,
-                           UnrankedMode unranked_mode, uint64_t pool_offset,
-                           uint64_t pool_size);
+                           RankedPopulationNode::UnrankedMode unranked_mode,
+                           uint64_t pool_offset, uint64_t pool_size);
 
   RankedPopulationNodeImpl(const RankedPopulationNodeImpl&) = delete;
   RankedPopulationNodeImpl& operator=(const RankedPopulationNodeImpl&) = delete;
@@ -50,7 +50,7 @@ class RankedPopulationNodeImpl : public ModelNode {
 
   const std::string random_seed_;
   const uint64_t ranked_size_;
-  const UnrankedMode unranked_mode_;
+  const RankedPopulationNode::UnrankedMode unranked_mode_;
   const uint64_t pool_offset_;
   const uint64_t pool_size_;
 };

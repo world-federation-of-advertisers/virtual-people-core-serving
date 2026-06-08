@@ -309,5 +309,126 @@ TEST(RankedPopulationNodeImplTest, ApplyWithClassicLabel) {
             GENDER_FEMALE);
 }
 
+TEST(RankedPopulationNodeImplTest, BoundaryRankEqualsRankedSizeFallsBack) {
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestRankedNode"
+        index: 1
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 1000 }
+          random_seed: "boundary-seed"
+          ranked_size: 500
+          unranked_mode: DISJOINT
+        }
+      )pb",
+      &config));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  // local_rank=500 == ranked_size=500 — boundary, falls back to unranked.
+  LabelerEvent event;
+  event.set_acting_fingerprint(42);
+  auto* ra = event.mutable_labeler_input()->add_rank_assignments();
+  ra->set_pool_offset(100);
+  ra->set_local_rank(500);
+
+  EXPECT_THAT(node->Apply(event), IsOk());
+  uint64_t vid = event.virtual_person_activities(0).virtual_person_id();
+  // DISJOINT unranked range: [pool_offset + ranked_size, pool_offset +
+  // pool_size).
+  EXPECT_GE(vid, 600);
+  EXPECT_LT(vid, 1100);
+}
+
+TEST(RankedPopulationNodeImplTest, MultipleRankAssignmentsResolvesCorrectPool) {
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestRankedNode"
+        index: 1
+        ranked_population_node {
+          pools { population_offset: 500 total_population: 1000 }
+          random_seed: "multi-rank-seed"
+          ranked_size: 400
+          unranked_mode: DISJOINT
+        }
+      )pb",
+      &config));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  // Event carries rank assignments for multiple pools; only 500 matches.
+  LabelerEvent event;
+  event.set_acting_fingerprint(42);
+  auto* labeler_input = event.mutable_labeler_input();
+  auto* ra1 = labeler_input->add_rank_assignments();
+  ra1->set_pool_offset(100);
+  ra1->set_local_rank(5);
+  auto* ra2 = labeler_input->add_rank_assignments();
+  ra2->set_pool_offset(500);
+  ra2->set_local_rank(10);
+  auto* ra3 = labeler_input->add_rank_assignments();
+  ra3->set_pool_offset(9000);
+  ra3->set_local_rank(99);
+
+  EXPECT_THAT(node->Apply(event), IsOk());
+  uint64_t vid = event.virtual_person_activities(0).virtual_person_id();
+  // Uses pool_offset=500, local_rank=10 → ranked range [500, 900).
+  EXPECT_GE(vid, 500);
+  EXPECT_LT(vid, 900);
+}
+
+TEST(RankedPopulationNodeImplTest, RankForNonExistentPoolReturnsError) {
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestRankedNode"
+        index: 1
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "wrong-pool-seed"
+          ranked_size: 200
+          unranked_mode: DISJOINT
+        }
+      )pb",
+      &config));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  // Rank assignment for pool_offset=9999 doesn't match pool_offset=100.
+  LabelerEvent event;
+  event.set_acting_fingerprint(42);
+  auto* ra = event.mutable_labeler_input()->add_rank_assignments();
+  ra->set_pool_offset(9999);
+  ra->set_local_rank(5);
+
+  EXPECT_THAT(node->Apply(event),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
+TEST(RankedPopulationNodeImplTest, InvalidMultiplePools) {
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestRankedNode"
+        index: 1
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 500 }
+          pools { population_offset: 600 total_population: 500 }
+          random_seed: "test-seed"
+          ranked_size: 200
+          unranked_mode: DISJOINT
+        }
+      )pb",
+      &config));
+
+  EXPECT_THAT(ModelNode::Build(config).status(),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+}
+
 }  // namespace
 }  // namespace wfa_virtual_people

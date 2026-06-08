@@ -28,6 +28,7 @@
 #include "wfa/virtual_people/common/label.pb.h"
 #include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
+#include "wfa/virtual_people/core/model/utils/consistent_hash.h"
 #include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 #include "wfa/virtual_people/core/model/utils/feistel.h"
 
@@ -72,18 +73,14 @@ RankedPopulationNodeImpl::Build(const CompiledNode& node_config) {
   }
   const auto& config = node_config.ranked_population_node();
 
-  if (config.pools_size() == 0) {
-    return absl::InvalidArgumentError(
-        "RankedPopulationNode must have at least one pool.");
+  if (config.pools_size() != 1) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "RankedPopulationNode requires exactly one pool, got ",
+        config.pools_size(), "."));
   }
 
-  // Compute total pool offset and size from the first pool.
-  // For RankedPopulationNode, a single contiguous pool is expected.
   uint64_t pool_offset = config.pools(0).population_offset();
-  uint64_t pool_size = 0;
-  for (const auto& pool : config.pools()) {
-    pool_size += pool.total_population();
-  }
+  uint64_t pool_size = config.pools(0).total_population();
 
   if (pool_size == 0) {
     return absl::InvalidArgumentError(
@@ -103,8 +100,8 @@ RankedPopulationNodeImpl::Build(const CompiledNode& node_config) {
 
 RankedPopulationNodeImpl::RankedPopulationNodeImpl(
     const CompiledNode& node_config, std::string random_seed,
-    uint64_t ranked_size, UnrankedMode unranked_mode, uint64_t pool_offset,
-    uint64_t pool_size)
+    uint64_t ranked_size, RankedPopulationNode::UnrankedMode unranked_mode,
+    uint64_t pool_offset, uint64_t pool_size)
     : ModelNode(node_config),
       random_seed_(std::move(random_seed)),
       ranked_size_(ranked_size),
@@ -113,11 +110,6 @@ RankedPopulationNodeImpl::RankedPopulationNodeImpl(
       pool_size_(pool_size) {}
 
 absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
-  if (event.virtual_person_activities_size() > 0) {
-    return absl::InvalidArgumentError(
-        "virtual_person_activities should only be created in leaf nodes.");
-  }
-
   // Pass-1 mode: emit pool identity and return without assigning a VID.
   if (event.pool_identity_mode()) {
     PoolAssignment* pa = event.add_pool_assignments();
@@ -127,13 +119,21 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
     return absl::OkStatus();
   }
 
+  if (event.virtual_person_activities_size() > 0) {
+    return absl::InvalidArgumentError(
+        "virtual_person_activities should only be created in leaf nodes.");
+  }
+
   VirtualPersonActivity* activity = event.add_virtual_person_activities();
   uint64_t virtual_person_id;
 
   // Look up pre-computed rank from LabelerInput.rank_assignments.
+  bool has_rank_assignments = false;
   bool has_rank = false;
   uint64_t local_rank = 0;
   if (event.has_labeler_input()) {
+    has_rank_assignments =
+        event.labeler_input().rank_assignments_size() > 0;
     for (const auto& ra : event.labeler_input().rank_assignments()) {
       if (ra.pool_offset() == pool_offset_) {
         local_rank = ra.local_rank();
@@ -141,6 +141,13 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
         break;
       }
     }
+  }
+
+  // Rank assignments were provided but none match this pool — caller misuse.
+  if (has_rank_assignments && !has_rank) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "RankAssignment provided but none match pool_offset=", pool_offset_,
+        "."));
   }
 
   if (has_rank && local_rank < ranked_size_) {
@@ -151,10 +158,9 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
     // UNRANKED path: hash-based (mode-dependent scope).
     std::string seed_str =
         absl::StrCat(random_seed_, event.acting_fingerprint());
-    uint64_t seed =
-        util::Fingerprint64(seed_str.data(), seed_str.size());
+    uint64_t seed = util::Fingerprint64(seed_str.data(), seed_str.size());
 
-    if (unranked_mode_ == DISJOINT) {
+    if (unranked_mode_ == RankedPopulationNode::DISJOINT) {
       uint64_t unranked_size = pool_size_ - ranked_size_;
       if (unranked_size == 0) {
         return absl::InvalidArgumentError(
@@ -162,10 +168,15 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
             "space.");
       }
       virtual_person_id =
-          pool_offset_ + ranked_size_ + (seed % unranked_size);
-    } else {
+          pool_offset_ + ranked_size_ +
+          JumpConsistentHash(seed, static_cast<int32_t>(unranked_size));
+    } else if (unranked_mode_ == RankedPopulationNode::FULL_POOL) {
       // FULL_POOL: hash into the entire pool.
-      virtual_person_id = pool_offset_ + (seed % pool_size_);
+      virtual_person_id =
+          pool_offset_ + JumpConsistentHash(seed, static_cast<int32_t>(pool_size_));
+    } else {
+      return absl::InvalidArgumentError(
+          "UnrankedMode must be DISJOINT or FULL_POOL.");
     }
   }
 

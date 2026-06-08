@@ -27,6 +27,7 @@ namespace wfa_virtual_people {
 namespace {
 
 using ::wfa::IsOk;
+using ::wfa::StatusIs;
 
 TEST(Pass1ModeTest, RankedNodeEmitsPoolAssignment) {
   CompiledNode root;
@@ -60,7 +61,7 @@ TEST(Pass1ModeTest, RankedNodeEmitsPoolAssignment) {
   EXPECT_EQ(output.pool_assignments(0).ranked_size(), 500);
 }
 
-TEST(Pass1ModeTest, PopulationNodeUnaffectedByPass1Mode) {
+TEST(Pass1ModeTest, PopulationNodeRejectsPass1Mode) {
   CompiledNode root;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -78,13 +79,10 @@ TEST(Pass1ModeTest, PopulationNodeUnaffectedByPass1Mode) {
   input.mutable_event_id()->set_publisher("test");
   input.mutable_event_id()->set_id("event-1");
 
+  // PopulationNode does not support pool-identity mode — should error.
   LabelerOutput output;
   EXPECT_THAT(labeler->Label(input, output, LabelingMode::kPoolIdentity),
-              IsOk());
-
-  // PopulationNode doesn't know about pool_identity_mode — behaves normally.
-  EXPECT_EQ(output.people_size(), 1);
-  EXPECT_EQ(output.pool_assignments_size(), 0);
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
 TEST(Pass1ModeTest, DefaultModeUnchanged) {

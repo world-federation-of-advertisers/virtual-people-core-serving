@@ -122,6 +122,12 @@ PopulationNodeImpl::PopulationNodeImpl(
       random_seed_(random_seed) {}
 
 absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
+  if (event.pool_identity_mode()) {
+    return absl::InvalidArgumentError(
+        "PopulationNode does not support pool-identity mode. Use "
+        "RankedPopulationNode for two-pass labeling.");
+  }
+
   // Creates a new virtual_person_activities in @event and write the virtual
   // person id and label.
   // No virtual_person_activity should be added by previous nodes.

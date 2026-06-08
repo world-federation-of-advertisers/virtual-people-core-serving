@@ -186,44 +186,44 @@ TEST(RankedLabelingIntegrationTest, TwoPassCollisionFree) {
 }
 
 // Mixed model: one PopulationNode leaf, one RankedPopulationNode leaf.
-TEST(RankedLabelingIntegrationTest, MixedModelPass1) {
+TEST(RankedLabelingIntegrationTest, Pass1BranchRoutesToCorrectPools) {
   CompiledNode root;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
-        name: "MixedRoot"
+        name: "Root"
         branch_node {
           branches {
             node {
-              name: "ClassicLeaf"
-              population_node {
-                pools { population_offset: 10 total_population: 100 }
-                random_seed: "classic-seed"
-              }
-            }
-            chance: 0.5
-          }
-          branches {
-            node {
-              name: "RankedLeaf"
+              name: "PoolA"
               ranked_population_node {
-                pools { population_offset: 2000 total_population: 500 }
-                random_seed: "ranked-seed"
-                ranked_size: 300
+                pools { population_offset: 1000 total_population: 500 }
+                random_seed: "pool-a-seed"
+                ranked_size: 200
                 unranked_mode: DISJOINT
               }
             }
             chance: 0.5
           }
-          random_seed: "mixed-branch-seed"
+          branches {
+            node {
+              name: "PoolB"
+              ranked_population_node {
+                pools { population_offset: 5000 total_population: 500 }
+                random_seed: "pool-b-seed"
+                ranked_size: 300
+                unranked_mode: FULL_POOL
+              }
+            }
+            chance: 0.5
+          }
+          random_seed: "branch-seed"
         }
       )pb",
       &root));
 
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(root));
 
-  int pool_assignment_count = 0;
-  int people_count = 0;
-
+  std::unordered_set<uint64_t> pool_offsets;
   for (int i = 0; i < kEventCount; ++i) {
     LabelerInput input;
     input.mutable_event_id()->set_publisher("test");
@@ -232,16 +232,14 @@ TEST(RankedLabelingIntegrationTest, MixedModelPass1) {
     LabelerOutput output;
     ASSERT_THAT(labeler->Label(input, output, LabelingMode::kPoolIdentity),
                 IsOk());
-
-    pool_assignment_count += output.pool_assignments_size();
-    people_count += output.people_size();
+    ASSERT_EQ(output.pool_assignments_size(), 1);
+    EXPECT_EQ(output.people_size(), 0);
+    pool_offsets.insert(output.pool_assignments(0).pool_offset());
   }
 
-  // Some events should hit the RankedPopulationNode (pool_assignments),
-  // and some should hit the PopulationNode (people).
-  EXPECT_GT(pool_assignment_count, 0)
-      << "No events routed to RankedPopulationNode";
-  EXPECT_GT(people_count, 0) << "No events routed to PopulationNode";
+  // Pool identity must vary with routing.
+  EXPECT_TRUE(pool_offsets.contains(1000)) << "No events routed to pool A";
+  EXPECT_TRUE(pool_offsets.contains(5000)) << "No events routed to pool B";
 }
 
 // Verify pass-2 with ranked_size=0 behaves like hash-based.

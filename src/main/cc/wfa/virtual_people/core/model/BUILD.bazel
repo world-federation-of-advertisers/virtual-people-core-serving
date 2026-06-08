@@ -37,6 +37,7 @@ cc_library(
     ],
     strip_include_prefix = _INCLUDE_PREFIX,
     deps = [
+        "//src/main/cc/wfa/virtual_people/core/model/utils:consistent_hash",
         "//src/main/cc/wfa/virtual_people/core/model/utils:constants",
         "//src/main/cc/wfa/virtual_people/core/model/utils:distributed_consistent_hashing",
         "//src/main/cc/wfa/virtual_people/core/model/utils:feistel",
