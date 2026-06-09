@@ -36,11 +36,11 @@ private constructor(
    * assigned to virtual_person_activities[0] in [event].
    */
   override fun apply(event: LabelerEvent.Builder) {
+    // Pass-1 (pool-identity) mode: a plain PopulationNode has no ranked pool to
+    // announce, so it produces no output. This lets a model mix ranked and
+    // unranked leaves; events routing here are labeled normally in pass-2.
     if (event.poolIdentityMode) {
-      error(
-        "PopulationNodeImpl does not support pool-identity mode. " +
-          "Use RankedPopulationNode for two-pass labeling."
-      )
+      return
     }
 
     // Creates a new virtual_person_activities in the event and writes the

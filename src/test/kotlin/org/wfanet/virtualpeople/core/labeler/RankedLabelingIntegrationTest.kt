@@ -328,7 +328,7 @@ class RankedLabelingIntegrationTest {
   }
 
   @Test
-  fun `pass 1 population node throws`() {
+  fun `pass 1 population node produces no output`() {
     val labeler =
       buildLabeler(
         """
@@ -340,9 +340,72 @@ class RankedLabelingIntegrationTest {
     """
       )
 
-    assertFailsWith<IllegalStateException> {
-      labeler.label(makeInput("pop-event"), LabelingMode.POOL_IDENTITY)
+    val output = labeler.label(makeInput("pop-event"), LabelingMode.POOL_IDENTITY)
+
+    assertEquals(0, output.peopleCount, "Pass-1 PopulationNode should not assign VIDs")
+    assertEquals(
+      0,
+      output.poolAssignmentsCount,
+      "Pass-1 PopulationNode should emit no pool assignment"
+    )
+  }
+
+  @Test
+  fun `pass 1 mixed model emits assignments only for ranked leaf`() {
+    // A model may mix a RankedPopulationNode leaf (needs ranking) and a plain
+    // PopulationNode leaf (does not). In pass-1, events routing to the ranked
+    // leaf emit a PoolAssignment; events routing to the vanilla leaf emit
+    // nothing. No VIDs are assigned in either case.
+    val labeler =
+      buildLabeler(
+        """
+      name: "Root"
+      branch_node {
+        branches {
+          node {
+            name: "RankedLeaf"
+            ranked_population_node {
+              pools { population_offset: 1000 total_population: 500 }
+              random_seed: "ranked-seed"
+              ranked_size: 200
+              unranked_mode: DISJOINT
+            }
+          }
+          chance: 0.5
+        }
+        branches {
+          node {
+            name: "VanillaLeaf"
+            population_node {
+              pools { population_offset: 10 total_population: 100 }
+              random_seed: "vanilla-seed"
+            }
+          }
+          chance: 0.5
+        }
+        random_seed: "branch-seed"
+      }
+    """
+      )
+
+    var rankedCount = 0
+    var vanillaCount = 0
+    for (i in 0 until 200) {
+      val output = labeler.label(makeInput("mixed-$i"), LabelingMode.POOL_IDENTITY)
+      assertEquals(0, output.peopleCount, "Pass-1 should never assign VIDs")
+      when (output.poolAssignmentsCount) {
+        1 -> {
+          assertEquals(1000L, output.poolAssignmentsList[0].poolOffset)
+          rankedCount++
+        }
+        0 -> vanillaCount++
+        else -> error("Unexpected pool assignment count ${output.poolAssignmentsCount}")
+      }
     }
+
+    assertTrue(rankedCount > 0, "No events routed to the ranked leaf")
+    assertTrue(vanillaCount > 0, "No events routed to the vanilla PopulationNode leaf")
+    assertEquals(200, rankedCount + vanillaCount)
   }
 
   @Test
