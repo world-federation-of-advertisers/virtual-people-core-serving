@@ -122,10 +122,11 @@ PopulationNodeImpl::PopulationNodeImpl(
       random_seed_(random_seed) {}
 
 absl::Status PopulationNodeImpl::Apply(LabelerEvent& event) const {
+  // Pass-1 (pool-identity) mode: a plain PopulationNode has no ranked pool to
+  // announce, so it produces no output. This lets a model mix ranked and
+  // unranked leaves; events routing here are labeled normally in pass-2.
   if (event.pool_identity_mode()) {
-    return absl::InvalidArgumentError(
-        "PopulationNode does not support pool-identity mode. Use "
-        "RankedPopulationNode for two-pass labeling.");
+    return absl::OkStatus();
   }
 
   // Creates a new virtual_person_activities in @event and write the virtual

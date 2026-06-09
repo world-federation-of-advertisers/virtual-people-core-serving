@@ -274,5 +274,70 @@ TEST(RankedLabelingIntegrationTest, RankedSizeZeroFullHashBased) {
   }
 }
 
+// Mixed model: one RankedPopulationNode leaf and one (vanilla) PopulationNode
+// leaf under a BranchNode. In pass-1, events routing to the ranked leaf emit a
+// PoolAssignment; events routing to the PopulationNode leaf emit nothing. No
+// VIDs are assigned in either case.
+TEST(RankedLabelingIntegrationTest,
+     Pass1MixedModelEmitsAssignmentsOnlyForRankedLeaf) {
+  CompiledNode root;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "Root"
+        branch_node {
+          branches {
+            node {
+              name: "RankedLeaf"
+              ranked_population_node {
+                pools { population_offset: 1000 total_population: 500 }
+                random_seed: "ranked-seed"
+                ranked_size: 200
+                unranked_mode: DISJOINT
+              }
+            }
+            chance: 0.5
+          }
+          branches {
+            node {
+              name: "VanillaLeaf"
+              population_node {
+                pools { population_offset: 10 total_population: 100 }
+                random_seed: "vanilla-seed"
+              }
+            }
+            chance: 0.5
+          }
+          random_seed: "branch-seed"
+        }
+      )pb",
+      &root));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> labeler, Labeler::Build(root));
+
+  int ranked_count = 0;
+  int vanilla_count = 0;
+  for (int i = 0; i < kEventCount; ++i) {
+    LabelerInput input;
+    input.mutable_event_id()->set_publisher("test");
+    input.mutable_event_id()->set_id(std::to_string(i));
+
+    LabelerOutput output;
+    ASSERT_THAT(labeler->Label(input, output, LabelingMode::kPoolIdentity),
+                IsOk());
+    EXPECT_EQ(output.people_size(), 0);
+    if (output.pool_assignments_size() == 1) {
+      EXPECT_EQ(output.pool_assignments(0).pool_offset(), 1000);
+      ++ranked_count;
+    } else {
+      EXPECT_EQ(output.pool_assignments_size(), 0);
+      ++vanilla_count;
+    }
+  }
+
+  EXPECT_GT(ranked_count, 0) << "No events routed to the ranked leaf";
+  EXPECT_GT(vanilla_count, 0) << "No events routed to the vanilla leaf";
+  EXPECT_EQ(ranked_count + vanilla_count, kEventCount);
+}
+
 }  // namespace
 }  // namespace wfa_virtual_people
