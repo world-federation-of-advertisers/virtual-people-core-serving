@@ -44,6 +44,7 @@ cc_library(
         "//src/main/cc/wfa/virtual_people/core/model/utils:field_filters_matcher",
         "//src/main/cc/wfa/virtual_people/core/model/utils:hash",
         "//src/main/cc/wfa/virtual_people/core/model/utils:hash_field_mask_matcher",
+        "//src/main/cc/wfa/virtual_people/core/model/utils:population_node_helper",
         "//src/main/cc/wfa/virtual_people/core/model/utils:update_matrix_helper",
         "//src/main/cc/wfa/virtual_people/core/model/utils:virtual_person_selector",
         "@com_google_absl//absl/container:flat_hash_map",
