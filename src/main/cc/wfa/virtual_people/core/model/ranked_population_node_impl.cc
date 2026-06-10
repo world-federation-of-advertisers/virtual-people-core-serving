@@ -15,10 +15,10 @@
 #include "wfa/virtual_people/core/model/ranked_population_node_impl.h"
 
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -30,42 +30,10 @@
 #include "wfa/virtual_people/common/model.pb.h"
 #include "wfa/virtual_people/core/model/model_node.h"
 #include "wfa/virtual_people/core/model/utils/consistent_hash.h"
-#include "wfa/virtual_people/core/model/utils/distributed_consistent_hashing.h"
 #include "wfa/virtual_people/core/model/utils/feistel.h"
+#include "wfa/virtual_people/core/model/utils/population_node_helper.h"
 
 namespace wfa_virtual_people {
-
-namespace {
-
-// Collapse the @quantum_label to a single label based on the probabilities, and
-// merge to @output_label. Reused from PopulationNodeImpl.
-absl::Status CollapseQuantumLabel(const QuantumLabel& quantum_label,
-                                  absl::string_view seed_suffix,
-                                  PersonLabelAttributes& output_label) {
-  if (quantum_label.labels_size() == 0) {
-    return absl::InvalidArgumentError("Empty quantum label.");
-  }
-  if (quantum_label.labels_size() != quantum_label.probabilities_size()) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "The sizes of labels and probabilities are different in quantum label ",
-        quantum_label.DebugString()));
-  }
-  std::vector<DistributionChoice> distribution;
-  distribution.reserve(quantum_label.probabilities_size());
-  for (int i = 0; i < quantum_label.probabilities_size(); ++i) {
-    distribution.emplace_back(
-        DistributionChoice({i, quantum_label.probabilities(i)}));
-  }
-  ASSIGN_OR_RETURN(
-      std::unique_ptr<DistributedConsistentHashing> hashing,
-      DistributedConsistentHashing::Build(std::move(distribution)));
-  int32_t index = hashing->Hash(absl::StrCat(
-      "quantum-label-collapse-", quantum_label.seed(), seed_suffix));
-  output_label.MergeFrom(quantum_label.labels(index));
-  return absl::OkStatus();
-}
-
-}  // namespace
 
 absl::StatusOr<std::unique_ptr<RankedPopulationNodeImpl>>
 RankedPopulationNodeImpl::Build(const CompiledNode& node_config) {
@@ -86,6 +54,15 @@ RankedPopulationNodeImpl::Build(const CompiledNode& node_config) {
   if (pool_size == 0) {
     return absl::InvalidArgumentError(
         "RankedPopulationNode total pool size must be > 0.");
+  }
+
+  // JumpConsistentHash takes an int32_t bucket count, so the pool must fit in
+  // INT32_MAX. The design worst case (~1.5B) fits; guard larger pools so a
+  // future model fails loudly instead of silently wrapping to a wrong VID.
+  if (pool_size > static_cast<uint64_t>(std::numeric_limits<int32_t>::max())) {
+    return absl::InvalidArgumentError(absl::StrCat(
+        "pool_size (", pool_size, ") exceeds the maximum supported size (",
+        std::numeric_limits<int32_t>::max(), ")."));
   }
 
   if (config.ranked_size() > pool_size) {

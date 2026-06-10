@@ -430,5 +430,55 @@ TEST(RankedPopulationNodeImplTest, InvalidMultiplePools) {
               StatusIs(absl::StatusCode::kInvalidArgument, ""));
 }
 
+TEST(RankedPopulationNodeImplTest, RankedSizeZeroMatchesPopulationNode) {
+  // Backward-compatibility guarantee: a RankedPopulationNode with ranked_size=0
+  // and FULL_POOL must assign exactly the same VIDs as a PopulationNode with
+  // the same pool and seed. Deploying a memoized model with ranked_size=0 must
+  // not change existing VID assignments.
+  CompiledNode ranked_config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "RankedNode"
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "same-seed"
+          ranked_size: 0
+          unranked_mode: FULL_POOL
+        }
+      )pb",
+      &ranked_config));
+  CompiledNode pop_config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "PopNode"
+        population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "same-seed"
+        }
+      )pb",
+      &pop_config));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> ranked_node,
+                       ModelNode::Build(ranked_config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> pop_node,
+                       ModelNode::Build(pop_config));
+
+  for (int fingerprint = 0; fingerprint < 100; ++fingerprint) {
+    LabelerEvent ranked_event;
+    ranked_event.set_acting_fingerprint(fingerprint);
+    ASSERT_THAT(ranked_node->Apply(ranked_event), IsOk());
+    ASSERT_EQ(ranked_event.virtual_person_activities_size(), 1);
+
+    LabelerEvent pop_event;
+    pop_event.set_acting_fingerprint(fingerprint);
+    ASSERT_THAT(pop_node->Apply(pop_event), IsOk());
+    ASSERT_EQ(pop_event.virtual_person_activities_size(), 1);
+
+    EXPECT_EQ(ranked_event.virtual_person_activities(0).virtual_person_id(),
+              pop_event.virtual_person_activities(0).virtual_person_id())
+        << "VID mismatch for fingerprint " << fingerprint;
+  }
+}
+
 }  // namespace
 }  // namespace wfa_virtual_people
