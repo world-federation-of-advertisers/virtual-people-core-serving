@@ -339,5 +339,99 @@ TEST(RankedLabelingIntegrationTest,
   EXPECT_EQ(ranked_count + vanilla_count, kEventCount);
 }
 
+// Cross-language golden vectors. These exact VIDs and PoolAssignment values
+// must be reproduced by the Kotlin implementation for the same config and
+// inputs; a matching Kotlin golden test (separate PR) pins the other side. The
+// Feistel golden vectors in
+// PR #81 only cover the ranked permutation; these additionally pin the unranked
+// path (FarmHash64(random_seed + acting_fingerprint) -> JumpConsistentHash) and
+// the pass-1 PoolAssignment, so a divergent seed construction or hash binding
+// in either language fails loudly instead of silently assigning different VIDs.
+TEST(RankedLabelingIntegrationTest, CrossLanguageGoldenVectors) {
+  CompiledNode disjoint;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "GoldenDisjoint"
+        ranked_population_node {
+          pools { population_offset: 1000 total_population: 500 }
+          random_seed: "golden-seed"
+          ranked_size: 200
+          unranked_mode: DISJOINT
+        }
+      )pb",
+      &disjoint));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> disjoint_labeler,
+                       Labeler::Build(disjoint));
+
+  // (1) Full ranked path: rank 5 -> pool_offset + Feistel(5, ranked_size,
+  // seed).
+  {
+    LabelerInput input;
+    input.mutable_event_id()->set_publisher("test");
+    input.mutable_event_id()->set_id("golden-ranked");
+    RankAssignment* ra = input.add_rank_assignments();
+    ra->set_pool_offset(1000);
+    ra->set_local_rank(5);
+    LabelerOutput output;
+    ASSERT_THAT(disjoint_labeler->Label(input, output), IsOk());
+    ASSERT_EQ(output.people_size(), 1);
+    EXPECT_EQ(output.people(0).virtual_person_id(), 1141);
+  }
+
+  // (2) Unranked DISJOINT path: no rank -> [pool_offset+ranked_size,
+  // +pool_size).
+  {
+    LabelerInput input;
+    input.mutable_event_id()->set_publisher("test");
+    input.mutable_event_id()->set_id("golden-unranked");
+    LabelerOutput output;
+    ASSERT_THAT(disjoint_labeler->Label(input, output), IsOk());
+    ASSERT_EQ(output.people_size(), 1);
+    EXPECT_EQ(output.people(0).virtual_person_id(), 1354);
+  }
+
+  // (4) Pass-1 mode: emits PoolAssignment(pool_offset, pool_size, ranked_size).
+  {
+    LabelerInput input;
+    input.mutable_event_id()->set_publisher("test");
+    input.mutable_event_id()->set_id("golden-pass1");
+    LabelerOutput output;
+    ASSERT_THAT(
+        disjoint_labeler->Label(input, output, LabelingMode::kPoolIdentity),
+        IsOk());
+    ASSERT_EQ(output.pool_assignments_size(), 1);
+    EXPECT_EQ(output.pool_assignments(0).pool_offset(), 1000);
+    EXPECT_EQ(output.pool_assignments(0).pool_size(), 500);
+    EXPECT_EQ(output.pool_assignments(0).ranked_size(), 200);
+    EXPECT_EQ(output.people_size(), 0);
+  }
+
+  // (3) Unranked FULL_POOL path: no rank -> [pool_offset,
+  // pool_offset+pool_size).
+  CompiledNode full_pool;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "GoldenFullPool"
+        ranked_population_node {
+          pools { population_offset: 5000 total_population: 500 }
+          random_seed: "golden-seed"
+          ranked_size: 200
+          unranked_mode: FULL_POOL
+        }
+      )pb",
+      &full_pool));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<Labeler> full_pool_labeler,
+                       Labeler::Build(full_pool));
+  {
+    LabelerInput input;
+    input.mutable_event_id()->set_publisher("test");
+    input.mutable_event_id()->set_id("golden-fullpool");
+    LabelerOutput output;
+    ASSERT_THAT(full_pool_labeler->Label(input, output), IsOk());
+    ASSERT_EQ(output.people_size(), 1);
+    EXPECT_EQ(output.people(0).virtual_person_id(), 5472);
+  }
+}
+
 }  // namespace
 }  // namespace wfa_virtual_people
