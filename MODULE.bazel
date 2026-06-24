@@ -37,6 +37,16 @@ bazel_dep(
     repo_name = "wfa_virtual_people_common",
 )
 
+# DO_NOT_SUBMIT: pin to the open virtual-people-common PR
+# (world-federation-of-advertisers/virtual-people-common#75) that adds the
+# VirtualPersonActivity.memoized_rank_fallback field used below. Replace with
+# a normal version bump (0.8.0) once #75 merges.
+git_override(
+    module_name = "virtual-people-common",
+    remote = "https://github.com/world-federation-of-advertisers/virtual-people-common.git",
+    commit = "d8948c7cacde765e7eec4fe2561135705f3ea755",
+)
+
 # Bazel Central Registry modules.
 bazel_dep(
     name = "rules_proto",
