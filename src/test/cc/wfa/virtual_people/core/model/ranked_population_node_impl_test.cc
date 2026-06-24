@@ -335,11 +335,15 @@ TEST(RankedPopulationNodeImplTest, BoundaryRankEqualsRankedSizeFallsBack) {
   ra->set_local_rank(500);
 
   EXPECT_THAT(node->Apply(event), IsOk());
-  uint64_t vid = event.virtual_person_activities(0).virtual_person_id();
+  const auto& activity = event.virtual_person_activities(0);
+  uint64_t vid = activity.virtual_person_id();
   // DISJOINT unranked range: [pool_offset + ranked_size, pool_offset +
   // pool_size).
   EXPECT_GE(vid, 600);
   EXPECT_LT(vid, 1100);
+  // Caller attempted memoization (rank_assignments non-empty) but we fell back
+  // to hash because local_rank >= ranked_size — surface the signal.
+  EXPECT_TRUE(activity.memoized_rank_fallback());
 }
 
 TEST(RankedPopulationNodeImplTest, MultipleRankAssignmentsResolvesCorrectPool) {

@@ -69,14 +69,25 @@ private constructor(
     // the subpool has no rank for it (per the design's overflow-fps-fall-back-to-unranked-path
     // contract). Also defensively covers operator scenarios like heal-rank-index after partial
     // data loss or a model-version mismatch between Phase 0 and Phase 2.
+    val hadRankAssignments =
+      event.hasLabelerInput() && event.labelerInput.rankAssignmentsList.isNotEmpty()
     val rankAssignment =
       if (event.hasLabelerInput())
         event.labelerInput.rankAssignmentsList.firstOrNull { it.poolOffset.toULong() == poolOffset }
       else null
+    val usedRankedPath = rankAssignment != null && rankAssignment.localRank.toULong() < rankedSize
+
+    // Memoized-rank fallback signal: stamped iff the caller attempted memoization
+    // (rank_assignments non-empty) but we end up on the hash path. The consumer aggregates this
+    // into an OpenTelemetry counter to alarm on rising memoized-fallback rates per
+    // (data provider, model line, pool offset).
+    if (hadRankAssignments && !usedRankedPath) {
+      activity.memoizedRankFallback = true
+    }
 
     val virtualPersonId =
-      if (rankAssignment != null && rankAssignment.localRank.toULong() < rankedSize) {
-        poolOffset + Feistel.permute(rankAssignment.localRank.toULong(), rankedSize, randomSeed)
+      if (usedRankedPath) {
+        poolOffset + Feistel.permute(rankAssignment!!.localRank.toULong(), rankedSize, randomSeed)
       } else {
         val seed = PopulationNodeHelper.computeVidSeed(randomSeed, event.actingFingerprint)
         when (unrankedMode) {

@@ -116,6 +116,8 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
   // it (per the design's overflow-fps-fall-back-to-unranked-path contract).
   // Also defensively covers operator scenarios like heal-rank-index after
   // partial data loss or a model-version mismatch between Phase 0 and Phase 2.
+  bool had_rank_assignments = event.has_labeler_input() &&
+                              event.labeler_input().rank_assignments_size() > 0;
   bool has_rank = false;
   uint64_t local_rank = 0;
   if (event.has_labeler_input()) {
@@ -126,6 +128,14 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
         break;
       }
     }
+  }
+
+  // Memoized-rank fallback signal: stamped iff the caller attempted memoization
+  // (rank_assignments non-empty) but we end up on the hash path. The consumer
+  // aggregates this into an OpenTelemetry counter to alarm on rising
+  // memoized-fallback rates per (data provider, model line, pool offset).
+  if (had_rank_assignments && !(has_rank && local_rank < ranked_size_)) {
+    activity->set_memoized_rank_fallback(true);
   }
 
   if (has_rank && local_rank < ranked_size_) {
