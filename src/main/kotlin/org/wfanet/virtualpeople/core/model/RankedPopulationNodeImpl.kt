@@ -60,12 +60,15 @@ private constructor(
 
     val activity = VirtualPersonActivity.newBuilder()
 
-    // Look up pre-computed rank from LabelerInput.rank_assignments. A fingerprint can legitimately
-    // route through multiple subpools across impressions and therefore appear in multiple
-    // RankAssignment entries; this leaf takes the entry whose pool_offset matches its own. If no
-    // entry matches (e.g. the fingerprint overflowed this subpool in Phase 1, or this impression
-    // reached a subpool the fingerprint has no rank in), fall back to the hash path — same as if
-    // no rank assignments were provided at all.
+    // Look up pre-computed rank from LabelerInput.rank_assignments. The caller (memoized Phase-2
+    // sink) attaches a RankAssignment for every subpool the fingerprint is currently ranked in
+    // across this (DataProvider, ModelLine); this leaf scans the list for the entry matching its
+    // own pool_offset. If none matches, fall back to the hash path — same behavior as if no rank
+    // assignments were provided at all. The primary case for this fallback is overflow: when this
+    // subpool reached ranked_size in Phase 1 and this fingerprint was one of the unranked surplus,
+    // the subpool has no rank for it (per the design's overflow-fps-fall-back-to-unranked-path
+    // contract). Also defensively covers operator scenarios like heal-rank-index after partial
+    // data loss or a model-version mismatch between Phase 0 and Phase 2.
     val rankAssignment =
       if (event.hasLabelerInput())
         event.labelerInput.rankAssignmentsList.firstOrNull { it.poolOffset.toULong() == poolOffset }

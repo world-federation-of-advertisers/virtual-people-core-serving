@@ -381,12 +381,11 @@ TEST(RankedPopulationNodeImplTest, MultipleRankAssignmentsResolvesCorrectPool) {
   EXPECT_LT(vid, 900);
 }
 
-// A fingerprint can legitimately route to multiple subpools across impressions
-// (design ÃÂ§ Cumulative rank index map). Phase-2 attaches every per-subpool rank
-// the fingerprint holds; this leaf takes its own pool_offset. If none matches
-// Ã¢ÂÂ because the fingerprint either overflowed this subpool in Phase 1 or
-// reached this subpool only on this impression and not in any previously
-// dispatched one Ã¢ÂÂ the leaf must fall back to the hash path, not fail the job.
+// When this leaf's pool_offset matches no entry in rank_assignments, the leaf
+// must fall back to the hash path instead of failing the job. The dominant
+// case is Phase-1 overflow: when this subpool reached ranked_size and this
+// fingerprint was one of the unranked surplus, the subpool has no rank for it
+// (per design § Retention Rule, overflow-fps-fall-back-to-unranked-path).
 TEST(RankedPopulationNodeImplTest, NoMatchingRankAssignmentFallsBackToHash) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
@@ -405,7 +404,7 @@ TEST(RankedPopulationNodeImplTest, NoMatchingRankAssignmentFallsBackToHash) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  // Rank assignments only carry entries for OTHER pools (9000, 99999) Ã¢ÂÂ none
+  // Rank assignments only carry entries for OTHER pools (9000, 99999) — none
   // for this leaf's pool_offset=100. This mirrors the multi-subpool case where
   // the fingerprint holds ranks in other subpools but not this one.
   LabelerEvent event;
@@ -426,12 +425,11 @@ TEST(RankedPopulationNodeImplTest, NoMatchingRankAssignmentFallsBackToHash) {
   EXPECT_LT(vid, 600);
 }
 
-// Same invariant when rank assignments are present but match neither the
-// leaf's pool_offset nor any pool in this model: the fingerprint can only have
-// been routed to subpools that aren't reachable from this leaf, so this leaf
-// must hash-fall-back. Equivalent to NoMatchingRankAssignmentFallsBackToHash;
-// kept distinct to lock in that the empty-rank_assignments behavior is
-// identical to the non-matching-rank_assignments behavior.
+// The non-matching-rank_assignments path must produce the same VID as the
+// empty-rank_assignments path — both represent the same semantic state
+// (no rank for this fingerprint in this subpool, hash-fall-back), so same
+// input must yield the same VID. Locks in that the fix didn't accidentally
+// introduce a different hash seed for the two no-rank cases.
 TEST(RankedPopulationNodeImplTest,
      NoMatchingRankAssignmentMatchesEmptyAssignmentsVid) {
   CompiledNode config;
@@ -467,7 +465,7 @@ TEST(RankedPopulationNodeImplTest,
   EXPECT_THAT(node->Apply(event_b), IsOk());
   uint64_t vid_b = event_b.virtual_person_activities(0).virtual_person_id();
 
-  // Both must produce the same VID Ã¢ÂÂ non-matching assignments behave exactly
+  // Both must produce the same VID — non-matching assignments behave exactly
   // like empty assignments.
   EXPECT_EQ(vid_a, vid_b);
 }

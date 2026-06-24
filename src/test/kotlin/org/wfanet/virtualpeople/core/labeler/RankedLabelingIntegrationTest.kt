@@ -242,11 +242,10 @@ class RankedLabelingIntegrationTest {
   /**
    * Regression test for world-federation-of-advertisers/cross-media-measurement#4073.
    *
-   * A fingerprint can legitimately route to multiple subpools across impressions (design §
-   * Cumulative rank index map). Phase-2 attaches every per-subpool rank the fingerprint holds; this
-   * leaf takes its own pool_offset. If none matches — because the fingerprint either overflowed
-   * this subpool in Phase 1 or reached this subpool only on this impression and not in any
-   * previously dispatched one — the leaf must fall back to the hash path, not fail the job.
+   * When this leaf's pool_offset matches no entry in rank_assignments, the leaf must fall back to
+   * the hash path instead of failing the job. The dominant case is Phase-1 overflow: when this
+   * subpool reached ranked_size and this fingerprint was one of the unranked surplus, the subpool
+   * has no rank for it (per design § Retention Rule, overflow-fps-fall-back-to-unranked-path).
    */
   @Test
   fun `rank for non-existent pool falls back to hash`() {
@@ -289,9 +288,10 @@ class RankedLabelingIntegrationTest {
   }
 
   /**
-   * The fallback when rank_assignments are present-but-non-matching must produce the same VID as
-   * when rank_assignments are empty. Both paths represent the same semantics: this fingerprint has
-   * no rank in this subpool, fall back to hash. Same input → same VID.
+   * The non-matching-rank_assignments path must produce the same VID as the empty-rank_assignments
+   * path — both represent the same semantic state (no rank for this fingerprint in this subpool,
+   * hash-fall-back), so same input must yield the same VID. Locks in that the fix didn't
+   * accidentally introduce a different hash seed for the two no-rank cases.
    */
   @Test
   fun `non-matching rank assignment produces same VID as empty rank assignments`() {
