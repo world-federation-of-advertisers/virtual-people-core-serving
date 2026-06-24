@@ -15,6 +15,7 @@
 #include "wfa/virtual_people/core/labeler/labeler.h"
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
