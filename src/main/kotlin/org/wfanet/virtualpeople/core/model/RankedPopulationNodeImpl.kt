@@ -60,16 +60,16 @@ private constructor(
 
     val activity = VirtualPersonActivity.newBuilder()
 
-    val rankAssignments =
-      if (event.hasLabelerInput()) event.labelerInput.rankAssignmentsList else emptyList()
-    val rankAssignment = rankAssignments.firstOrNull { it.poolOffset.toULong() == poolOffset }
-
-    if (rankAssignments.isNotEmpty() && rankAssignment == null) {
-      error(
-        "RankAssignment provided but none match pool_offset=$poolOffset. " +
-          "Available: ${rankAssignments.map { it.poolOffset }}."
-      )
-    }
+    // Look up pre-computed rank from LabelerInput.rank_assignments. A fingerprint can legitimately
+    // route through multiple subpools across impressions and therefore appear in multiple
+    // RankAssignment entries; this leaf takes the entry whose pool_offset matches its own. If no
+    // entry matches (e.g. the fingerprint overflowed this subpool in Phase 1, or this impression
+    // reached a subpool the fingerprint has no rank in), fall back to the hash path — same as if
+    // no rank assignments were provided at all.
+    val rankAssignment =
+      if (event.hasLabelerInput())
+        event.labelerInput.rankAssignmentsList.firstOrNull { it.poolOffset.toULong() == poolOffset }
+      else null
 
     val virtualPersonId =
       if (rankAssignment != null && rankAssignment.localRank.toULong() < rankedSize) {

@@ -16,7 +16,6 @@ package org.wfanet.virtualpeople.core.labeler
 
 import com.google.protobuf.TextFormat
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -240,15 +239,24 @@ class RankedLabelingIntegrationTest {
     assertTrue(vid < 900uL, "VID $vid should be in ranked range for pool 500")
   }
 
+  /**
+   * Regression test for world-federation-of-advertisers/cross-media-measurement#4073.
+   *
+   * A fingerprint can legitimately route to multiple subpools across impressions (design §
+   * Cumulative rank index map). Phase-2 attaches every per-subpool rank the fingerprint holds; this
+   * leaf takes its own pool_offset. If none matches — because the fingerprint either overflowed
+   * this subpool in Phase 1 or reached this subpool only on this impression and not in any
+   * previously dispatched one — the leaf must fall back to the hash path, not fail the job.
+   */
   @Test
-  fun `rank for non-existent pool throws`() {
+  fun `rank for non-existent pool falls back to hash`() {
     val labeler =
       buildLabeler(
         """
       name: "TestRankedNode"
       ranked_population_node {
         pools { population_offset: 100 total_population: 500 }
-        random_seed: "wrong-pool-seed"
+        random_seed: "overflow-fallback-seed"
         ranked_size: 200
         unranked_mode: DISJOINT
       }
@@ -260,13 +268,68 @@ class RankedLabelingIntegrationTest {
         publisher = "test"
         id = "wrong-pool-event"
       }
+      // Rank assignments only carry entries for OTHER pools — none for pool_offset=100.
       rankAssignments += rankAssignment {
-        poolOffset = 9999
+        poolOffset = 9000
         localRank = 5
+      }
+      rankAssignments += rankAssignment {
+        poolOffset = 99999
+        localRank = 17
       }
     }
 
-    assertFailsWith<IllegalStateException> { labeler.label(input) }
+    val output = labeler.label(input)
+    assertEquals(1, output.peopleCount)
+    val vid = output.peopleList[0].virtualPersonId.toULong()
+    // DISJOINT mode: VID lands in the unranked sub-range
+    // [pool_offset + ranked_size, pool_offset + pool_size) = [300, 600).
+    assertTrue(vid >= 300uL, "VID $vid below unranked range")
+    assertTrue(vid < 600uL, "VID $vid above pool")
+  }
+
+  /**
+   * The fallback when rank_assignments are present-but-non-matching must produce the same VID as
+   * when rank_assignments are empty. Both paths represent the same semantics: this fingerprint has
+   * no rank in this subpool, fall back to hash. Same input → same VID.
+   */
+  @Test
+  fun `non-matching rank assignment produces same VID as empty rank assignments`() {
+    val labeler =
+      buildLabeler(
+        """
+      name: "TestRankedNode"
+      ranked_population_node {
+        pools { population_offset: 100 total_population: 500 }
+        random_seed: "overflow-fallback-seed"
+        ranked_size: 200
+        unranked_mode: DISJOINT
+      }
+    """
+      )
+
+    val baseInput = labelerInput {
+      eventId = eventId {
+        publisher = "test"
+        id = "shared-id"
+      }
+    }
+
+    // Input A: no rank_assignments at all.
+    val vidA = labeler.label(baseInput).peopleList[0].virtualPersonId
+
+    // Input B: same event id, rank_assignments only for OTHER pools.
+    val inputB =
+      baseInput.copy {
+        rankAssignments += rankAssignment {
+          poolOffset = 9000
+          localRank = 5
+        }
+      }
+    val vidB = labeler.label(inputB).peopleList[0].virtualPersonId
+
+    // Both must produce the same VID — non-matching assignments behave exactly like empty.
+    assertEquals(vidA, vidB)
   }
 
   @Test
@@ -346,7 +409,7 @@ class RankedLabelingIntegrationTest {
     assertEquals(
       0,
       output.poolAssignmentsCount,
-      "Pass-1 PopulationNode should emit no pool assignment"
+      "Pass-1 PopulationNode should emit no pool assignment",
     )
   }
 

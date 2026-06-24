@@ -105,12 +105,16 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
   VirtualPersonActivity* activity = event.add_virtual_person_activities();
   uint64_t virtual_person_id;
 
-  // Look up pre-computed rank from LabelerInput.rank_assignments.
-  bool has_rank_assignments = false;
+  // Look up pre-computed rank from LabelerInput.rank_assignments. A
+  // fingerprint can legitimately route through multiple subpools across
+  // impressions and therefore appear in multiple RankAssignment entries; this
+  // leaf takes the entry whose pool_offset matches its own. If no entry
+  // matches (e.g. the fingerprint overflowed this subpool in Phase 1, or this
+  // impression reached a subpool the fingerprint has no rank in), fall back to
+  // the hash path — same as if no rank assignments were provided at all.
   bool has_rank = false;
   uint64_t local_rank = 0;
   if (event.has_labeler_input()) {
-    has_rank_assignments = event.labeler_input().rank_assignments_size() > 0;
     for (const auto& ra : event.labeler_input().rank_assignments()) {
       if (ra.pool_offset() == pool_offset_) {
         local_rank = ra.local_rank();
@@ -118,13 +122,6 @@ absl::Status RankedPopulationNodeImpl::Apply(LabelerEvent& event) const {
         break;
       }
     }
-  }
-
-  // Rank assignments were provided but none match this pool — caller misuse.
-  if (has_rank_assignments && !has_rank) {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "RankAssignment provided but none match pool_offset=", pool_offset_,
-        "."));
   }
 
   if (has_rank && local_rank < ranked_size_) {

@@ -381,7 +381,13 @@ TEST(RankedPopulationNodeImplTest, MultipleRankAssignmentsResolvesCorrectPool) {
   EXPECT_LT(vid, 900);
 }
 
-TEST(RankedPopulationNodeImplTest, RankForNonExistentPoolReturnsError) {
+// A fingerprint can legitimately route to multiple subpools across impressions
+// (design ÃÂ§ Cumulative rank index map). Phase-2 attaches every per-subpool rank
+// the fingerprint holds; this leaf takes its own pool_offset. If none matches
+// Ã¢ÂÂ because the fingerprint either overflowed this subpool in Phase 1 or
+// reached this subpool only on this impression and not in any previously
+// dispatched one Ã¢ÂÂ the leaf must fall back to the hash path, not fail the job.
+TEST(RankedPopulationNodeImplTest, NoMatchingRankAssignmentFallsBackToHash) {
   CompiledNode config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
       R"pb(
@@ -389,7 +395,7 @@ TEST(RankedPopulationNodeImplTest, RankForNonExistentPoolReturnsError) {
         index: 1
         ranked_population_node {
           pools { population_offset: 100 total_population: 500 }
-          random_seed: "wrong-pool-seed"
+          random_seed: "overflow-fallback-seed"
           ranked_size: 200
           unranked_mode: DISJOINT
         }
@@ -399,15 +405,71 @@ TEST(RankedPopulationNodeImplTest, RankForNonExistentPoolReturnsError) {
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
                        ModelNode::Build(config));
 
-  // Rank assignment for pool_offset=9999 doesn't match pool_offset=100.
+  // Rank assignments only carry entries for OTHER pools (9000, 99999) Ã¢ÂÂ none
+  // for this leaf's pool_offset=100. This mirrors the multi-subpool case where
+  // the fingerprint holds ranks in other subpools but not this one.
   LabelerEvent event;
   event.set_acting_fingerprint(42);
-  auto* ra = event.mutable_labeler_input()->add_rank_assignments();
-  ra->set_pool_offset(9999);
-  ra->set_local_rank(5);
+  auto* labeler_input = event.mutable_labeler_input();
+  auto* ra1 = labeler_input->add_rank_assignments();
+  ra1->set_pool_offset(9000);
+  ra1->set_local_rank(5);
+  auto* ra2 = labeler_input->add_rank_assignments();
+  ra2->set_pool_offset(99999);
+  ra2->set_local_rank(17);
 
-  EXPECT_THAT(node->Apply(event),
-              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_THAT(node->Apply(event), IsOk());
+  uint64_t vid = event.virtual_person_activities(0).virtual_person_id();
+  // Must land in the unranked sub-range [pool_offset + ranked_size,
+  // pool_offset + pool_size) = [300, 600) under DISJOINT mode.
+  EXPECT_GE(vid, 300);
+  EXPECT_LT(vid, 600);
+}
+
+// Same invariant when rank assignments are present but match neither the
+// leaf's pool_offset nor any pool in this model: the fingerprint can only have
+// been routed to subpools that aren't reachable from this leaf, so this leaf
+// must hash-fall-back. Equivalent to NoMatchingRankAssignmentFallsBackToHash;
+// kept distinct to lock in that the empty-rank_assignments behavior is
+// identical to the non-matching-rank_assignments behavior.
+TEST(RankedPopulationNodeImplTest,
+     NoMatchingRankAssignmentMatchesEmptyAssignmentsVid) {
+  CompiledNode config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        name: "TestRankedNode"
+        index: 1
+        ranked_population_node {
+          pools { population_offset: 100 total_population: 500 }
+          random_seed: "overflow-fallback-seed"
+          ranked_size: 200
+          unranked_mode: DISJOINT
+        }
+      )pb",
+      &config));
+
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<ModelNode> node,
+                       ModelNode::Build(config));
+
+  // Event A: no rank_assignments at all.
+  LabelerEvent event_a;
+  event_a.set_acting_fingerprint(42);
+  event_a.mutable_labeler_input();
+  EXPECT_THAT(node->Apply(event_a), IsOk());
+  uint64_t vid_a = event_a.virtual_person_activities(0).virtual_person_id();
+
+  // Event B: same fingerprint, rank_assignments only for other pools.
+  LabelerEvent event_b;
+  event_b.set_acting_fingerprint(42);
+  auto* ra = event_b.mutable_labeler_input()->add_rank_assignments();
+  ra->set_pool_offset(9000);
+  ra->set_local_rank(5);
+  EXPECT_THAT(node->Apply(event_b), IsOk());
+  uint64_t vid_b = event_b.virtual_person_activities(0).virtual_person_id();
+
+  // Both must produce the same VID Ã¢ÂÂ non-matching assignments behave exactly
+  // like empty assignments.
+  EXPECT_EQ(vid_a, vid_b);
 }
 
 TEST(RankedPopulationNodeImplTest, InvalidMultiplePools) {
