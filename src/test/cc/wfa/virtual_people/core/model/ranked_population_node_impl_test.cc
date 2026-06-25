@@ -422,11 +422,14 @@ TEST(RankedPopulationNodeImplTest, NoMatchingRankAssignmentFallsBackToHash) {
   ra2->set_local_rank(17);
 
   EXPECT_THAT(node->Apply(event), IsOk());
-  uint64_t vid = event.virtual_person_activities(0).virtual_person_id();
+  const auto& activity = event.virtual_person_activities(0);
+  uint64_t vid = activity.virtual_person_id();
   // Must land in the unranked sub-range [pool_offset + ranked_size,
   // pool_offset + pool_size) = [300, 600) under DISJOINT mode.
   EXPECT_GE(vid, 300);
   EXPECT_LT(vid, 600);
+  // The whole point of this path is to surface that the leaf had to hash-fall-back.
+  EXPECT_TRUE(activity.memoized_rank_fallback());
 }
 
 // The non-matching-rank_assignments path must produce the same VID as the
@@ -458,7 +461,11 @@ TEST(RankedPopulationNodeImplTest,
   event_a.set_acting_fingerprint(42);
   event_a.mutable_labeler_input();
   EXPECT_THAT(node->Apply(event_a), IsOk());
-  uint64_t vid_a = event_a.virtual_person_activities(0).virtual_person_id();
+  const auto& activity_a = event_a.virtual_person_activities(0);
+  uint64_t vid_a = activity_a.virtual_person_id();
+  // No rank_assignments at all => caller did not attempt memoization, so the
+  // fallback signal MUST NOT fire.
+  EXPECT_FALSE(activity_a.memoized_rank_fallback());
 
   // Event B: same fingerprint, rank_assignments only for other pools.
   LabelerEvent event_b;
@@ -467,7 +474,11 @@ TEST(RankedPopulationNodeImplTest,
   ra->set_pool_offset(9000);
   ra->set_local_rank(5);
   EXPECT_THAT(node->Apply(event_b), IsOk());
-  uint64_t vid_b = event_b.virtual_person_activities(0).virtual_person_id();
+  const auto& activity_b = event_b.virtual_person_activities(0);
+  uint64_t vid_b = activity_b.virtual_person_id();
+  // Non-matching assignments => caller did attempt memoization but the leaf
+  // hash-fell-back, so the signal MUST fire.
+  EXPECT_TRUE(activity_b.memoized_rank_fallback());
 
   // Both must produce the same VID — non-matching assignments behave exactly
   // like empty assignments.

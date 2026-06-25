@@ -16,6 +16,7 @@ package org.wfanet.virtualpeople.core.labeler
 
 import com.google.protobuf.TextFormat
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -280,11 +281,14 @@ class RankedLabelingIntegrationTest {
 
     val output = labeler.label(input)
     assertEquals(1, output.peopleCount)
-    val vid = output.peopleList[0].virtualPersonId.toULong()
+    val activity = output.peopleList[0]
+    val vid = activity.virtualPersonId.toULong()
     // DISJOINT mode: VID lands in the unranked sub-range
     // [pool_offset + ranked_size, pool_offset + pool_size) = [300, 600).
     assertTrue(vid >= 300uL, "VID $vid below unranked range")
     assertTrue(vid < 600uL, "VID $vid above pool")
+    // The whole point of this path is to surface that the leaf had to hash-fall-back.
+    assertTrue(activity.memoizedRankFallback)
   }
 
   /**
@@ -316,7 +320,11 @@ class RankedLabelingIntegrationTest {
     }
 
     // Input A: no rank_assignments at all.
-    val vidA = labeler.label(baseInput).peopleList[0].virtualPersonId
+    val activityA = labeler.label(baseInput).peopleList[0]
+    val vidA = activityA.virtualPersonId
+    // No rank_assignments at all => caller did not attempt memoization, so the
+    // fallback signal MUST NOT fire.
+    assertFalse(activityA.memoizedRankFallback)
 
     // Input B: same event id, rank_assignments only for OTHER pools.
     val inputB =
@@ -326,7 +334,11 @@ class RankedLabelingIntegrationTest {
           localRank = 5
         }
       }
-    val vidB = labeler.label(inputB).peopleList[0].virtualPersonId
+    val activityB = labeler.label(inputB).peopleList[0]
+    val vidB = activityB.virtualPersonId
+    // Non-matching assignments => caller did attempt memoization but the leaf
+    // hash-fell-back, so the signal MUST fire.
+    assertTrue(activityB.memoizedRankFallback)
 
     // Both must produce the same VID — non-matching assignments behave exactly like empty.
     assertEquals(vidA, vidB)
