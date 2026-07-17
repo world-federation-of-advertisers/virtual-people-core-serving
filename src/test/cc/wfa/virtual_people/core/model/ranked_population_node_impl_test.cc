@@ -428,7 +428,8 @@ TEST(RankedPopulationNodeImplTest, NoMatchingRankAssignmentFallsBackToHash) {
   // pool_offset + pool_size) = [300, 600) under DISJOINT mode.
   EXPECT_GE(vid, 300);
   EXPECT_LT(vid, 600);
-  // The whole point of this path is to surface that the leaf had to hash-fall-back.
+  // The whole point of this path is to surface that the leaf had to
+  // hash-fall-back.
   EXPECT_TRUE(activity.memoized_rank_fallback());
 }
 
