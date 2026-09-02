@@ -71,15 +71,28 @@ class LabelerIntegrationTest {
   }
 
   @Test
-  fun `toy model routes by placement`() {
+  fun `toy model routes feed placement`() {
     val rootNode =
       parseTextProto(File("$TEXTPROTO_PATH/toy_model.textproto").bufferedReader(), compiledNode {})
     val labeler = Labeler.build(rootNode)
 
     applyAndValidate(
       labeler,
-      "placement_labeler_input.textproto",
-      "placement_labeler_output.textproto",
+      "feed_placement_labeler_input.textproto",
+      "feed_placement_labeler_output.textproto",
+    )
+  }
+
+  @Test
+  fun `toy model routes stories placement`() {
+    val rootNode =
+      parseTextProto(File("$TEXTPROTO_PATH/toy_model.textproto").bufferedReader(), compiledNode {})
+    val labeler = Labeler.build(rootNode)
+
+    applyAndValidate(
+      labeler,
+      "stories_placement_labeler_input.textproto",
+      "stories_placement_labeler_output.textproto",
     )
   }
 }

@@ -16,6 +16,20 @@ branch_node {
   }
   branches {
     condition {
+      name: "placement"
+      op: EQUAL
+      value: "stories"
+    }
+    node {
+      name: "stories_pool"
+      population_node {
+        pools { population_offset: 30000 total_population: 1 }
+        random_seed: "stories_pool_seed"
+      }
+    }
+  }
+  branches {
+    condition {
       op: OR
       sub_filters {
         name: "labeler_input.profile_info.email_user_info.user_id"
