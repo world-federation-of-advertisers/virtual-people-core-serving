@@ -1,0 +1,5 @@
+event_id {
+  publisher: "PUBLISHER_01"
+  id: "PLACEMENT_EVENT"
+}
+placement: "feed"

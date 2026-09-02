@@ -108,5 +108,27 @@ TEST(LabelerIntegrationTest, TestSingleIdModel) {
   }
 }
 
+TEST(LabelerIntegrationTest, TestToyModelRoutesFeedPlacement) {
+  ApplyAndValidate("toy_model.textproto",
+                   "feed_placement_labeler_input.textproto",
+                   "feed_placement_labeler_output.textproto",
+                   /* is_single_node_file = */ true);
+  ApplyAndValidate("toy_model_riegeli_list",
+                   "feed_placement_labeler_input.textproto",
+                   "feed_placement_labeler_output.textproto",
+                   /* is_single_node_file = */ false);
+}
+
+TEST(LabelerIntegrationTest, TestToyModelRoutesStoriesPlacement) {
+  ApplyAndValidate("toy_model.textproto",
+                   "stories_placement_labeler_input.textproto",
+                   "stories_placement_labeler_output.textproto",
+                   /* is_single_node_file = */ true);
+  ApplyAndValidate("toy_model_riegeli_list",
+                   "stories_placement_labeler_input.textproto",
+                   "stories_placement_labeler_output.textproto",
+                   /* is_single_node_file = */ false);
+}
+
 }  // namespace
 }  // namespace wfa_virtual_people
