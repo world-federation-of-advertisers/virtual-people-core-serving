@@ -30,11 +30,7 @@ private const val TEXTPROTO_PATH = "src/main/resources/testing/labeler"
 @RunWith(JUnit4::class)
 class LabelerIntegrationTest {
 
-  private fun applyAndValidate(
-    labeler: Labeler,
-    inputFileName: String,
-    outputFileName: String,
-  ) {
+  private fun applyAndValidate(labeler: Labeler, inputFileName: String, outputFileName: String) {
     val input =
       parseTextProto(File("$TEXTPROTO_PATH/$inputFileName").bufferedReader(), labelerInput {})
     val expectedOutput =
@@ -72,5 +68,18 @@ class LabelerIntegrationTest {
       val outputFileName = "single_id_labeler_output.textproto"
       applyAndValidate(labeler, inputFileName, outputFileName)
     }
+  }
+
+  @Test
+  fun `toy model routes by placement`() {
+    val rootNode =
+      parseTextProto(File("$TEXTPROTO_PATH/toy_model.textproto").bufferedReader(), compiledNode {})
+    val labeler = Labeler.build(rootNode)
+
+    applyAndValidate(
+      labeler,
+      "placement_labeler_input.textproto",
+      "placement_labeler_output.textproto",
+    )
   }
 }

@@ -33,17 +33,8 @@ bazel_dep(
 )
 bazel_dep(
     name = "virtual-people-common",
-    version = "0.8.0",
+    version = "0.9.0",
     repo_name = "wfa_virtual_people_common",
-)
-
-# TODO(virtual-people-common#76): Remove and bump the registry version once
-# the LabelerInput.placement change is released. Points at the branch so
-# this repo can build and test against the new field before it lands.
-git_override(
-    module_name = "virtual-people-common",
-    commit = "eb75a620df64fa48e1b739d75e59363a6e2b98de",
-    remote = "https://github.com/world-federation-of-advertisers/virtual-people-common.git",
 )
 
 # Bazel Central Registry modules.

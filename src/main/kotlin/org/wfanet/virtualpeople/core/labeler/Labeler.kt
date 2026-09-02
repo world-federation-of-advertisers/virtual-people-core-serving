@@ -48,6 +48,9 @@ class Labeler private constructor(private val rootNode: ModelNode) {
    */
   fun label(input: LabelerInput, mode: LabelingMode): LabelerOutput {
     val eventBuilder = labelerEvent { labelerInput = input }.toBuilder()
+    if (input.hasPlacement()) {
+      eventBuilder.placement = input.placement
+    }
     setFingerprints(eventBuilder)
 
     if (mode == LabelingMode.POOL_IDENTITY) {

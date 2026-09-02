@@ -108,5 +108,15 @@ TEST(LabelerIntegrationTest, TestSingleIdModel) {
   }
 }
 
+TEST(LabelerIntegrationTest, TestToyModelRoutesByPlacement) {
+  ApplyAndValidate("toy_model.textproto", "placement_labeler_input.textproto",
+                   "placement_labeler_output.textproto",
+                   /* is_single_node_file = */ true);
+  ApplyAndValidate("toy_model_riegeli_list",
+                   "placement_labeler_input.textproto",
+                   "placement_labeler_output.textproto",
+                   /* is_single_node_file = */ false);
+}
+
 }  // namespace
 }  // namespace wfa_virtual_people
