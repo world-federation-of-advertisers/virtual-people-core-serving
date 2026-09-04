@@ -172,9 +172,6 @@ absl::Status Labeler::Label(const LabelerInput& input, LabelerOutput& output,
   // Prepare labeler event.
   LabelerEvent event;
   *event.mutable_labeler_input() = input;
-  if (input.has_placement()) {
-    event.set_placement(input.placement());
-  }
   SetFingerprints(event);
 
   if (mode == LabelingMode::kPoolIdentity) {
