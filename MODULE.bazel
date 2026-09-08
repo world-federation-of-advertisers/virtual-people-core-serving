@@ -33,8 +33,16 @@ bazel_dep(
 )
 bazel_dep(
     name = "virtual-people-common",
-    version = "0.9.0",
+    version = "0.10.0",
     repo_name = "wfa_virtual_people_common",
+)
+
+# TODO(bazel-registry#217): Remove this override after 0.10.0 is available
+# from the WFA Bazel registry.
+git_override(
+    module_name = "virtual-people-common",
+    commit = "d1696bae97f3041bb72aac2eb1c339c2dc1677f6",
+    remote = "https://github.com/world-federation-of-advertisers/virtual-people-common.git",
 )
 
 # Bazel Central Registry modules.
