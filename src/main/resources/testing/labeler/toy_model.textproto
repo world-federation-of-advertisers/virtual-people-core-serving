@@ -2,7 +2,7 @@ name: "root"
 branch_node {
   branches {
     condition {
-      name: "placement"
+      name: "labeler_input.placement"
       op: EQUAL
       value: "feed"
     }
@@ -16,7 +16,7 @@ branch_node {
   }
   branches {
     condition {
-      name: "placement"
+      name: "labeler_input.placement"
       op: EQUAL
       value: "stories"
     }
