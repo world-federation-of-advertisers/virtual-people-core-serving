@@ -134,6 +134,90 @@ TEST(ConditionalMergeImplTest, TestUpdateEvents) {
   EXPECT_EQ(event_2.person_country_code(), "UPDATED_COUNTRY_2");
 }
 
+TEST(ConditionalMergeImplTest,
+     TestMapsNestedPlacementValuesToCategoriesWithPassThrough) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_merge {
+          nodes {
+            condition {
+              name: "labeler_input.placement"
+              op: IN
+              value: "PLACEMENT_UNSPECIFIED,FACEBOOK_DESKTOP_NEWS_FEED,FACEBOOK_INSTREAM"
+            }
+            update { labeler_input { placement: "facebook" } }
+          }
+          nodes {
+            condition {
+              name: "labeler_input.placement"
+              op: IN
+              value: "INSTAGRAM_EXPLORE,INSTAGRAM_FEED,INSTAGRAM_REELS,INSTAGRAM_STORIES"
+            }
+            update { labeler_input { placement: "instagram" } }
+          }
+          pass_through_non_matches: true
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  LabelerEvent facebook_event;
+  facebook_event.mutable_labeler_input()->set_timestamp_usec(123);
+  facebook_event.mutable_labeler_input()->set_placement("FACEBOOK_INSTREAM");
+  EXPECT_THAT(updater->Update(facebook_event), IsOk());
+  EXPECT_EQ(facebook_event.labeler_input().placement(), "facebook");
+  EXPECT_EQ(facebook_event.labeler_input().timestamp_usec(), 123);
+
+  LabelerEvent instagram_event;
+  instagram_event.mutable_labeler_input()->set_timestamp_usec(456);
+  instagram_event.mutable_labeler_input()->set_placement("INSTAGRAM_REELS");
+  EXPECT_THAT(updater->Update(instagram_event), IsOk());
+  EXPECT_EQ(instagram_event.labeler_input().placement(), "instagram");
+  EXPECT_EQ(instagram_event.labeler_input().timestamp_usec(), 456);
+
+  LabelerEvent unknown_event;
+  unknown_event.mutable_labeler_input()->set_timestamp_usec(789);
+  unknown_event.mutable_labeler_input()->set_placement("UNKNOWN_PLACEMENT");
+  EXPECT_THAT(updater->Update(unknown_event), IsOk());
+  EXPECT_EQ(unknown_event.labeler_input().placement(), "UNKNOWN_PLACEMENT");
+  EXPECT_EQ(unknown_event.labeler_input().timestamp_usec(), 789);
+}
+
+TEST(ConditionalMergeImplTest,
+     TestMapsNestedPlacementValuesToCategoriesWithoutPassThrough) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_merge {
+          nodes {
+            condition {
+              name: "labeler_input.placement"
+              op: IN
+              value: "FACEBOOK_DESKTOP_NEWS_FEED,FACEBOOK_INSTREAM"
+            }
+            update { labeler_input { placement: "facebook" } }
+          }
+          pass_through_non_matches: false
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  LabelerEvent matching_event;
+  matching_event.mutable_labeler_input()->set_placement("FACEBOOK_INSTREAM");
+  EXPECT_THAT(updater->Update(matching_event), IsOk());
+  EXPECT_EQ(matching_event.labeler_input().placement(), "facebook");
+
+  LabelerEvent unknown_event;
+  unknown_event.mutable_labeler_input()->set_placement("UNKNOWN_PLACEMENT");
+  EXPECT_THAT(updater->Update(unknown_event),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_EQ(unknown_event.labeler_input().placement(), "UNKNOWN_PLACEMENT");
+}
+
 TEST(ConditionalMergeImplTest, TestNoMatchingNotPass) {
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
