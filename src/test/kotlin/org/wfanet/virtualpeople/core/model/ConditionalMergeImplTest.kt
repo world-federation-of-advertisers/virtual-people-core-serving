@@ -26,6 +26,7 @@ import org.wfanet.virtualpeople.common.FieldFilterProto.Op
 import org.wfanet.virtualpeople.common.conditionalMerge
 import org.wfanet.virtualpeople.common.fieldFilterProto
 import org.wfanet.virtualpeople.common.labelerEvent
+import org.wfanet.virtualpeople.common.labelerInput
 
 @RunWith(JUnit4::class)
 class ConditionalMergeImplTest {
@@ -128,6 +129,103 @@ class ConditionalMergeImplTest {
     val eventBuilder2 = labelerEvent { personCountryCode = "COUNTRY_2" }.toBuilder()
     updater.update(eventBuilder2)
     assertEquals("UPDATED_COUNTRY_2", eventBuilder2.personCountryCode)
+  }
+
+  @Test
+  fun `nested placement values map to categories with pass through`() {
+    val config = attributesUpdater {
+      conditionalMerge = conditionalMerge {
+        nodes.add(
+          conditionalMergeNode {
+            condition = fieldFilterProto {
+              name = "labeler_input.placement"
+              op = Op.IN
+              value = "PUBLISHER_A_FEED,PUBLISHER_A_VIDEO,PUBLISHER_A_DISPLAY"
+            }
+            update = labelerEvent { labelerInput = labelerInput { placement = "publisher_a" } }
+          }
+        )
+        nodes.add(
+          conditionalMergeNode {
+            condition = fieldFilterProto {
+              name = "labeler_input.placement"
+              op = Op.IN
+              value = "PUBLISHER_B_FEED,PUBLISHER_B_VIDEO,PUBLISHER_B_DISPLAY"
+            }
+            update = labelerEvent { labelerInput = labelerInput { placement = "publisher_b" } }
+          }
+        )
+        passThroughNonMatches = true
+      }
+    }
+    val updater = AttributesUpdaterInterface.build(config)
+
+    val publisherAEvent =
+      labelerEvent {
+          labelerInput = labelerInput {
+            timestampUsec = 123L
+            placement = "PUBLISHER_A_VIDEO"
+          }
+        }
+        .toBuilder()
+    updater.update(publisherAEvent)
+    assertEquals("publisher_a", publisherAEvent.labelerInput.placement)
+    assertEquals(123L, publisherAEvent.labelerInput.timestampUsec)
+
+    val publisherBEvent =
+      labelerEvent {
+          labelerInput = labelerInput {
+            timestampUsec = 456L
+            placement = "PUBLISHER_B_VIDEO"
+          }
+        }
+        .toBuilder()
+    updater.update(publisherBEvent)
+    assertEquals("publisher_b", publisherBEvent.labelerInput.placement)
+    assertEquals(456L, publisherBEvent.labelerInput.timestampUsec)
+
+    val unknownEvent =
+      labelerEvent {
+          labelerInput = labelerInput {
+            timestampUsec = 789L
+            placement = "UNKNOWN_PLACEMENT"
+          }
+        }
+        .toBuilder()
+    updater.update(unknownEvent)
+    assertEquals("UNKNOWN_PLACEMENT", unknownEvent.labelerInput.placement)
+    assertEquals(789L, unknownEvent.labelerInput.timestampUsec)
+  }
+
+  @Test
+  fun `nested placement values map to categories without pass through`() {
+    val config = attributesUpdater {
+      conditionalMerge = conditionalMerge {
+        nodes.add(
+          conditionalMergeNode {
+            condition = fieldFilterProto {
+              name = "labeler_input.placement"
+              op = Op.IN
+              value = "PUBLISHER_A_FEED,PUBLISHER_A_VIDEO"
+            }
+            update = labelerEvent { labelerInput = labelerInput { placement = "publisher_a" } }
+          }
+        )
+        passThroughNonMatches = false
+      }
+    }
+    val updater = AttributesUpdaterInterface.build(config)
+
+    val matchingEvent =
+      labelerEvent { labelerInput = labelerInput { placement = "PUBLISHER_A_VIDEO" } }.toBuilder()
+    updater.update(matchingEvent)
+    assertEquals("publisher_a", matchingEvent.labelerInput.placement)
+
+    val unknownEvent =
+      labelerEvent { labelerInput = labelerInput { placement = "UNKNOWN_PLACEMENT" } }.toBuilder()
+    val exception = assertFailsWith<IllegalStateException> { updater.update(unknownEvent) }
+    assertTrue(exception.message!!.contains("No node matching"))
+    assertEquals("UNKNOWN_PLACEMENT", unknownEvent.labelerInput.placement)
   }
 
   @Test

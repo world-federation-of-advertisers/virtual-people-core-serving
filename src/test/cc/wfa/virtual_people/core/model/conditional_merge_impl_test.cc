@@ -134,6 +134,90 @@ TEST(ConditionalMergeImplTest, TestUpdateEvents) {
   EXPECT_EQ(event_2.person_country_code(), "UPDATED_COUNTRY_2");
 }
 
+TEST(ConditionalMergeImplTest,
+     TestMapsNestedPlacementValuesToCategoriesWithPassThrough) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_merge {
+          nodes {
+            condition {
+              name: "labeler_input.placement"
+              op: IN
+              value: "PUBLISHER_A_FEED,PUBLISHER_A_VIDEO,PUBLISHER_A_DISPLAY"
+            }
+            update { labeler_input { placement: "publisher_a" } }
+          }
+          nodes {
+            condition {
+              name: "labeler_input.placement"
+              op: IN
+              value: "PUBLISHER_B_FEED,PUBLISHER_B_VIDEO,PUBLISHER_B_DISPLAY"
+            }
+            update { labeler_input { placement: "publisher_b" } }
+          }
+          pass_through_non_matches: true
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  LabelerEvent publisher_a_event;
+  publisher_a_event.mutable_labeler_input()->set_timestamp_usec(123);
+  publisher_a_event.mutable_labeler_input()->set_placement("PUBLISHER_A_VIDEO");
+  EXPECT_THAT(updater->Update(publisher_a_event), IsOk());
+  EXPECT_EQ(publisher_a_event.labeler_input().placement(), "publisher_a");
+  EXPECT_EQ(publisher_a_event.labeler_input().timestamp_usec(), 123);
+
+  LabelerEvent publisher_b_event;
+  publisher_b_event.mutable_labeler_input()->set_timestamp_usec(456);
+  publisher_b_event.mutable_labeler_input()->set_placement("PUBLISHER_B_VIDEO");
+  EXPECT_THAT(updater->Update(publisher_b_event), IsOk());
+  EXPECT_EQ(publisher_b_event.labeler_input().placement(), "publisher_b");
+  EXPECT_EQ(publisher_b_event.labeler_input().timestamp_usec(), 456);
+
+  LabelerEvent unknown_event;
+  unknown_event.mutable_labeler_input()->set_timestamp_usec(789);
+  unknown_event.mutable_labeler_input()->set_placement("UNKNOWN_PLACEMENT");
+  EXPECT_THAT(updater->Update(unknown_event), IsOk());
+  EXPECT_EQ(unknown_event.labeler_input().placement(), "UNKNOWN_PLACEMENT");
+  EXPECT_EQ(unknown_event.labeler_input().timestamp_usec(), 789);
+}
+
+TEST(ConditionalMergeImplTest,
+     TestMapsNestedPlacementValuesToCategoriesWithoutPassThrough) {
+  BranchNode::AttributesUpdater config;
+  ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
+      R"pb(
+        conditional_merge {
+          nodes {
+            condition {
+              name: "labeler_input.placement"
+              op: IN
+              value: "PUBLISHER_A_FEED,PUBLISHER_A_VIDEO"
+            }
+            update { labeler_input { placement: "publisher_a" } }
+          }
+          pass_through_non_matches: false
+        }
+      )pb",
+      &config));
+  ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
+                       AttributesUpdaterInterface::Build(config));
+
+  LabelerEvent matching_event;
+  matching_event.mutable_labeler_input()->set_placement("PUBLISHER_A_VIDEO");
+  EXPECT_THAT(updater->Update(matching_event), IsOk());
+  EXPECT_EQ(matching_event.labeler_input().placement(), "publisher_a");
+
+  LabelerEvent unknown_event;
+  unknown_event.mutable_labeler_input()->set_placement("UNKNOWN_PLACEMENT");
+  EXPECT_THAT(updater->Update(unknown_event),
+              StatusIs(absl::StatusCode::kInvalidArgument, ""));
+  EXPECT_EQ(unknown_event.labeler_input().placement(), "UNKNOWN_PLACEMENT");
+}
+
 TEST(ConditionalMergeImplTest, TestNoMatchingNotPass) {
   BranchNode::AttributesUpdater config;
   ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(
