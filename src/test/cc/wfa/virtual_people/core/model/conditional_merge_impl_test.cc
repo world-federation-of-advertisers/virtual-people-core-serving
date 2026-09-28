@@ -144,17 +144,17 @@ TEST(ConditionalMergeImplTest,
             condition {
               name: "labeler_input.placement"
               op: IN
-              value: "PLACEMENT_UNSPECIFIED,FACEBOOK_DESKTOP_NEWS_FEED,FACEBOOK_INSTREAM"
+              value: "PUBLISHER_A_FEED,PUBLISHER_A_VIDEO,PUBLISHER_A_DISPLAY"
             }
-            update { labeler_input { placement: "facebook" } }
+            update { labeler_input { placement: "publisher_a" } }
           }
           nodes {
             condition {
               name: "labeler_input.placement"
               op: IN
-              value: "INSTAGRAM_EXPLORE,INSTAGRAM_FEED,INSTAGRAM_REELS,INSTAGRAM_STORIES"
+              value: "PUBLISHER_B_FEED,PUBLISHER_B_VIDEO,PUBLISHER_B_DISPLAY"
             }
-            update { labeler_input { placement: "instagram" } }
+            update { labeler_input { placement: "publisher_b" } }
           }
           pass_through_non_matches: true
         }
@@ -163,19 +163,19 @@ TEST(ConditionalMergeImplTest,
   ASSERT_OK_AND_ASSIGN(std::unique_ptr<AttributesUpdaterInterface> updater,
                        AttributesUpdaterInterface::Build(config));
 
-  LabelerEvent facebook_event;
-  facebook_event.mutable_labeler_input()->set_timestamp_usec(123);
-  facebook_event.mutable_labeler_input()->set_placement("FACEBOOK_INSTREAM");
-  EXPECT_THAT(updater->Update(facebook_event), IsOk());
-  EXPECT_EQ(facebook_event.labeler_input().placement(), "facebook");
-  EXPECT_EQ(facebook_event.labeler_input().timestamp_usec(), 123);
+  LabelerEvent publisher_a_event;
+  publisher_a_event.mutable_labeler_input()->set_timestamp_usec(123);
+  publisher_a_event.mutable_labeler_input()->set_placement("PUBLISHER_A_VIDEO");
+  EXPECT_THAT(updater->Update(publisher_a_event), IsOk());
+  EXPECT_EQ(publisher_a_event.labeler_input().placement(), "publisher_a");
+  EXPECT_EQ(publisher_a_event.labeler_input().timestamp_usec(), 123);
 
-  LabelerEvent instagram_event;
-  instagram_event.mutable_labeler_input()->set_timestamp_usec(456);
-  instagram_event.mutable_labeler_input()->set_placement("INSTAGRAM_REELS");
-  EXPECT_THAT(updater->Update(instagram_event), IsOk());
-  EXPECT_EQ(instagram_event.labeler_input().placement(), "instagram");
-  EXPECT_EQ(instagram_event.labeler_input().timestamp_usec(), 456);
+  LabelerEvent publisher_b_event;
+  publisher_b_event.mutable_labeler_input()->set_timestamp_usec(456);
+  publisher_b_event.mutable_labeler_input()->set_placement("PUBLISHER_B_VIDEO");
+  EXPECT_THAT(updater->Update(publisher_b_event), IsOk());
+  EXPECT_EQ(publisher_b_event.labeler_input().placement(), "publisher_b");
+  EXPECT_EQ(publisher_b_event.labeler_input().timestamp_usec(), 456);
 
   LabelerEvent unknown_event;
   unknown_event.mutable_labeler_input()->set_timestamp_usec(789);
@@ -195,9 +195,9 @@ TEST(ConditionalMergeImplTest,
             condition {
               name: "labeler_input.placement"
               op: IN
-              value: "FACEBOOK_DESKTOP_NEWS_FEED,FACEBOOK_INSTREAM"
+              value: "PUBLISHER_A_FEED,PUBLISHER_A_VIDEO"
             }
-            update { labeler_input { placement: "facebook" } }
+            update { labeler_input { placement: "publisher_a" } }
           }
           pass_through_non_matches: false
         }
@@ -207,9 +207,9 @@ TEST(ConditionalMergeImplTest,
                        AttributesUpdaterInterface::Build(config));
 
   LabelerEvent matching_event;
-  matching_event.mutable_labeler_input()->set_placement("FACEBOOK_INSTREAM");
+  matching_event.mutable_labeler_input()->set_placement("PUBLISHER_A_VIDEO");
   EXPECT_THAT(updater->Update(matching_event), IsOk());
-  EXPECT_EQ(matching_event.labeler_input().placement(), "facebook");
+  EXPECT_EQ(matching_event.labeler_input().placement(), "publisher_a");
 
   LabelerEvent unknown_event;
   unknown_event.mutable_labeler_input()->set_placement("UNKNOWN_PLACEMENT");

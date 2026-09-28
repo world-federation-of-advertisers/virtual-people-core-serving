@@ -140,9 +140,9 @@ class ConditionalMergeImplTest {
             condition = fieldFilterProto {
               name = "labeler_input.placement"
               op = Op.IN
-              value = "PLACEMENT_UNSPECIFIED,FACEBOOK_DESKTOP_NEWS_FEED,FACEBOOK_INSTREAM"
+              value = "PUBLISHER_A_FEED,PUBLISHER_A_VIDEO,PUBLISHER_A_DISPLAY"
             }
-            update = labelerEvent { labelerInput = labelerInput { placement = "facebook" } }
+            update = labelerEvent { labelerInput = labelerInput { placement = "publisher_a" } }
           }
         )
         nodes.add(
@@ -150,9 +150,9 @@ class ConditionalMergeImplTest {
             condition = fieldFilterProto {
               name = "labeler_input.placement"
               op = Op.IN
-              value = "INSTAGRAM_EXPLORE,INSTAGRAM_FEED,INSTAGRAM_REELS,INSTAGRAM_STORIES"
+              value = "PUBLISHER_B_FEED,PUBLISHER_B_VIDEO,PUBLISHER_B_DISPLAY"
             }
-            update = labelerEvent { labelerInput = labelerInput { placement = "instagram" } }
+            update = labelerEvent { labelerInput = labelerInput { placement = "publisher_b" } }
           }
         )
         passThroughNonMatches = true
@@ -160,29 +160,29 @@ class ConditionalMergeImplTest {
     }
     val updater = AttributesUpdaterInterface.build(config)
 
-    val facebookEvent =
+    val publisherAEvent =
       labelerEvent {
           labelerInput = labelerInput {
             timestampUsec = 123L
-            placement = "FACEBOOK_INSTREAM"
+            placement = "PUBLISHER_A_VIDEO"
           }
         }
         .toBuilder()
-    updater.update(facebookEvent)
-    assertEquals("facebook", facebookEvent.labelerInput.placement)
-    assertEquals(123L, facebookEvent.labelerInput.timestampUsec)
+    updater.update(publisherAEvent)
+    assertEquals("publisher_a", publisherAEvent.labelerInput.placement)
+    assertEquals(123L, publisherAEvent.labelerInput.timestampUsec)
 
-    val instagramEvent =
+    val publisherBEvent =
       labelerEvent {
           labelerInput = labelerInput {
             timestampUsec = 456L
-            placement = "INSTAGRAM_REELS"
+            placement = "PUBLISHER_B_VIDEO"
           }
         }
         .toBuilder()
-    updater.update(instagramEvent)
-    assertEquals("instagram", instagramEvent.labelerInput.placement)
-    assertEquals(456L, instagramEvent.labelerInput.timestampUsec)
+    updater.update(publisherBEvent)
+    assertEquals("publisher_b", publisherBEvent.labelerInput.placement)
+    assertEquals(456L, publisherBEvent.labelerInput.timestampUsec)
 
     val unknownEvent =
       labelerEvent {
@@ -206,9 +206,9 @@ class ConditionalMergeImplTest {
             condition = fieldFilterProto {
               name = "labeler_input.placement"
               op = Op.IN
-              value = "FACEBOOK_DESKTOP_NEWS_FEED,FACEBOOK_INSTREAM"
+              value = "PUBLISHER_A_FEED,PUBLISHER_A_VIDEO"
             }
-            update = labelerEvent { labelerInput = labelerInput { placement = "facebook" } }
+            update = labelerEvent { labelerInput = labelerInput { placement = "publisher_a" } }
           }
         )
         passThroughNonMatches = false
@@ -217,9 +217,9 @@ class ConditionalMergeImplTest {
     val updater = AttributesUpdaterInterface.build(config)
 
     val matchingEvent =
-      labelerEvent { labelerInput = labelerInput { placement = "FACEBOOK_INSTREAM" } }.toBuilder()
+      labelerEvent { labelerInput = labelerInput { placement = "PUBLISHER_A_VIDEO" } }.toBuilder()
     updater.update(matchingEvent)
-    assertEquals("facebook", matchingEvent.labelerInput.placement)
+    assertEquals("publisher_a", matchingEvent.labelerInput.placement)
 
     val unknownEvent =
       labelerEvent { labelerInput = labelerInput { placement = "UNKNOWN_PLACEMENT" } }.toBuilder()
